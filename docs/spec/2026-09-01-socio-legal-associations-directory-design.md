@@ -1,7 +1,7 @@
 # Directory of Socio‑Legal Associations — Design Specification
 
 **Status:** Draft for discussion
-**Date:** 2026‑09‑01 · **Revised:** 2026‑09‑02 (reviewer comments: map by seat not president; notability/deletion risk; personal e‑mails; journals added to the model)
+**Date:** 2026‑09‑01 · **Revised:** 2026‑09‑02 (reviewer comments: map by seat not president; notability/deletion risk; personal e‑mails; journals added to the model; reactive change‑monitoring — no scheduled task)
 **Audience:** Part 1 is written for a non‑technical reader (a scholar with no computer‑science background). Part 2 is the precise technical specification.
 **Source data:** `data/Global Law and Society Associations Directory v7 Sept 2026.xlsx` and `data/socio-legal-associations.quickstatements.txt` (see §2.10). The `data/` folder is deliberately kept out of the public repository.
 
@@ -167,17 +167,44 @@ association, edit the field, confirm. One change, one confirmation.
 
 ### 1.6 Maintenance burden
 
-The project deliberately has a **small and mostly non‑technical** maintenance load.
+The project deliberately has a **small, reactive, and mostly non‑technical**
+maintenance load. **There is no scheduled monitoring task** (see §1.6.1).
 
-**Editorial / community work (ongoing, light):**
+**Editorial / community work (reactive — only when something triggers it):**
 
 | Task | Effort | Who |
 | --- | --- | --- |
-| Encouraging associations to add/refresh their entry | Ad hoc | Project lead / steering group |
-| Watching the entries for bad edits (Wikidata gives a ready‑made watch list / dashboard) | ~15 min per week | Any trained contributor |
+| Encouraging associations to add/refresh their entry, and to switch on change‑notifications for it | Ad hoc, at onboarding | Project lead / steering group |
+| Responding to a change‑notification e‑mail when one arrives (these ~40 low‑traffic items change a handful of times a year in total; most changes are the associations' own) | Minutes, only when triggered | Anyone on the notification list |
 | Answering occasional Wikidata community questions or notability challenges | Rare, unpredictable | Someone comfortable on Wikidata |
 | Agreeing modelling conventions with the relevant Wikidata subject group | Mostly one‑off | Project lead + a Wikidata‑literate helper |
 | Nudging associations to record new presidents after elections | Ad hoc | Project lead |
+
+#### 1.6.1 How change monitoring works (reactive, no standing task)
+
+Nobody watches a dashboard on a schedule. Instead:
+
+- **A — the contact person subscribes to their own entry.** They already need a
+  Wikimedia account to edit; Wikimedia's default is to add pages you edit to your
+  watchlist, so after editing they are *already watching* the item. They tick
+  *"Email me when a page on my watchlist is changed"* once (immediate, or a
+  daily/weekly digest), and every future edit arrives in their inbox with a link to
+  the change. The web app shows a **"Notify me of changes to this entry"** button on
+  the association card and the post‑edit screen that walks them through this.
+- **A′ — no account: an Atom feed.** Each item exposes a history feed
+  (`…?title=Q…&action=history&feed=atom`); the app shows this URL for feed‑reader or
+  feed‑to‑email users. A *"Related changes"* feed additionally covers the linked
+  person and journal records.
+- **B — an automated project digest (optional add‑on).** The daily snapshot job (§2.9,
+  needed anyway for resilience) can also diff consecutive snapshots and, on any
+  material change, e‑mail the association's institutional address (`P968`) and a shared
+  project inbox, each with a direct link to the Wikidata diff. No person runs anything;
+  mail is read only when it arrives. The project works without B — A and C alone are
+  sufficient — so it can be approved now and switched on later.
+- **C — correction has no deadline.** Every Wikidata revision is permanent and
+  revertible, and the wider community already patrols recent changes, so a bad edit
+  noticed late is still a one‑click fix. This is what makes a purely reactive model
+  sufficient.
 
 **Technical work (occasional, small):**
 
@@ -195,6 +222,8 @@ The project deliberately has a **small and mostly non‑technical** maintenance 
   by the Wikimedia Foundation; every record's full history is kept permanently.
 - No user accounts, passwords or personal‑data store of our own — identity is handled
   by Wikimedia.
+- **No scheduled monitoring or moderation rota** — change‑watching is reactive
+  (§1.6.1): notifications come to people, people do not go looking.
 - Hosting cost is effectively zero (static hosting or GitHub Pages / Cloudflare Pages).
 
 **Privacy note — e‑mail addresses.** The public e‑mail field on an association's
@@ -221,6 +250,7 @@ details such as date of birth or home address.
 | A new person or association is challenged as "not notable" and **deleted by Wikidata editors**, leaving a hole in the map. Higher‑risk cases in the current data: a dormant network (LASSNET), brand‑new bodies (ALADES, ILSA), and national **sections** of larger associations (Polish, Austrian, Indian RC‑23, and others). | Agree an inclusion approach with the relevant Wikidata subject group **before** importing (§2.7). National sections are recorded as *part of* their parent association rather than as stand‑alone records unless they have their own identifiers and activity. Every record carries references, an official‑website link, and identifiers (ORCID for people; journal/ISSN where relevant). A short "at‑risk / contested" list is kept in the repository so anything deleted can be re‑created or re‑modelled quickly. |
 | Wikidata's query service is briefly unavailable | The page keeps a local copy and there is a daily backup file, so the map still loads. |
 | Two records get created for the same association or person | Search‑first forms, an explicit "create new" step, ORCID matching, and a final confirmation. |
+| A wrong or malicious edit to an entry | Reactive, not scheduled (§1.6.1): the association is notified of changes to its own record; an automated digest e‑mails a diff link to the project inbox; the wider Wikidata community patrols recent changes; and every revision is revertible later with no deadline. |
 | People edit the Wikidata records by hand in inconsistent ways | The map query uses step‑by‑step fallbacks and the app tolerates missing fields. |
 
 ---
@@ -276,7 +306,8 @@ no database, no server‑side rendering.
   Cloudflare Pages, or Netlify. GitHub Pages is *not* required and plays no special
   role in OAuth.
 - **`config.json`** holds non‑secret settings: the OAuth **client ID** (public by
-  design), the redirect URI, the target class/field QIDs, and label languages.
+  design), the redirect URI, the target class/field QIDs, label languages, and the
+  project notification inbox address used by the change‑notification job (§2.9).
 
 ### 2.3 Data model in Wikidata
 
@@ -509,9 +540,14 @@ phase 1 (see §2.8).
 
 - **Deploy:** rebuild static bundle, replace files (ZIP upload or `git push`). No
   migrations, no downtime.
-- **Snapshot job:** GitHub Action on a schedule runs the SPARQL query and commits
-  `data/snapshot.json`. Independent of where the site is hosted. Failure is
-  non‑critical (live query still serves users).
+- **Snapshot + change‑notification job:** a GitHub Action on a schedule runs the SPARQL
+  query, commits `data/snapshot.json`, **diffs it against the previous snapshot**, and
+  on any material change e‑mails the affected association's `P968` address and the
+  project inbox (address in `config.json`) with a link to the Wikidata diff. Independent
+  of where the site is hosted. Failure is non‑critical (live query still serves users;
+  contact‑person watchlist e‑mails are unaffected). Sending mail needs one credential
+  (an SMTP or transactional‑email key) stored as a GitHub Actions secret — the only
+  secret in the project, and only for outbound notifications.
 - **Dependencies:** map library (e.g. MapLibre GL or Leaflet) and a small SPARQL/OAuth
   helper; pin versions; review a few times per year.
 - **OAuth consumer:** re‑touch only on domain change or grant change; some changes
