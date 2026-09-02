@@ -50,7 +50,7 @@ fetch('https://www.wikidata.org/w/rest.php/wikibase/v1/entities/items/Q4115189/s
   - If either assumption is wrong, fix `src/adapters/wikibase-api.js`'s `restStatement`/
     `applyChangeSet` accordingly and re-run `cd dev && npm test`.
 
-- [ ] **Step 4: Revert the sandbox edit** you made (undo on `Q4115189`).
+- [ ] **Step 5: Revert the sandbox edit** you made (undo on `Q4115189`).
 
 ### Task A2: WikiProject consultation — confirm class + field QIDs
 
