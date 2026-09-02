@@ -129,7 +129,7 @@ Data spec §2.3 marks `Q955824` (learned society) / `Q48204` (voluntary associat
 
 - [ ] **Step 5: Note** that Wikimedia may take days to approve new consumers; some grant changes require re-approval.
 
-- [ ] **Step 6: Confirm (or explicitly rule out) a token-revocation endpoint.** Check
+- [x] **Step 6: Confirm (or explicitly rule out) a token-revocation endpoint.** Check
   Wikimedia's current OAuth 2.0 documentation for a `/revoke` (or similarly named)
   endpoint under the same `meta.wikimedia.org` OAuth2 base path used for
   `authorize`/`access_token`. If one exists, set `config.json`'s `oauth.revokeUrl`
@@ -138,6 +138,18 @@ Data spec §2.3 marks `Q955824` (learned society) / `Q48204` (voluntary associat
   editor should be told (in onboarding material, not necessarily in-app copy)
   that they can fully revoke the app's access anytime at
   `Special:OAuthManageMyGrants` on Meta-Wiki.
+
+  **Ruled out, 2026-09-02.** Checked `mediawiki.org/wiki/OAuth/For_Developers`, the
+  api.wikimedia.org auth docs, and the `mediawiki-extensions-OAuth` source
+  (`extension.json`'s REST route list): the only OAuth2 REST routes are
+  `/oauth2/authorize`, `/oauth2/access_token`, `/oauth2/resource/{type}`, and two
+  consumer-management routes (`/oauth2/client`, `/oauth2/client/{client_key}/reset_secret`)
+  — **no revoke/invalidate route exists.** The documented revocation path is
+  user-initiated only, via `Special:OAuthManageMyGrants` on Meta-Wiki. **Confirmed:
+  `config.json`'s `oauth.revokeUrl` stays `null`** — `src/adapters/oauth-pkce.js`'s
+  best-effort revoke call (already coded to no-op when `revokeUrl` is `null`) needs no
+  change. Add the `Special:OAuthManageMyGrants` pointer to onboarding material per the
+  original note above (Task D3).
 
 ---
 
