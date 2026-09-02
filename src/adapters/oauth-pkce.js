@@ -37,8 +37,6 @@ const K = {
 export function createAuth({ fetch, storage, location, crypto, config, now = () => Date.now() }) {
   let accessToken = null;
   let expiresAt = 0;
-  const persistent = config.tokenPersistence !== 'session';
-  const store = persistent ? storage : sessionSafe(storage);
 
   async function tokenRequest(body) {
     const res = await fetch(config.oauth.tokenUrl, {
@@ -50,15 +48,15 @@ export function createAuth({ fetch, storage, location, crypto, config, now = () 
     const j = await res.json();
     accessToken = j.access_token;
     expiresAt = now() + (j.expires_in ? j.expires_in * 1000 : 3600_000);
-    if (j.refresh_token) store.setItem(K.refresh, j.refresh_token);
+    if (j.refresh_token) storage.setItem(K.refresh, j.refresh_token);
     return accessToken;
   }
 
   return {
-    hasSession: () => !!store.getItem(K.refresh),
+    hasSession: () => !!storage.getItem(K.refresh),
 
     async restore() {
-      const rt = store.getItem(K.refresh);
+      const rt = storage.getItem(K.refresh);
       if (!rt) return false;
       try {
         await tokenRequest({ grant_type: 'refresh_token', refresh_token: rt, client_id: config.oauth.clientId });
@@ -71,8 +69,8 @@ export function createAuth({ fetch, storage, location, crypto, config, now = () 
     async connect() {
       const { verifier, challenge } = await pkceChallenge(crypto);
       const state = b64url(crypto.getRandomValues(new Uint8Array(16)));
-      store.setItem(K.verifier, verifier);
-      store.setItem(K.state, state);
+      storage.setItem(K.verifier, verifier);
+      storage.setItem(K.state, state);
       location.href = buildAuthorizeUrl(config, { challenge, state });
     },
 
@@ -86,14 +84,9 @@ export function createAuth({ fetch, storage, location, crypto, config, now = () 
     async disconnect() {
       accessToken = null;
       expiresAt = 0;
-      store.removeItem(K.refresh);
-      store.removeItem(K.verifier);
-      store.removeItem(K.state);
+      storage.removeItem(K.refresh);
+      storage.removeItem(K.verifier);
+      storage.removeItem(K.state);
     },
   };
-}
-
-/** Fallback wrapper so `"session"` persistence uses sessionStorage semantics via the same API. */
-function sessionSafe(storage) {
-  return storage; // in the browser, app.js passes window.sessionStorage here; tests pass a mem store
 }

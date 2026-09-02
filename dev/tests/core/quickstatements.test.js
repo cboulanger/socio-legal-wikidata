@@ -39,3 +39,14 @@ test('a ref to a previously created item resolves to LAST only if it is the imme
   const out = serialize(cs);
   assert.match(out, /# MANUAL: after import, add P488 -> \(new item "person"\) on new item "assoc"/);
 });
+
+test('quoted values escape embedded quotes and backslashes', () => {
+  const cs = { summary: 's', ops: [
+    { type: 'create-item', ref: 'assoc', labels: { en: 'Say "Hi" \\ Bye' }, descriptions: {},
+      claims: [{ property: 'P856', value: { kind: 'url', value: 'https://example.org/"x"' }, reference: { P854: 'https://ref.example/"y"' } }] },
+  ]};
+  const out = serialize(cs);
+  assert.match(out, /LAST\tLen\t"Say \\"Hi\\" \\\\ Bye"/);
+  assert.match(out, /LAST\tP856\t"https:\/\/example\.org\/\\"x\\""/);
+  assert.match(out, /S854\t"https:\/\/ref\.example\/\\"y\\""/);
+});
