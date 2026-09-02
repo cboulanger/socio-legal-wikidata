@@ -1,9 +1,18 @@
 # Draft: WikiProject consultation post (Task A2)
 
 > Not yet posted. Post this (or an edited version) as the project lead, from a
-> logged-in Wikimedia account, to the talk page of the most relevant WikiProject —
-> candidates: `Wikidata talk:WikiProject Sociology`, `Wikidata talk:WikiProject Law`.
-> Cross-post a shorter pointer to the other if the two projects are separate.
+> logged-in Wikimedia account.
+>
+> **Venue, checked live 2026-09-02:** `Wikidata:WikiProject Sociology` has had no
+> edits since January 2025 and has no talk page at all — not worth creating one
+> there. `Wikidata:WikiProject Law`, by contrast, is actively maintained (bot-updated
+> lists as recently as 2026-08-30) and its talk page,
+> [`Wikidata talk:WikiProject Law`](https://www.wikidata.org/wiki/Wikidata_talk:WikiProject_Law),
+> already exists. Post there as the primary venue, and cross-post (or just link to
+> it) at [`Wikidata:Project chat`](https://www.wikidata.org/wiki/Wikidata:Project_chat)
+> — the general, always-active community discussion board — for broader visibility,
+> since this touches sociology as much as law.
+>
 > This step needs a human account and can't be automated — drafted here so posting
 > it is a one-minute copy/paste.
 

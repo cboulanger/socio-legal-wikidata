@@ -95,7 +95,15 @@ fetch('https://www.wikidata.org/w/rest.php/wikibase/v1/entities/items/Q4115189/s
 
 Data spec §2.3 marks `Q955824` (learned society) / `Q48204` (voluntary association) and `Q2734663` (sociology of law) as *(confirm)*.
 
-- [ ] **Step 1: Post the candidate list + modelling proposal** to the talk page of the most relevant WikiProject (e.g. *Wikidata:WikiProject Sociology* or *…Law*), covering: the in-scope class, `P101` field value, the `P361` treatment of national sections, and the `P123` treatment of association-published journals. Link the data spec and `docs/at-risk.md`. **Drafted, not yet posted** — full text ready to copy/paste at [`../wikiproject-consultation-draft.md`](../wikiproject-consultation-draft.md); posting needs a human Wikimedia account.
+- [ ] **Step 1: Post the candidate list + modelling proposal** covering: the in-scope class, `P101` field value, the `P361` treatment of national sections, and the `P123` treatment of association-published journals. Link the data spec and `docs/at-risk.md`. **Drafted, not yet posted** — full text ready to copy/paste at [`../wikiproject-consultation-draft.md`](../wikiproject-consultation-draft.md); posting needs a human Wikimedia account.
+
+  **Venue corrected 2026-09-02** (checked live — the two candidates named in an
+  earlier draft of this step don't both actually work): `Wikidata:WikiProject
+  Sociology` has had no edits since January 2025 and has no talk page — skip it.
+  Post to [`Wikidata talk:WikiProject Law`](https://www.wikidata.org/wiki/Wikidata_talk:WikiProject_Law)
+  instead (exists, actively bot-maintained), and cross-post/link at
+  [`Wikidata:Project chat`](https://www.wikidata.org/wiki/Wikidata:Project_chat)
+  (the general, always-active community venue) for broader visibility.
 
 - [ ] **Step 2: Record the agreed values** in `config.json` (`inScopeClassQid`, `inScopeFieldQid`) and update data spec §2.3 to drop the *(confirm)* markers.
 
@@ -340,7 +348,7 @@ Only if the project wants proactive diffs on top of contact-person watchlists. T
 | Decision | Value | Date | Notes |
 | --- | --- | --- | --- |
 | `writeMode` (Task A1) | `direct` | 2026-09-02 | Decided from CORS preflight headers alone (see Task A1 Step 0) — `access-control-allow-origin: *` on both the statements and single-statement REST endpoints, methods POST/PATCH/PUT/DELETE all allowed. No live edit needed for this part; already set in `config.json`. Payload assumptions in `wikibase-api.js` (Step 4) separately confirmed live against `Q4115189`: `comment` field name ✅, PATCH `/qualifiers/-` on a statement with no existing qualifiers ✅. No code changes needed. |
-| in-scope class QID (Task A2) | `Q955824` / `Q48204` (provisional) | | Consultation drafted (`../wikiproject-consultation-draft.md`), not yet posted — needs a human account. |
+| in-scope class QID (Task A2) | `Q955824` / `Q48204` (provisional) | | Consultation drafted (`../wikiproject-consultation-draft.md`), not yet posted — needs a human account. Venue: `Wikidata talk:WikiProject Law` + `Wikidata:Project chat` (not "WikiProject Sociology" — dormant, no talk page). |
 | in-scope field QID (Task A2) | `Q2734663` (provisional) | | Same as above. |
 | production OAuth client ID (Task A3) | | | Needs Task A3 done interactively on Meta-Wiki; still `REPLACE_WITH_REGISTERED_CONSUMER_CLIENT_ID` in `config.json`. |
 | production deploy URL | `https://cboulanger.github.io/socio-legal-wikidata/` | 2026-09-02 | GitHub Pages, deployed via `.github/workflows/deploy.yml` on every push to `main`. Dev/local uses `http://localhost:8000/`. Redirect URIs for Task A3: `…/callback.html` on each. |
