@@ -77,7 +77,7 @@ export function createAuth({ fetch, storage, location, crypto, config, now = () 
     },
 
     async getToken() {
-      if (accessToken && now() < expiresAt) return accessToken;
+      if (accessToken && now() < expiresAt - 30_000) return accessToken;
       const ok = await this.restore();
       if (!ok) throw new Error('not authenticated');
       return accessToken;

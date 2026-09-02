@@ -53,20 +53,21 @@ test('createAuth.restore mints an access token from a stored refresh token', asy
   assert.equal(storage.getItem('slw:oauth:refresh'), 'REFRESH2');
 });
 
-test('createAuth.getToken refreshes when the access token has expired', async () => {
+test('createAuth.getToken refreshes within 30s of expiry (buffer), not only after true expiry', async () => {
   const storage = memStorage();
   storage.setItem('slw:oauth:refresh', 'R1');
   let calls = 0;
   const fetch = async () => {
     calls++;
-    return { ok: true, json: async () => ({ access_token: `A${calls}`, refresh_token: `R${calls + 1}`, expires_in: 1 }) };
+    return { ok: true, json: async () => ({ access_token: `A${calls}`, refresh_token: `R${calls + 1}`, expires_in: 100 }) };
   };
   let t = 0;
   const auth = createAuth({ fetch, storage, location: { href: '' }, crypto: webcrypto, config, now: () => t });
-  await auth.restore();
-  assert.equal(await auth.getToken(), 'A1');
-  t = 5000; // 5s later, token (1s ttl) is stale
-  assert.equal(await auth.getToken(), 'A2');
+  await auth.restore(); // t=0, expiresAt=100_000
+  assert.equal(await auth.getToken(), 'A1'); // still well within the buffer window, no extra call
+  assert.equal(calls, 1);
+  t = 75_000; // 75s in: past expiresAt-30_000 (=70_000), but before true expiry (100_000)
+  assert.equal(await auth.getToken(), 'A2'); // buffer triggers an early refresh
   assert.equal(calls, 2);
 });
 
