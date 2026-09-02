@@ -82,6 +82,16 @@ Data spec §2.3 marks `Q955824` (learned society) / `Q48204` (voluntary associat
 
 - [ ] **Step 5: Note** that Wikimedia may take days to approve new consumers; some grant changes require re-approval.
 
+- [ ] **Step 6: Confirm (or explicitly rule out) a token-revocation endpoint.** Check
+  Wikimedia's current OAuth 2.0 documentation for a `/revoke` (or similarly named)
+  endpoint under the same `meta.wikimedia.org` OAuth2 base path used for
+  `authorize`/`access_token`. If one exists, set `config.json`'s `oauth.revokeUrl`
+  to it. If none exists, leave `oauth.revokeUrl` as `null` — "Leave edit mode" /
+  "forget this device" will still clear the token from this browser, but the
+  editor should be told (in onboarding material, not necessarily in-app copy)
+  that they can fully revoke the app's access anytime at
+  `Special:OAuthManageMyGrants` on Meta-Wiki.
+
 ---
 
 ## Phase B — Build (hand off to the code plans)
