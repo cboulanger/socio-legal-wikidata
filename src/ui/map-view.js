@@ -1,4 +1,5 @@
 import { resolveSeatPin, resolveLeadershipPin } from '../core/resolve-location.js';
+import { escapeHtml } from '../render.js';
 
 /**
  * @typedef {Object} MapPin
@@ -53,7 +54,7 @@ export function createMapView(container, { tileUrl, tileAttribution, onSelect })
       const marker = L.circleMarker([p.coord[1], p.coord[0]], {
         radius: p.layer === 'seat' ? 7 : 5,
         className: p.layer === 'seat' ? 'pin pin--seat' : 'pin pin--lead',
-      }).bindTooltip(p.label);
+      }).bindTooltip(escapeHtml(p.label));
       marker.on('click', () => onSelect(p.assocQid));
       (p.layer === 'seat' ? seatLayer : leadLayer).addLayer(marker);
     }

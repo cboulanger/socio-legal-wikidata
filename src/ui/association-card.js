@@ -1,4 +1,4 @@
-import { html } from '../render.js';
+import { html, safeHref } from '../render.js';
 import { deriveScope } from '../core/model.js';
 import { historyFeedUrl, watchlistUrl } from './components/notify-link.js';
 
@@ -16,18 +16,18 @@ export function renderAssociationCard(a, { editMode = false } = {}) {
       <p class="card__meta">${scope}${a.countryLabel ? html` · ${a.countryLabel}` : ''}</p>
       ${a.parentLabel ? html`<p class="card__row">part of ${a.parentLabel}</p>` : ''}
       <p class="card__row">seat: ${place}</p>
-      ${a.website ? html`<p class="card__row"><a href="${a.website}" rel="noopener" target="_blank">website</a></p>` : ''}
+      ${a.website ? html`<p class="card__row"><a href="${safeHref(a.website)}" rel="noopener" target="_blank">website</a></p>` : ''}
       ${a.email ? html`<p class="card__row"><a href="mailto:${a.email}">${a.email}</a></p>` : ''}
       ${a.president
         ? html`<p class="card__row">president:
             ${a.president.url
-              ? html`<a href="${a.president.url}" rel="noopener" target="_blank">${a.president.label}</a>`
+              ? html`<a href="${safeHref(a.president.url)}" rel="noopener" target="_blank">${a.president.label}</a>`
               : a.president.label}
             ${a.leadUniLabel ? html`<span class="card__sub">${a.leadUniLabel}</span>` : ''}</p>`
         : ''}
       <p class="card__row">journal:
         ${a.journal
-          ? html`<a href="${a.journal.url || '#'}" rel="noopener" target="_blank">${a.journal.label}</a>`
+          ? html`<a href="${safeHref(a.journal.url || '#')}" rel="noopener" target="_blank">${a.journal.label}</a>`
           : '—'}</p>
       <p class="card__actions">
         <a class="card__notify" href="${watchlistUrl(a.qid)}" rel="noopener" target="_blank"

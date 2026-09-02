@@ -1,5 +1,5 @@
 /** Marker for already-escaped, trusted HTML produced by `html`. */
-class Trusted {
+export class Trusted {
   /** @param {string} s */
   constructor(s) {
     this.value = s;
@@ -17,6 +17,21 @@ export function escapeHtml(s) {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
+}
+
+/**
+ * Allow only http(s), mailto, and protocol-relative/relative URLs in click targets.
+ * Anything else (javascript:, data:, vbscript:, …) → '#'.
+ * @param {unknown} url
+ * @returns {string}
+ */
+export function safeHref(url) {
+  if (typeof url !== 'string') return '#';
+  const trimmed = url.trim();
+  if (/^(https?:|mailto:)/i.test(trimmed)) return trimmed;
+  if (/^(\/|\.\/|\.\.\/|#)/.test(trimmed)) return trimmed;
+  if (/^[a-z][a-z0-9+.-]*:/i.test(trimmed)) return '#'; // any other explicit scheme
+  return trimmed; // schemeless (e.g. "example.org/x")
 }
 
 /** @param {unknown} v @returns {string} */

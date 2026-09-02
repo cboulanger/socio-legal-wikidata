@@ -41,3 +41,9 @@ test('renders a journal line when present, "—" when absent', () => {
   const withJournal = { ...a, journal: { qid: 'Q9', label: 'ZfRS', url: 'https://z', issn: null } };
   assert.match(renderAssociationCard(withJournal, {}).value, /ZfRS/);
 });
+
+test('a javascript: URL in website is neutralised to #', () => {
+  const bad = { ...a, website: 'javascript:alert(1)' };
+  const out = renderAssociationCard(bad, {}).value;
+  assert.doesNotMatch(out, /javascript:alert/);
+});
