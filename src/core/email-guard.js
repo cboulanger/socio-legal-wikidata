@@ -17,9 +17,9 @@ const ROLE_WORDS = new Set([
 export function looksPersonal(email) {
   if (typeof email !== 'string' || !email.includes('@')) return false;
   const [local, domain] = email.toLowerCase().split('@');
-  if (FREE_MAIL.has(domain)) return true;
   const parts = local.split(/[._-]+/).filter(Boolean);
   if (parts.some((p) => ROLE_WORDS.has(p))) return false;
+  if (FREE_MAIL.has(domain)) return true;
   // firstname.lastname or f.lastname patterns
   if (parts.length >= 2 && parts.every((p) => /^[a-z]+$/.test(p)) && parts.some((p) => p.length >= 3)) {
     return true;

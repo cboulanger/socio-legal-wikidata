@@ -23,3 +23,9 @@ test('non-strings are not flagged', () => {
   assert.equal(looksPersonal(''), false);
   assert.equal(looksPersonal(null), false);
 });
+
+test('a role word wins even on a free-mail domain', () => {
+  assert.equal(looksPersonal('admin@gmail.com'), false);
+  assert.equal(looksPersonal('info.desk@gmail.com'), false);
+  assert.equal(looksPersonal('office@yahoo.com'), false);
+});
