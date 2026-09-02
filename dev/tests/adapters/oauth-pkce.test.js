@@ -80,3 +80,32 @@ test('createAuth.connect stores verifier+state and points location at the author
   assert.ok(storage.getItem('slw:oauth:state'));
   assert.match(location.href, /^https:\/\/meta\.example\/authorize\?/);
 });
+
+test('disconnect posts to oauth.revokeUrl when configured, and always clears storage even if revoke fails', async () => {
+  const storage = memStorage();
+  storage.setItem('slw:oauth:refresh', 'R1');
+  storage.setItem('slw:oauth:verifier', 'V1');
+  storage.setItem('slw:oauth:state', 'S1');
+  const cfgWithRevoke = { ...config, oauth: { ...config.oauth, revokeUrl: 'https://meta.example/revoke' } };
+  let revokeCalled = null;
+  const fetch = async (url, init) => {
+    revokeCalled = { url, body: init.body.toString() };
+    throw new Error('network error'); // revocation fails — disconnect must still clear storage
+  };
+  const auth = createAuth({ fetch, storage, location: { href: '' }, crypto: webcrypto, config: cfgWithRevoke, now: () => 0 });
+  await auth.disconnect();
+  assert.equal(revokeCalled.url, 'https://meta.example/revoke');
+  assert.match(revokeCalled.body, /token=R1/);
+  assert.equal(storage.getItem('slw:oauth:refresh'), null);
+  assert.equal(storage.getItem('slw:oauth:verifier'), null);
+  assert.equal(storage.getItem('slw:oauth:state'), null);
+});
+
+test('disconnect skips the network call entirely when revokeUrl is not configured', async () => {
+  const storage = memStorage();
+  storage.setItem('slw:oauth:refresh', 'R1');
+  const fetch = async () => { throw new Error('should not be called'); };
+  const auth = createAuth({ fetch, storage, location: { href: '' }, crypto: webcrypto, config, now: () => 0 }); // config has no revokeUrl
+  await auth.disconnect();
+  assert.equal(storage.getItem('slw:oauth:refresh'), null);
+});

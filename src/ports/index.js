@@ -15,7 +15,7 @@
  * @property {() => Promise<boolean>} restore  // silently mint an access token; false if not possible
  * @property {() => Promise<void>} connect     // begin the interactive OAuth redirect
  * @property {() => Promise<string>} getToken  // a valid access token, refreshing if needed
- * @property {() => Promise<void>} disconnect  // drop tokens (and revoke if persistent)
+ * @property {() => Promise<void>} disconnect  // drop local tokens; best-effort server-side revoke if oauth.revokeUrl is configured
  *
  * @typedef {Object} EntityCandidate
  * @property {string} qid

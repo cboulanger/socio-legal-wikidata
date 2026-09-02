@@ -14,7 +14,8 @@
     "tokenUrl": "https://meta.wikimedia.org/w/rest.php/oauth2/access_token",
     "clientId": "REPLACE_WITH_REGISTERED_CONSUMER_CLIENT_ID",
     "redirectUri": "https://REPLACE_WITH_DEPLOY_HOST/callback.html",
-    "scopes": "basic editpage createpage"
+    "scopes": "basic editpage createpage",
+    "revokeUrl": null
   },
   "editTrigger": "either",
   "editParam": "edit",

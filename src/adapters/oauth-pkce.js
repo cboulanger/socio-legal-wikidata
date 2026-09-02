@@ -82,8 +82,20 @@ export function createAuth({ fetch, storage, location, crypto, config, now = () 
     },
 
     async disconnect() {
+      const refreshToken = storage.getItem(K.refresh);
       accessToken = null;
       expiresAt = 0;
+      if (config.oauth.revokeUrl && refreshToken) {
+        try {
+          await fetch(config.oauth.revokeUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: new URLSearchParams({ token: refreshToken, client_id: config.oauth.clientId }),
+          });
+        } catch {
+          // best-effort only — local disconnect must still proceed even if revocation fails
+        }
+      }
       storage.removeItem(K.refresh);
       storage.removeItem(K.verifier);
       storage.removeItem(K.state);
