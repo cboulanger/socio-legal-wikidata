@@ -8,5 +8,22 @@
   "cacheTtlMs": 86400000,
   "tileUrl": "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
   "tileAttribution": "© OpenStreetMap contributors",
-  "leadershipLayerDefault": false
+  "leadershipLayerDefault": false,
+  "oauth": {
+    "authorizeUrl": "https://meta.wikimedia.org/w/rest.php/oauth2/authorize",
+    "tokenUrl": "https://meta.wikimedia.org/w/rest.php/oauth2/access_token",
+    "clientId": "REPLACE_WITH_REGISTERED_CONSUMER_CLIENT_ID",
+    "redirectUri": "https://REPLACE_WITH_DEPLOY_HOST/callback.html",
+    "scopes": "basic editpage createpage"
+  },
+  "editTrigger": "either",
+  "editParam": "edit",
+  "tokenPersistence": "persistent",
+  "writeMode": "direct",
+  "wikibaseRestBase": "https://www.wikidata.org/w/rest.php/wikibase/v1",
+  "wikidataActionApi": "https://www.wikidata.org/w/api.php",
+  "quickstatementsUrl": "https://quickstatements.toolforge.org/#/v1=",
+  "humanQid": "Q5",
+  "researcherQid": "Q1650915",
+  "academicJournalQid": "Q737498"
 }
