@@ -68,7 +68,10 @@ export function createWikibaseApi({ fetch, config, getToken }) {
       const authHeaders = { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' };
       /** @type {Object<string,string>} */
       const refMap = {};
-      const resolveRef = (r) => refMap[r] || (() => { throw new Error(`unresolved ref ${r}`); })();
+      const resolveRef = (r) => {
+        if (!refMap[r]) throw new Error(`unresolved ref ${r}`);
+        return refMap[r];
+      };
       const created = [];
       const diffUrls = [];
 
@@ -94,9 +97,8 @@ export function createWikibaseApi({ fetch, config, getToken }) {
             body: JSON.stringify({ statement: restStatement(op, resolveRef), comment: cs.summary }),
           });
           if (!res.ok) throw new Error(`add-statement failed: ${res.status} ${await res.text()}`);
-          const j = await res.json();
+          await res.json();
           diffUrls.push(`https://www.wikidata.org/wiki/${qid}#${op.property}`);
-          if (j.id) { /* statement id available for callers that need it */ }
         } else if (op.type === 'end-statement') {
           const res = await fetch(`${rest}/statements/${encodeURIComponent(op.statementId)}`, {
             method: 'PATCH', headers: authHeaders,

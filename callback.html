@@ -5,8 +5,8 @@
   <p id="msg">Completing sign-in…</p>
   <script type="module">
     import { handleCallback } from './src/adapters/oauth-callback.js';
-    const config = await (await fetch('config.json')).json();
     try {
+      const config = await (await fetch('config.json')).json();
       const target = await handleCallback({ location, storage: localStorage, fetch, config });
       location.replace(target);
     } catch (e) {
