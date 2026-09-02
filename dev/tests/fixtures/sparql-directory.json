@@ -1,0 +1,35 @@
+{
+  "head": { "vars": ["assoc","assocLabel","assocDescription","website","email","inception","country","countryLabel","countryCode","operating","seat","seatLabel","seatCoord","parent","parentLabel","president","presidentLabel","presidentUrl","leadUni","leadUniLabel","leadCoord","journal","journalLabel","journalUrl","issn"] },
+  "results": { "bindings": [
+    {
+      "assoc": { "type": "uri", "value": "http://www.wikidata.org/entity/Q2145564" },
+      "assocLabel": { "type": "literal", "value": "Research Committee on the Sociology of Law" },
+      "assocDescription": { "type": "literal", "value": "international scholarly association" },
+      "website": { "type": "literal", "value": "https://rcsl.hypotheses.org" },
+      "email": { "type": "literal", "value": "m.kortabarria@iisj.es" },
+      "inception": { "type": "literal", "value": "1962" },
+      "seat": { "type": "uri", "value": "http://www.wikidata.org/entity/Q1015907" },
+      "seatLabel": { "type": "literal", "value": "Oñati" },
+      "seatCoord": { "type": "literal", "value": "Point(2.4102 43.0356)" },
+      "president": { "type": "uri", "value": "http://www.wikidata.org/entity/Q125" },
+      "presidentLabel": { "type": "literal", "value": "Pierre Guibentif" },
+      "presidentUrl": { "type": "literal", "value": "https://example.org/guibentif" },
+      "leadUni": { "type": "uri", "value": "http://www.wikidata.org/entity/Q608593" },
+      "leadUniLabel": { "type": "literal", "value": "ISCTE" },
+      "leadCoord": { "type": "literal", "value": "Point(-9.1533 38.7486)" },
+      "journal": { "type": "uri", "value": "http://www.wikidata.org/entity/Q7100448" },
+      "journalLabel": { "type": "literal", "value": "Oñati Socio-Legal Series" },
+      "journalUrl": { "type": "literal", "value": "https://opo.iisj.net/index.php/osls" },
+      "issn": { "type": "literal", "value": "2079-5971" }
+    },
+    {
+      "assoc": { "type": "uri", "value": "http://www.wikidata.org/entity/Q112" },
+      "assocLabel": { "type": "literal", "value": "German Association for Law and Society" },
+      "assocDescription": { "type": "literal", "value": "German learned society" },
+      "website": { "type": "literal", "value": "https://rechtssoziologie.info" },
+      "country": { "type": "uri", "value": "http://www.wikidata.org/entity/Q183" },
+      "countryLabel": { "type": "literal", "value": "Germany" },
+      "countryCode": { "type": "literal", "value": "DE" }
+    }
+  ]}
+}
