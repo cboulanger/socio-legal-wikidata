@@ -6,6 +6,8 @@
 
 **Audience:** Part 1 is written for a non‑technical reader (a scholar with no computer‑science background). Part 2 is the precise technical specification.
 
+**Companion document:** [`2026-09-02-ui-design.md`](2026-09-02-ui-design.md) covers the browser application — its structure, the no‑build decision, and a first visual sketch.
+
 **Source data:** (deliberately kept out of the public repository)
 
 ---
@@ -301,8 +303,9 @@ no database, no server‑side rendering.
 ### 2.2 Hosting and delivery
 
 - **Deliverable:** a ZIP of static files (or a `git push` to a Pages host). The final
-  artefact is `index.html`, `callback.html`, bundled JS/CSS, `config.json`, and
-  `data/snapshot.json`.
+  artefact is `index.html`, `callback.html`, hand‑written JS/CSS modules served as‑is
+  (no build step — see [`2026-09-02-ui-design.md`](2026-09-02-ui-design.md) §2),
+  `config.json`, and `data/snapshot.json`.
 - **Requirements of the host:** serve the files over **HTTPS** at a **stable URL**.
   Nothing else (no Node, no PHP, no database).
 - **Recommended hosts:** the maintainer's existing web server, GitHub Pages,
@@ -541,7 +544,7 @@ phase 1 (see §2.8).
 
 ### 2.9 Maintenance (technical detail)
 
-- **Deploy:** rebuild static bundle, replace files (ZIP upload or `git push`). No
+- **Deploy:** replace the static files (ZIP upload or `git push`). No build, no
   migrations, no downtime.
 - **Snapshot + change‑notification job:** a GitHub Action on a schedule runs the SPARQL
   query, commits `data/snapshot.json`, **diffs it against the previous snapshot**, and
