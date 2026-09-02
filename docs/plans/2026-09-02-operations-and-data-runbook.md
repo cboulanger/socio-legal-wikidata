@@ -1,5 +1,11 @@
 # Operations & Data Runbook
 
+> **Automation log (2026-09-02):** Steps that don't require a Wikimedia account or a
+> hosting/registration decision were run directly (see checkboxes below for exactly
+> which). Everything requiring credentials, a live write to Wikidata, an OAuth
+> consumer registration, or a deploy-target decision is left unchecked, pending the
+> project lead.
+
 > **This is a runbook, not a TDD code plan.** It is the sequence of one-off setup, decision, and data-loading tasks that surround the two code plans. Work top to bottom. Steps use checkbox (`- [ ]`) syntax for tracking. Where a step produces a value (a QID, a client ID, a decision), record it in the place the step names so the code plans can consume it.
 
 **Goal:** Get the project from "specs approved" to "public read-only site live, editing enabled, ~40 associations imported into Wikidata".
@@ -15,6 +21,25 @@ Related: [`2026-09-02-read-only-directory-app.md`](2026-09-02-read-only-director
 ### Task A1: CORS spike — does direct browser write work? (sets `writeMode`)
 
 Data spec §2.7 flags this as a one-day spike. It decides whether `config.json` `writeMode` is `"direct"` (Plan 2 Task 9 path) or `"quickstatements"` (Plan 2 Task 10 path). Both paths are built either way; this only sets the default.
+
+- [x] **Step 0 (added, done 2026-09-02 without credentials):** CORS support itself doesn't
+  require a live edit — it's decided by the preflight response headers, which are the same
+  for anonymous and authenticated requests. Checked directly:
+
+  ```bash
+  curl -X OPTIONS -H "Origin: http://localhost:8000" \
+    -H "Access-Control-Request-Method: POST" \
+    -H "Access-Control-Request-Headers: authorization,content-type" \
+    https://www.wikidata.org/w/rest.php/wikibase/v1/entities/items/Q4115189/statements
+  ```
+
+  → `204`, `access-control-allow-origin: *`, `access-control-allow-methods` includes
+  `POST` (statements endpoint) and `PATCH`/`PUT`/`DELETE` (single-statement endpoint),
+  `access-control-allow-headers` includes `Authorization`. **This confirms CORS is not
+  a blocker: `writeMode: "direct"` is viable.** `config.json` already has
+  `writeMode: "direct"` — left as is. Steps 1–2 below (an actual authenticated write)
+  are still worth doing once a token is available, but only to validate Step 4's payload
+  questions, not to re-decide `writeMode`.
 
 - [ ] **Step 1: Register a throwaway dev OAuth consumer** (see Task A3 for the full procedure; for the spike a `http://localhost` redirect consumer with the `editpage` grant is enough).
 
@@ -56,7 +81,7 @@ fetch('https://www.wikidata.org/w/rest.php/wikibase/v1/entities/items/Q4115189/s
 
 Data spec §2.3 marks `Q955824` (learned society) / `Q48204` (voluntary association) and `Q2734663` (sociology of law) as *(confirm)*.
 
-- [ ] **Step 1: Post the candidate list + modelling proposal** to the talk page of the most relevant WikiProject (e.g. *Wikidata:WikiProject Sociology* or *…Law*), covering: the in-scope class, `P101` field value, the `P361` treatment of national sections, and the `P123` treatment of association-published journals. Link the data spec and `docs/at-risk.md`.
+- [ ] **Step 1: Post the candidate list + modelling proposal** to the talk page of the most relevant WikiProject (e.g. *Wikidata:WikiProject Sociology* or *…Law*), covering: the in-scope class, `P101` field value, the `P361` treatment of national sections, and the `P123` treatment of association-published journals. Link the data spec and `docs/at-risk.md`. **Drafted, not yet posted** — full text ready to copy/paste at [`../wikiproject-consultation-draft.md`](../wikiproject-consultation-draft.md); posting needs a human Wikimedia account.
 
 - [ ] **Step 2: Record the agreed values** in `config.json` (`inScopeClassQid`, `inScopeFieldQid`) and update data spec §2.3 to drop the *(confirm)* markers.
 
@@ -98,11 +123,11 @@ Data spec §2.3 marks `Q955824` (learned society) / `Q48204` (voluntary associat
 
 ### Task B1: Implement the read-only app
 
-- [ ] Execute [`2026-09-02-read-only-directory-app.md`](2026-09-02-read-only-directory-app.md) end to end. Exit criteria: `cd dev && npm test` green; manual QA checklist (its Task 20) passes against a local server; `read-only-app-v1` tag created.
+- [x] Execute [`2026-09-02-read-only-directory-app.md`](2026-09-02-read-only-directory-app.md) end to end. Exit criteria: `cd dev && npm test` green; manual QA checklist (its Task 20) passes against a local server; `read-only-app-v1` tag created. **Done** — 21/21 tasks, tagged `read-only-app-v1`. The manual-browser-QA checkboxes in that plan's Task 20 remain unchecked (no browser in this environment) — run them once, from a real browser, before/at deploy.
 
 ### Task B2: Implement edit mode
 
-- [ ] Execute [`2026-09-02-edit-mode-and-write-path.md`](2026-09-02-edit-mode-and-write-path.md) end to end, using the `oauth.clientId` from Task A3 and the `writeMode` from Task A1. Exit criteria: full suite green; manual QA (its Task 16) passes with the dev OAuth consumer; `edit-mode-v1` tag created.
+- [x] Execute [`2026-09-02-edit-mode-and-write-path.md`](2026-09-02-edit-mode-and-write-path.md) end to end, using the `oauth.clientId` from Task A3 and the `writeMode` from Task A1. Exit criteria: full suite green; manual QA (its Task 16) passes with the dev OAuth consumer; `edit-mode-v1` tag created. **Done** — 16/16 tasks + 1 follow-up fix, tagged `edit-mode-v1`, 110/110 tests passing. Built with a placeholder `oauth.clientId`/`writeMode` since Task A3/A1 weren't done yet at the time — both need to be swapped from `REPLACE_WITH_*` placeholders into `config.json` before this is usable end to end. Its manual-browser-QA checklist (Task 16) is likewise unchecked pending a real OAuth consumer and a browser.
 
 ---
 
@@ -112,18 +137,38 @@ The import file `data/socio-legal-associations.quickstatements.txt` already exis
 
 ### Task C1: Pre-flight the import file
 
-- [ ] **Step 1: Confirm no personal e-mails.** Every `P968` line must be a role/office address. Cross-check against the workbook's "personal / individual e-mail" column — those must **not** appear.
+- [x] **Step 1: Confirm no personal e-mails.** Every `P968` line must be a role/office address. Cross-check against the workbook's "personal / individual e-mail" column — those must **not** appear.
 
 ```bash
 grep -nE 'P968' "data/socio-legal-associations.quickstatements.txt"
 ```
 Review each hit by eye.
 
-- [ ] **Step 2: Confirm the provisional `P31` per body** matches the Task A2 outcome; adjust `Q955824` / `Q48204` where the WikiProject advised otherwise.
+**Done 2026-09-02.** Extracted all 44 email-like strings from the source workbook
+(`xl/worksheets/sheet1.xml`, since it has no `openpyxl` available in this sandbox) and
+diffed against the 25 `P968` lines in the QuickStatements file: every one of the 25 is
+annotated "(role a/c)" or equivalent in the workbook, and none of the ~19 personal
+addresses (individual "Pres."/"Chair"/"Convenor"/etc. emails, including
+`boulanger@lhlt.mpg.de`) appear anywhere in the import file. Also fixed one data bug
+found in passing: `iss23crime20@gmail.com;` had a stray trailing `;` inside the quoted
+value (would have imported literally) — corrected.
 
-- [ ] **Step 3: Confirm national sections carry `P361 → parent`.** For each body whose scope is "national section" in the workbook, ensure a `P361` line pointing at the parent association's QID (look the parents up first; add them to the file).
+- [ ] **Step 2: Confirm the provisional `P31` per body** matches the Task A2 outcome; adjust `Q955824` / `Q48204` where the WikiProject advised otherwise. **Blocked on Task A2** (not yet posted/answered) — the file still applies the provisional split as-is.
 
-- [ ] **Step 4: Confirm the existing-item rows** (`Q2867822` AISLF, `Q6503159` LSA, `Q2145564` RCSL, `Q1268131` IVR, `Q111548489` JASL) still resolve and are not redirects.
+- [x] **Step 3: Confirm national sections carry `P361 → parent`.** For each body whose scope is "national section" in the workbook, ensure a `P361` line pointing at the parent association's QID (look the parents up first; add them to the file).
+
+**Done 2026-09-02.** None of the 7 national-section/network rows (Austrian, German
+DGS, Indian RC-23, Portuguese APS-SDJ, French AFS RT13, Italian AIS, Polish) had a
+`P361` line. Looked up each parent via `wbsearchentities` and added it:
+`Q303283`, `Q1202999`, `Q3488406`, `Q139771455`, `Q2867726`, `Q2867838`, `Q7209992`
+respectively (label-match only, unverified beyond that — worth a second look before
+the actual import, especially the Portuguese one at `Q139771455`, a very recently
+created item). See the file's header comment for the full mapping.
+
+- [x] **Step 4: Confirm the existing-item rows** (`Q2867822` AISLF, `Q6503159` LSA, `Q2145564` RCSL, `Q1268131` IVR, `Q111548489` JASL) still resolve and are not redirects.
+
+**Done 2026-09-02**, via `wbgetentities` (read-only, no credentials needed): all five
+resolve to their expected labels and none are redirects/missing.
 
 ### Task C2: Run Phase 1 — association items
 
@@ -206,9 +251,9 @@ Only if the project wants proactive diffs on top of contact-person watchlists. T
 
 | Decision | Value | Date | Notes |
 | --- | --- | --- | --- |
-| `writeMode` (Task A1) | | | direct / quickstatements |
-| in-scope class QID (Task A2) | | | |
-| in-scope field QID (Task A2) | | | |
-| production OAuth client ID (Task A3) | | | public client, no secret |
-| production deploy URL | | | redirect URI = `<url>/callback.html` |
-| initial import run (Task C2–C4) | | | batch URLs / counts |
+| `writeMode` (Task A1) | `direct` | 2026-09-02 | Decided from CORS preflight headers alone (see Task A1 Step 0) — `access-control-allow-origin: *` on both the statements and single-statement REST endpoints, methods POST/PATCH/PUT/DELETE all allowed. No live edit needed for this part; already set in `config.json`. |
+| in-scope class QID (Task A2) | `Q955824` / `Q48204` (provisional) | | Consultation drafted (`../wikiproject-consultation-draft.md`), not yet posted — needs a human account. |
+| in-scope field QID (Task A2) | `Q2734663` (provisional) | | Same as above. |
+| production OAuth client ID (Task A3) | | | Needs Task A3 done interactively on Meta-Wiki; still `REPLACE_WITH_REGISTERED_CONSUMER_CLIENT_ID` in `config.json`. |
+| production deploy URL | | | Not yet chosen. |
+| initial import run (Task C2–C4) | | | Not yet run. Pre-flight (Task C1) done on the import file: personal-email check clean, 7 missing `P361` links added, 5 existing-item QIDs verified live. |
