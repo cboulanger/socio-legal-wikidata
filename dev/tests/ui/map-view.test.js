@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { emptyAssociation } from '../../../src/core/model.js';
-import { toMapPins } from '../../../src/ui/map-view.js';
+import { toMapPins, isoOfFeature } from '../../../src/ui/map-view.js';
 
 const centroids = { DE: [10.45, 51.16] };
 const list = [
@@ -26,4 +26,10 @@ test('toMapPins adds leadership pins only when showLeadership is true', () => {
   assert.ok(lead);
   assert.deepEqual(lead.coord, [114.1, 22.3]);
   assert.equal(lead.label, 'HKU');
+});
+
+test('isoOfFeature reads ISO_A2 case-insensitively and rejects the -99 sentinel', () => {
+  assert.equal(isoOfFeature({ properties: { ISO_A2: 'de' } }), 'DE');
+  assert.equal(isoOfFeature({ properties: { iso_a2: 'FR' } }), 'FR');
+  assert.equal(isoOfFeature({ properties: { ISO_A2: '-99' } }), null);
 });

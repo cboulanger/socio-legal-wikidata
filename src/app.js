@@ -42,7 +42,9 @@ export async function createApp(deps) {
   const mapView = await createMapView(mapHost, {
     tileUrl: config.tileUrl,
     tileAttribution: config.tileAttribution,
+    countriesGeojson: deps.countriesGeojson,
     onSelect: (qid) => select(qid),
+    onSelectCountry: (iso) => { win.location.hash = `#/country/${iso}`; },
   });
 
   function renderPanelRegion() {
@@ -123,10 +125,12 @@ export async function createApp(deps) {
 if (typeof window !== 'undefined' && window.document?.getElementById('app')) {
   const config = await (await fetch('config.json')).json();
   const centroids = await (await fetch(config.centroidsUrl)).json();
+  const countriesGeojson = await (await fetch('data/countries.geojson')).json();
   await createApp({
     window,
     config,
     centroids,
+    countriesGeojson,
     loadDirectory: loadDirectoryImpl,
     createMapView: createMapViewImpl,
     detectMode: () => 'read',

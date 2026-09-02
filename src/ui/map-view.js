@@ -10,6 +10,13 @@ import { escapeHtml } from '../render.js';
  * @property {string} assocQid
  */
 
+/** @param {any} feature @returns {string|null} ISO 3166-1 alpha-2, uppercase */
+export function isoOfFeature(feature) {
+  const raw = feature?.properties?.ISO_A2 || feature?.properties?.iso_a2 || '';
+  const iso = String(raw).toUpperCase();
+  return iso && iso !== '-99' ? iso : null;
+}
+
 /**
  * @param {import('../core/model.js').Association[]} associations
  * @param {{centroids: Object<string, [number,number]>, showLeadership: boolean}} opts
@@ -39,10 +46,23 @@ export function toMapPins(associations, { centroids, showLeadership }) {
  * @param {HTMLElement} container
  * @param {{tileUrl: string, tileAttribution: string, onSelect: (assocQid: string) => void}} opts
  */
-export function createMapView(container, { tileUrl, tileAttribution, onSelect }) {
+export function createMapView(container, { tileUrl, tileAttribution, onSelect, onSelectCountry, countriesGeojson }) {
   /* global L */
   const map = L.map(container, { worldCopyJump: true }).setView([20, 10], 2);
   L.tileLayer(tileUrl, { attribution: tileAttribution, maxZoom: 12 }).addTo(map);
+
+  if (countriesGeojson) {
+    L.geoJSON(countriesGeojson, {
+      style: { color: '#94a3b8', weight: 1, fillOpacity: 0.02 },
+      onEachFeature: (feature, layer) => {
+        const iso = isoOfFeature(feature);
+        if (!iso) return;
+        layer.on('click', () => onSelectCountry && onSelectCountry(iso));
+        layer.on('mouseover', () => layer.setStyle({ fillOpacity: 0.12 }));
+        layer.on('mouseout', () => layer.setStyle({ fillOpacity: 0.02 }));
+      },
+    }).addTo(map);
+  }
 
   const seatLayer = L.layerGroup().addTo(map);
   const leadLayer = L.layerGroup().addTo(map);
