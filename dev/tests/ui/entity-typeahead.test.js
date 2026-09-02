@@ -41,3 +41,29 @@ test('allowCreate=false never shows the create affordance (e.g. universities)', 
   assert.doesNotMatch(el.innerHTML, /none-of-these/);
   assert.match(el.innerHTML, /not on Wikidata/);
 });
+
+test('the create affordance is hidden while real candidates are showing', async () => {
+  const el = host();
+  const ta = createTypeahead(el, { label: 'Association', searchEntities: search, onPick: () => {}, onCreate: () => {}, allowCreate: true });
+  await ta._typeForTest('asian law'); // `search()` returns one real match for this query
+  assert.match(el.innerHTML, /Asian Law and Society Association/);
+  assert.doesNotMatch(el.innerHTML, /none-of-these/);
+});
+
+test('a stale search response does not overwrite a newer query\'s results', async () => {
+  const el = host();
+  let resolveFirst;
+  const slowThenFast = async (text) => {
+    if (text === 'slow query') {
+      return new Promise((resolve) => { resolveFirst = () => resolve([{ qid: 'QSLOW', label: 'Slow Result', description: '' }]); });
+    }
+    return [{ qid: 'QFAST', label: 'Fast Result', description: '' }];
+  };
+  const ta = createTypeahead(el, { label: 'X', searchEntities: slowThenFast, onPick: () => {}, allowCreate: false });
+  const firstSearch = ta._typeForTest('slow query'); // starts, does not resolve yet
+  await ta._typeForTest('fast query'); // resolves immediately, should win
+  resolveFirst(); // now let the stale first search resolve
+  await firstSearch;
+  assert.match(el.innerHTML, /Fast Result/);
+  assert.doesNotMatch(el.innerHTML, /Slow Result/);
+});

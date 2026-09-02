@@ -14,6 +14,7 @@ import { rankCandidates } from '../../core/dedupe.js';
  */
 export function createTypeahead(el, opts) {
   const state = { query: '', candidates: [], showCreate: false, chosen: null };
+  let searchSeq = 0;
 
   function render() {
     const ranked = rankCandidates(state.query, state.candidates).slice(0, 8);
@@ -34,7 +35,7 @@ export function createTypeahead(el, opts) {
             </ul>
             ${state.query && ranked.length === 0 && !opts.allowCreate
               ? html`<p class="typeahead__none">This item is not on Wikidata — it must be added there first.</p>` : ''}
-            ${state.query && opts.allowCreate && !state.showCreate
+            ${state.query && ranked.length === 0 && opts.allowCreate && !state.showCreate
               ? html`<button type="button" data-role="none-of-these">None of these — create new</button>` : ''}
             ${state.showCreate
               ? html`<div data-role="create-form" class="typeahead__create">
@@ -47,7 +48,10 @@ export function createTypeahead(el, opts) {
   async function doSearch(text) {
     state.query = text;
     state.showCreate = false;
-    state.candidates = text.trim().length >= 2 ? await opts.searchEntities(text, 'item') : [];
+    const seq = ++searchSeq;
+    const results = text.trim().length >= 2 ? await opts.searchEntities(text, 'item') : [];
+    if (seq !== searchSeq) return; // a newer search started while this one was in flight; discard
+    state.candidates = results;
     render();
   }
 

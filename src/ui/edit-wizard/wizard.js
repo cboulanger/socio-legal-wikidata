@@ -1,4 +1,4 @@
-import { html, mount } from '../../render.js';
+import { html, mount, safeHref } from '../../render.js';
 import { emptyDraft } from '../../core/draft.js';
 import { buildChangeSet } from '../../core/changeset.js';
 import { STEP_ORDER, validateStep } from './steps.js';
@@ -95,8 +95,8 @@ export function createWizard(host, opts) {
     render(html`
       <div class="wizard__done">
         <h3>Success</h3>
-        <ul>${(result.diffUrls || []).map((u) => html`<li><a href="${u}" target="_blank" rel="noopener">${u}</a></li>`)}</ul>
-        ${result.handoffUrl ? html`<p><a href="${result.handoffUrl}" target="_blank" rel="noopener">Finish in QuickStatements</a></p>` : ''}
+        <ul>${(result.diffUrls || []).map((u) => html`<li><a href="${safeHref(u)}" target="_blank" rel="noopener">${u}</a></li>`)}</ul>
+        ${result.handoffUrl ? html`<p><a href="${safeHref(result.handoffUrl)}" target="_blank" rel="noopener">Finish in QuickStatements</a></p>` : ''}
         <button type="button" data-role="close">Done</button>
       </div>`);
     return result;
