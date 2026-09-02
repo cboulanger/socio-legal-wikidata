@@ -16,8 +16,15 @@ live from Wikidata. Hand-written static files — **no build step**.
 
 ## Deploy
 
-Copy every file except `dev/`, `docs/`, `scripts/`, `.github/` to a web
-server that serves over HTTPS. No server-side code required.
+**Production:** GitHub Pages, deployed automatically by
+[`.github/workflows/deploy.yml`](.github/workflows/deploy.yml) on every push to
+`main` (tests must pass first). Live at
+<https://cboulanger.github.io/socio-legal-wikidata/> — a merge to `main` *is* the
+deploy; there is no manual upload step for this host.
+
+**A different host:** copy every file except `dev/`, `docs/`, `scripts/`,
+`.github/` to a web server that serves over HTTPS. No server-side code required —
+see "Deploy (detail)" below.
 
 ## Change common things without touching code
 

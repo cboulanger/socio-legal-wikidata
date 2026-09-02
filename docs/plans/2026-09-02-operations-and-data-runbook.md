@@ -103,13 +103,21 @@ Data spec §2.3 marks `Q955824` (learned society) / `Q48204` (voluntary associat
 
 ### Task A3: Register the production OAuth consumer
 
-- [ ] **Step 1: Decide the deploy URL** with the site maintainer (e.g. `https://socio-legal-map.example.org/`). The redirect URI is fixed at registration.
+- [x] **Step 1: Decide the deploy URL** with the site maintainer (e.g. `https://socio-legal-map.example.org/`). The redirect URI is fixed at registration.
+
+  **Decided 2026-09-02:** production is GitHub Pages at
+  `https://cboulanger.github.io/socio-legal-wikidata/` (project page for this repo —
+  see Task D1, now automated via CI). During development, `http://localhost:8000/`
+  (via `python3 -m http.server 8000`). This means **two** OAuth consumers are needed
+  in Step 2/4 below: a production one with callback
+  `https://cboulanger.github.io/socio-legal-wikidata/callback.html`, and a dev one
+  with callback `http://localhost:8000/callback.html`.
 
 - [ ] **Step 2: At `https://meta.wikimedia.org/wiki/Special:OAuthConsumerRegistration/propose`**, register:
   - **Application name:** Socio-Legal Associations Directory
   - **OAuth "protocol version":** OAuth 2.0
   - **This consumer is for use only by <you>:** unchecked (multiple editors)
-  - **Callback URL:** `https://socio-legal-map.example.org/callback.html` (exact)
+  - **Callback URL:** `https://cboulanger.github.io/socio-legal-wikidata/callback.html` (exact — updated per the deploy URL decided in Step 1)
   - **Allow consumer to specify a callback in requests:** unchecked
   - **Client is confidential:** **unchecked** (public client — no secret)
   - **Grants:** *Basic rights*, *Edit existing pages*, *Create, edit, and move pages*
@@ -224,11 +232,20 @@ resolve to their expected labels and none are redirects/missing.
 
 ### Task D1: Publish the site
 
-- [ ] **Step 1: Final local check** — `cd dev && npm test` green; `node scripts/refresh-snapshot.mjs` fresh.
+- [x] **Step 1 & 2, automated 2026-09-02:** `.github/workflows/deploy.yml` now runs
+  `cd dev && npm test` on every push to `main`, then — only if it's green — assembles
+  exactly the paths the manual version of this step used to list by hand
+  (`index.html`, `callback.html`, `config.json`, `styles/`, `src/`, `vendor/`, and the
+  three tracked files under `data/`) and publishes them via
+  `actions/deploy-pages`. GitHub Pages was enabled on the repo for this
+  (`build_type: workflow`, confirmed via the Pages API). First run: green,
+  live at `https://cboulanger.github.io/socio-legal-wikidata/` (verified `index.html`,
+  `config.json`, `callback.html`, `src/app.js` all return `200`). From here on, a
+  merge to `main` **is** the deploy — no manual upload step remains. (A different,
+  non-GitHub-Pages host would still use the old manual copy — see README "Deploy
+  (detail)".)
 
-- [ ] **Step 2: Upload** to the HTTPS host at the URL registered in Task A3. Include: `index.html`, `callback.html`, `config.json`, `styles/`, `src/`, `vendor/`, `data/`. Exclude: `dev/`, `docs/`, `scripts/`, `.github/`.
-
-- [ ] **Step 3: Verify `config.json` on the server** carries the **production** `oauth.clientId` and the **production** `oauth.redirectUri` (matching the deployed `callback.html` exactly), and the `writeMode` from Task A1.
+- [ ] **Step 3: Verify `config.json` on the server** carries the **production** `oauth.clientId` and the **production** `oauth.redirectUri` (matching the deployed `callback.html` exactly), and the `writeMode` from Task A1. **Blocked on Task A3** — `config.json` still has the `REPLACE_WITH_*` placeholders, so the live site is read-only-functional today but edit mode cannot complete an OAuth round trip yet. Once A3's production client ID exists, commit it into `config.json` and the next push redeploys automatically.
 
 ### Task D2: Post-deploy verification
 
@@ -269,5 +286,5 @@ Only if the project wants proactive diffs on top of contact-person watchlists. T
 | in-scope class QID (Task A2) | `Q955824` / `Q48204` (provisional) | | Consultation drafted (`../wikiproject-consultation-draft.md`), not yet posted — needs a human account. |
 | in-scope field QID (Task A2) | `Q2734663` (provisional) | | Same as above. |
 | production OAuth client ID (Task A3) | | | Needs Task A3 done interactively on Meta-Wiki; still `REPLACE_WITH_REGISTERED_CONSUMER_CLIENT_ID` in `config.json`. |
-| production deploy URL | | | Not yet chosen. |
+| production deploy URL | `https://cboulanger.github.io/socio-legal-wikidata/` | 2026-09-02 | GitHub Pages, deployed via `.github/workflows/deploy.yml` on every push to `main`. Dev/local uses `http://localhost:8000/`. Redirect URIs for Task A3: `…/callback.html` on each. |
 | initial import run (Task C2–C4) | | | Not yet run. Pre-flight (Task C1) done on the import file: personal-email check clean, 7 missing `P361` links added, 5 existing-item QIDs verified live. |
