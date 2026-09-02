@@ -1,0 +1,25 @@
+name: Refresh directory snapshot
+on:
+  schedule:
+    - cron: "17 4 * * *"
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: node scripts/refresh-snapshot.mjs
+      - name: Commit if changed
+        run: |
+          if ! git diff --quiet -- data/snapshot.json; then
+            git config user.name "snapshot-bot"
+            git config user.email "snapshot-bot@users.noreply.github.com"
+            git add data/snapshot.json
+            git commit -m "chore(data): refresh snapshot"
+            git push
+          fi
