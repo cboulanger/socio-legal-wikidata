@@ -113,19 +113,64 @@ Data spec §2.3 marks `Q955824` (learned society) / `Q48204` (voluntary associat
   `https://cboulanger.github.io/socio-legal-wikidata/callback.html`, and a dev one
   with callback `http://localhost:8000/callback.html`.
 
-- [ ] **Step 2: At `https://meta.wikimedia.org/wiki/Special:OAuthConsumerRegistration/propose`**, register:
-  - **Application name:** Socio-Legal Associations Directory
-  - **OAuth "protocol version":** OAuth 2.0
-  - **This consumer is for use only by <you>:** unchecked (multiple editors)
-  - **Callback URL:** `https://cboulanger.github.io/socio-legal-wikidata/callback.html` (exact — updated per the deploy URL decided in Step 1)
-  - **Allow consumer to specify a callback in requests:** unchecked
-  - **Client is confidential:** **unchecked** (public client — no secret)
-  - **Grants:** *Basic rights*, *Edit existing pages*, *Create, edit, and move pages*
-  - **Contact email:** the project inbox
+- [ ] **Step 2: At `https://meta.wikimedia.org/wiki/Special:OAuthConsumerRegistration/propose`**, register (field
+  labels below are the actual ones on the live 2026 form, German UI in parens where the
+  form was seen localized — verified live 2026-09-02, corrected from an earlier
+  guess at this list):
+  - **Anwendungsname / Application name:** `Socio-Legal Associations Directory`
+  - **Verbraucherversion / Consumer version:** `2.0` — cosmetic version label for
+    the app itself, unrelated to the OAuth 1.0a/2.0 protocol choice; any value is fine.
+  - **Anwendungsbeschreibung / Application description** (required): e.g. "Public,
+    read-only directory (map + list) of socio-legal scholarly associations
+    worldwide, reading live from Wikidata. This consumer lets logged-in Wikidata
+    editors add or update associations, contact persons, and journals directly
+    from the directory's edit mode. Source:
+    <https://github.com/cboulanger/socio-legal-wikidata>"
+  - **"Dieser Verbraucher ist nur für die Verwendung durch \<you\> / owner-only":**
+    **unchecked** (multiple editors need to authorize; checking this hides the
+    callback-URL field entirely and skips the redirect flow — see Step 4's note).
+  - **OAuth-Callback-URL / Callback URL:** `https://cboulanger.github.io/socio-legal-wikidata/callback.html` (exact — per the deploy URL decided in Step 1)
+  - **Kontakt-E-Mail-Adresse / Contact email:** the project inbox
+  - **Anwendbares Projekt / Applicable project:** `Wikidata` if offered as a specific
+    wiki in the autocomplete, else **"All projects"** — *not* "current project"
+    (registration happens on meta.wikimedia.org, so "current project" there means
+    Meta itself, not Wikidata).
+  - **Client ist vertraulich / Client is confidential:** **unchecked** — this app is
+    a static site with no server component (public client, PKCE-only; no secret
+    storage is possible).
+  - **Zulässige OAuth2-Berechtigungstypen / Allowed grant types:** check
+    *Autorisierungscode* (Authorization code) and *Token aktualisieren* (Refresh
+    token); leave *Client-Anmeldeinformationen* (Client credentials) unchecked.
+  - **Typen der angefragten Berechtigungen / Requested grant type:** "Autorisierung
+    für spezielle Berechtigungen beantragen" (request authorization for specific
+    grants) — not one of the identity-only options.
+  - **Anwendbare Berechtigungen / Applicable permissions** (a long checklist):
+    check only **"Vorhandene Seiten bearbeiten"** (Edit existing pages) and
+    **"Seiten erstellen, bearbeiten und verschieben"** (Create, edit, and move
+    pages). *Basisrechte* (Basic rights) is included automatically. Leave every
+    other row unchecked, including *(Bot-)Massenbearbeitungen* (high-volume
+    editing) — this app isn't a bot and doesn't need it.
+  - **Erlaubte IP-Adressbereiche / Allowed IP ranges:** leave the default
+    `0.0.0.0/0` / `::/0` (unrestricted — editors connect from arbitrary IPs).
+  - **Zulässige Seiten zum Bearbeiten / Pages allowed to edit:** leave empty
+    (unrestricted — the app touches many different association/person/journal
+    items, not a fixed page set).
+  - Tick the final ToS-acknowledgment checkbox, then submit ("Verbraucher planen").
 
 - [ ] **Step 3: Record the issued client ID** in `config.json` → `oauth.clientId`, and set `oauth.redirectUri` to the exact callback URL. There is no secret to store.
 
 - [ ] **Step 4: Register a second, dev consumer** with callback `http://localhost:8000/callback.html`, same grants, for local testing. Keep its client ID in a local, untracked `config.dev.json` or swap it in by hand.
+
+  **Correction (found while actually filling in the form, 2026-09-02):** do **not**
+  check "this consumer is for use only by \<you\>" on the dev consumer. An
+  owner-only consumer skips the redirect-based authorize flow entirely (the form
+  itself hides the callback-URL field once that box is checked) and hands you a
+  token directly — which means it never exercises `src/adapters/oauth-pkce.js` /
+  `callback.html`, the exact code path local testing exists to validate. Register
+  it exactly like Step 2's list above, with only the name/description and callback
+  URL (`http://localhost:8000/callback.html`) changed. Expect it may need the same
+  Wikimedia review as the production consumer, though non-sensitive grants like
+  ours are usually approved quickly.
 
 - [ ] **Step 5: Note** that Wikimedia may take days to approve new consumers; some grant changes require re-approval.
 
