@@ -38,6 +38,18 @@ fetch('https://www.wikidata.org/w/rest.php/wikibase/v1/entities/items/Q4115189/s
   - Network error / opaque response / CORS console error → **`writeMode: "quickstatements"`**.
   - Write it into `config.json` and note the result and date at the top of this file.
 
+- [ ] **Step 4: While you have a live sandbox edit working, also confirm two REST payload
+  details `src/adapters/wikibase-api.js` (Plan 2 Task 9) assumed without a live test:**
+  - The edit-summary field name: confirm the create/add-statement request body's
+    top-level `comment` key is what the live REST API expects (not `bot`/`summary`
+    or a query-string param).
+  - Ending a statement (`end-statement` op → `PATCH /statements/{id}` with a
+    JSON-Patch `add` at `/qualifiers/-`): confirm this succeeds against a sandbox
+    statement that currently has **no** qualifiers at all (RFC 6902 append-to-absent-array
+    semantics). Try it on a throwaway statement on `Q4115189`, then revert.
+  - If either assumption is wrong, fix `src/adapters/wikibase-api.js`'s `restStatement`/
+    `applyChangeSet` accordingly and re-run `cd dev && npm test`.
+
 - [ ] **Step 4: Revert the sandbox edit** you made (undo on `Q4115189`).
 
 ### Task A2: WikiProject consultation — confirm class + field QIDs
