@@ -30,7 +30,12 @@ source, cache lifetime.
 2. `node scripts/refresh-snapshot.mjs` — refresh `data/snapshot.json`, commit it.
 3. Upload to an HTTPS host, root or subfolder, these paths only:
    `index.html`, `config.json`, `styles/`, `src/`, `vendor/`, `data/`.
-   Do **not** upload `dev/`, `docs/`, `scripts/`, `.github/`.
+   Do **not** upload `dev/`, `docs/`, `scripts/`, `.github/`. If you deploy
+   with a plain file copy rather than `git`, upload only the tracked
+   contents of `data/` (`centroids.json`, `countries.geojson`,
+   `snapshot.json` — see `git ls-files data/`), not the whole folder: it
+   also holds a private, git-ignored working spreadsheet that must never
+   be published.
 4. Open the deployed URL and run the manual QA checklist below (requires a
    real browser — not automatable in CI or by an agent).
 
