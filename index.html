@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Directory of Socio-Legal Associations</title>
+  <link rel="stylesheet" href="vendor/leaflet.css"
+        integrity="sha384-sHL9NAb7lN7rfvG5lfHpm643Xkcjzp4jFvuavGOndn6pjVqS6ny56CAt3nsEVT4H" crossorigin="anonymous">
+  <link rel="stylesheet" href="styles/tokens.css">
+  <link rel="stylesheet" href="styles/app.css">
+</head>
+<body>
+  <div id="app">
+    <div id="map" role="region" aria-label="Map of association seats"></div>
+    <aside id="panel-host" aria-label="Association directory"></aside>
+    <label class="map-toggle">
+      <input type="checkbox" data-role="leadership-toggle"> show current leadership
+    </label>
+  </div>
+  <script src="vendor/leaflet.js"
+          integrity="sha384-cxOPjt7s7Iz04uaHJceBmS+qpjv2JkIHNVcuOrM+YHwZOmJGBXI00mdUXEq65HTH" crossorigin="anonymous"></script>
+  <script type="module" src="src/app.js"></script>
+</body>
+</html>
