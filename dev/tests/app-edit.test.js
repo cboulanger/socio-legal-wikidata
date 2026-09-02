@@ -41,7 +41,7 @@ test('in edit mode the badge and Edit button show; clicking Edit mounts the wiza
     createMapView: () => ({ render() {}, focus() {} }),
     detectMode: async () => 'edit',
     buildEditRuntime: async () => ({
-      auth: { disconnect: async () => {} },
+      auth: { hasSession: () => true, connect: async () => {}, disconnect: async () => {} },
       openWizard: (host, seed) => { wizardMounted = true; host.innerHTML = '<section class="wizard"></section>'; },
     }),
   });
@@ -51,4 +51,31 @@ test('in edit mode the badge and Edit button show; clicking Edit mounts the wiza
   assert.match(host.innerHTML, /data-action="edit"/);
   host.querySelector('[data-action="edit"]').click();
   assert.equal(wizardMounted, true);
+});
+
+test('edit mode without a session shows Connect, not Add/Leave, and wires onConnect', async () => {
+  const w = win('https://app.example/?edit');
+  let connectCalled = false;
+  await createApp({
+    window: w,
+    config: { cacheTtlMs: 1, tileUrl: 't', tileAttribution: 'a', editTrigger: 'either', editParam: 'edit' },
+    centroids: { DE: [10.4, 51.1] },
+    loadDirectory: async () => ({ associations, stale: false, asOf: null }),
+    createMapView: () => ({ render() {}, focus() {} }),
+    detectMode: async () => 'edit',
+    buildEditRuntime: async () => ({
+      auth: {
+        hasSession: () => false,
+        connect: async () => { connectCalled = true; },
+        disconnect: async () => {},
+      },
+      openWizard: () => {},
+    }),
+  });
+  const chrome = w.document.getElementById('edit-chrome');
+  assert.match(chrome.innerHTML, /Connect a Wikimedia account/);
+  assert.doesNotMatch(chrome.innerHTML, /Add association/);
+  assert.doesNotMatch(chrome.innerHTML, /Leave edit mode/);
+  chrome.querySelector('[data-role="connect"]').click();
+  assert.equal(connectCalled, true);
 });

@@ -18,7 +18,7 @@ import { renderEditChrome } from './ui/edit-panel.js';
  *   createMapView: typeof createMapViewImpl,
  *   detectMode: () => ('read'|'edit') | Promise<'read'|'edit'>,
  *   buildEditRuntime?: () => Promise<{
- *     auth: {disconnect: () => Promise<void>},
+ *     auth: {hasSession: () => boolean, connect: () => Promise<void>, disconnect: () => Promise<void>},
  *     openWizard: (host: HTMLElement, seed: any) => void,
  *   }>,
  * }} deps
@@ -125,8 +125,8 @@ export async function createApp(deps) {
     doc.getElementById('app').appendChild(drawer);
 
     const paintChrome = () => renderEditChrome(bar, {
-      connected: true,
-      onConnect: () => {},
+      connected: editRuntime.auth.hasSession(),
+      onConnect: () => editRuntime.auth.connect(),
       onLeave: async () => { await editRuntime.auth.disconnect(); win.location.search = ''; },
       onAdd: () => editRuntime.openWizard(drawer, { mode: 'create-association' }),
     });
@@ -136,6 +136,7 @@ export async function createApp(deps) {
       const btn = e.target.closest('[data-action="edit"]');
       if (!btn) return;
       const a = store.getState().associations.find((x) => x.qid === btn.dataset.qid);
+      if (!a) return;
       editRuntime.openWizard(drawer, {
         mode: 'change-president',
         association: { qid: a.qid, label: a.label },
@@ -164,13 +165,35 @@ if (typeof window !== 'undefined' && window.document?.getElementById('app')) {
   const config = await (await fetch('config.json')).json();
   const centroids = await (await fetch(config.centroidsUrl)).json();
   const countriesGeojson = await (await fetch('data/countries.geojson')).json();
-  const { detectMode } = await import('./ui/mode.js');
-  const { createAuth } = await import('./adapters/oauth-pkce.js');
-  const auth = createAuth({
-    fetch: window.fetch.bind(window),
-    storage: config.tokenPersistence === 'session' ? window.sessionStorage : window.localStorage,
-    location: window.location, crypto: window.crypto, config,
-  });
+
+  const storage = config.tokenPersistence === 'session' ? window.sessionStorage : window.localStorage;
+  const trigger = config.editTrigger || 'either';
+  const hasEditParam = new URLSearchParams(window.location.search).has(config.editParam || 'edit');
+  const hasStoredSession = !!storage.getItem('slw:oauth:refresh');
+  // Cheap pre-check using the same trigger semantics as ui/mode.js's detectMode, but
+  // without importing any edit/auth module — a definite read-only visitor (no ?edit,
+  // no stored session) never causes oauth-pkce.js or later edit modules to load.
+  const mightBeEdit =
+    ((trigger === 'session' || trigger === 'either') && hasStoredSession) ||
+    ((trigger === 'param' || trigger === 'either') && hasEditParam);
+
+  let detectModeFn = async () => 'read';
+  let auth = null;
+  if (mightBeEdit) {
+    const [{ detectMode }, { createAuth }] = await Promise.all([
+      import('./ui/mode.js'),
+      import('./adapters/oauth-pkce.js'),
+    ]);
+    auth = createAuth({
+      fetch: window.fetch.bind(window),
+      storage,
+      location: window.location,
+      crypto: window.crypto,
+      config,
+    });
+    detectModeFn = () => detectMode({ location: window.location, auth, config });
+  }
+
   await createApp({
     window,
     config,
@@ -178,8 +201,10 @@ if (typeof window !== 'undefined' && window.document?.getElementById('app')) {
     countriesGeojson,
     loadDirectory: loadDirectoryImpl,
     createMapView: createMapViewImpl,
-    detectMode: () => detectMode({ location: window.location, auth, config }),
+    detectMode: detectModeFn,
     buildEditRuntime: async () => {
+      // Only ever invoked when detectModeFn resolved to 'edit', which only happens
+      // when mightBeEdit was true, so `auth` is guaranteed non-null here.
       const [{ createWikibaseApi }, { createQuickStatementsWriter }, { createWizard }] = await Promise.all([
         import('./adapters/wikibase-api.js'),
         import('./adapters/quickstatements-handoff.js'),
