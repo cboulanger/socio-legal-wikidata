@@ -41,9 +41,9 @@ Data spec §2.7 flags this as a one-day spike. It decides whether `config.json` 
   are still worth doing once a token is available, but only to validate Step 4's payload
   questions, not to re-decide `writeMode`.
 
-- [ ] **Step 1: Register a throwaway dev OAuth consumer** (see Task A3 for the full procedure; for the spike a `http://localhost` redirect consumer with the `editpage` grant is enough).
+- [x] **Step 1: Register a throwaway dev OAuth consumer** (see Task A3 for the full procedure; for the spike a `http://localhost` redirect consumer with the `editpage` grant is enough). **Substituted**: used a bot-password session (Special:BotPasswords) instead of registering a real OAuth consumer, since Step 0 already answered the CORS/auth-scheme question this OAuth consumer existed to test, and the only thing left to validate here (Step 4's request-body shape) doesn't depend on the auth mechanism. A real dev OAuth consumer is still needed for Task A3/B2's actual end-to-end flow.
 
-- [ ] **Step 2: From a plain static page on a non-Wikimedia origin**, obtain an access token via the PKCE flow (you can reuse `src/adapters/oauth-pkce.js` once Plan 2 Task 7 exists, or do it by hand), then attempt one real edit on a test item:
+- [x] **Step 2: From a plain static page on a non-Wikimedia origin**, obtain an access token via the PKCE flow (you can reuse `src/adapters/oauth-pkce.js` once Plan 2 Task 7 exists, or do it by hand), then attempt one real edit on a test item. **Substituted** with `scripts/ops-sandbox-write-test.mjs` (bot-password auth, live HTTP calls, not a browser) — see Step 4's write-up below for the result.
 
 ```bash
 # after you have $TOKEN in a browser console on http://localhost:8000
@@ -75,7 +75,21 @@ fetch('https://www.wikidata.org/w/rest.php/wikibase/v1/entities/items/Q4115189/s
   - If either assumption is wrong, fix `src/adapters/wikibase-api.js`'s `restStatement`/
     `applyChangeSet` accordingly and re-run `cd dev && npm test`.
 
-- [ ] **Step 5: Revert the sandbox edit** you made (undo on `Q4115189`).
+  **Done 2026-09-02**, via `scripts/ops-sandbox-write-test.mjs` (bot-password session,
+  not OAuth — the CORS/auth-scheme question was already settled in Step 0; this only
+  needed to test payload shape) against `Q4115189`:
+  - `POST .../statements` with a top-level `comment` field → **HTTP 201, confirmed.**
+    `wikibase-api.js`'s use of `comment` is correct as written.
+  - `PATCH .../statements/{id}` with body `{"patch": [...], "comment": ...}`
+    (`Content-Type: application/json`, matching production exactly) containing an
+    `add` at `/qualifiers/-` against a statement with zero qualifiers → **HTTP 200,
+    confirmed.** (First attempt sent the bare JSON-Patch array as the body and got a
+    `400 missing-field` on `patch` — that was a bug in the *test script*, not in
+    `wikibase-api.js`, which already wraps the patch correctly; fixed the script and
+    re-ran.)
+  - **No fix needed in `src/adapters/wikibase-api.js` — both assumptions hold.**
+
+- [x] **Step 5: Revert the sandbox edit** you made (undo on `Q4115189`). **Done** — both test statements were deleted by the script itself (`DELETE .../statements/{id}` → HTTP 200 each), and `wbgetentities` on `Q4115189` afterwards shows zero `P373` claims remaining.
 
 ### Task A2: WikiProject consultation — confirm class + field QIDs
 
@@ -251,7 +265,7 @@ Only if the project wants proactive diffs on top of contact-person watchlists. T
 
 | Decision | Value | Date | Notes |
 | --- | --- | --- | --- |
-| `writeMode` (Task A1) | `direct` | 2026-09-02 | Decided from CORS preflight headers alone (see Task A1 Step 0) — `access-control-allow-origin: *` on both the statements and single-statement REST endpoints, methods POST/PATCH/PUT/DELETE all allowed. No live edit needed for this part; already set in `config.json`. |
+| `writeMode` (Task A1) | `direct` | 2026-09-02 | Decided from CORS preflight headers alone (see Task A1 Step 0) — `access-control-allow-origin: *` on both the statements and single-statement REST endpoints, methods POST/PATCH/PUT/DELETE all allowed. No live edit needed for this part; already set in `config.json`. Payload assumptions in `wikibase-api.js` (Step 4) separately confirmed live against `Q4115189`: `comment` field name ✅, PATCH `/qualifiers/-` on a statement with no existing qualifiers ✅. No code changes needed. |
 | in-scope class QID (Task A2) | `Q955824` / `Q48204` (provisional) | | Consultation drafted (`../wikiproject-consultation-draft.md`), not yet posted — needs a human account. |
 | in-scope field QID (Task A2) | `Q2734663` (provisional) | | Same as above. |
 | production OAuth client ID (Task A3) | | | Needs Task A3 done interactively on Meta-Wiki; still `REPLACE_WITH_REGISTERED_CONSUMER_CLIENT_ID` in `config.json`. |

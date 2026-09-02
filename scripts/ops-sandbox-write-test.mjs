@@ -175,14 +175,18 @@ async function main() {
         jar,
         'PATCH',
         `/entities/items/${SANDBOX_QID}/statements/${createdStatementIds[0]}`,
-        [
-          {
-            op: 'add',
-            path: '/qualifiers/-',
-            value: { property: { id: 'P1545' }, value: { type: 'somevalue' } },
-          },
-        ],
-        { 'Content-Type': 'application/json-patch+json' }
+        {
+          patch: [
+            {
+              op: 'add',
+              path: '/qualifiers/-',
+              value: { property: { id: 'P1545' }, value: { type: 'somevalue' } },
+            },
+          ],
+          comment: 'ops spike (Task A1 Step 4) — reverting immediately',
+        }
+        // Content-Type intentionally left as the default 'application/json' set in
+        // restRequest(), matching what src/adapters/wikibase-api.js actually sends.
       );
       console.log(`  -> HTTP ${patchResp.status}`);
       if (patchResp.status === 200) {
