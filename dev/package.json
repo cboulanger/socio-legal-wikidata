@@ -1,0 +1,12 @@
+{
+  "name": "socio-legal-wikidata-dev",
+  "private": true,
+  "type": "module",
+  "description": "Dev-only tooling for the directory app. NOT required to build or deploy.",
+  "scripts": {
+    "test": "node --test"
+  },
+  "devDependencies": {
+    "jsdom": "^24.1.0"
+  }
+}
