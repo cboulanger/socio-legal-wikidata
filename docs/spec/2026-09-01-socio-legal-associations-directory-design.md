@@ -117,16 +117,24 @@ rules applies.
 
 ### 1.5 How publishing and editing works
 
-Editing writes **directly to Wikidata, under the editor's own Wikimedia account**.
-There is no separate approval queue in our application; the safety net is Wikidata's
-permanent history and the ability of anyone to correct a mistake (this matches the
-decision that "anyone with a Wikimedia account" may edit).
+**The public application is read‑only by default.** It shows no "sign in" and no
+"edit" control; a visitor never sees that editing exists. Editing is a **separate mode
+that must be deliberately entered** — either automatically, because the person has
+connected a Wikimedia account in this browser before, or via a special `?edit` link.
+The full behaviour is in the companion UI spec
+([`2026-09-02-ui-design.md`](2026-09-02-ui-design.md) §1.6, §2.3).
 
-**Signing in.** The editor clicks *"Sign in with Wikimedia."* The browser goes to
-Wikimedia's own login page, the editor logs in there, and Wikimedia sends the browser
-back to our page with a temporary permission slip ("token"). **No password is ever
-seen or stored by our site.** The token is held only for the browser session and is
-discarded when the tab is closed or the editor signs out.
+Once in edit mode, changes are written **directly to Wikidata, under the editor's own
+Wikimedia account**. There is no separate approval queue in our application; the
+safety net is Wikidata's permanent history and the ability of anyone to correct a
+mistake (this matches the decision that "anyone with a Wikimedia account" may edit).
+
+**Connecting an account.** The first time, the editor is sent to *Wikimedia's own
+login page* and back, and our site receives a narrow, revocable permission slip
+("token"). **No password is ever seen or stored by our site.** On later visits, if the
+token was kept, edit mode resumes silently with no login step; otherwise the token
+lives only for the browser session and is discarded when the tab closes or the editor
+leaves edit mode.
 
 **Workflow A — adding a brand‑new association**
 
@@ -441,6 +449,13 @@ CORS‑enabled).
 
 ### 2.5 Write path
 
+**Read‑only by default; write code is gated.** With no edit trigger present the
+application never loads the auth or write modules and shows no edit affordance. Edit
+mode is entered either by a **silent refresh‑token restore** (returning editor) or a
+**`?edit` URL parameter** (first‑time editor, then connect once). Trigger choice and
+token persistence are configuration; the mechanics are in the UI spec
+([`2026-09-02-ui-design.md`](2026-09-02-ui-design.md) §2.3).
+
 **OAuth 2.0, public client, PKCE.**
 
 - Register once at Meta‑Wiki `Special:OAuthConsumerRegistration` as a
@@ -449,8 +464,9 @@ CORS‑enabled).
 - Redirect URI: the deployed site's `…/callback.html` (exact, HTTPS; a second
   consumer with an `http://localhost` redirect is registered for development).
 - Flow: `authorize` (with `code_challenge`) → browser returns to `callback.html` with
-  `code` → `POST …/oauth2/access_token` with `code_verifier` → access token (+ refresh
-  token) held in `sessionStorage`, cleared on sign‑out / tab close.
+  `code` → `POST …/oauth2/access_token` with `code_verifier` → access token in memory,
+  refresh token in `sessionStorage` or `localStorage` per the configured persistence
+  (UI spec §2.3); cleared on "leave edit mode" / "forget this device".
 - The token exchange and all edits are **browser → Wikimedia directly**; nothing is
   proxied through infrastructure we own.
 
@@ -608,7 +624,7 @@ The same file is also the model for the app's **QuickStatements fallback write p
 - Association card: name, scope, seat, "part of \<parent\>" where it is a section,
   official website, institutional e‑mail, current president (name + link to homepage)
   with their institution, the association's **own journal** (name + link) where it has
-  one, and an **Edit** button.
+  one, a "notify me of changes" link, and — **in edit mode only** — an **Edit** button.
 - Search box: jump to a country or an association (client‑side filter over the cached
   dataset, plus `wbsearchentities` for direct look‑ups).
 - Visual design is deliberately unspecified at this stage.

@@ -1,19 +1,16 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1180 470" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
   <rect x="0" y="0" width="1180" height="470" fill="#ffffff"/>
-  <text x="32" y="28" font-size="14" font-weight="700" fill="#0f172a">Layout sketch — three views (indicative, not final visual design)</text>
+  <text x="32" y="26" font-size="14" font-weight="700" fill="#0f172a">Layout sketch — read-only by default; edit mode is opt-in (indicative, not final visual design)</text>
 
-  <!-- ============ DESKTOP ============ -->
+  <!-- ============ A · DESKTOP, READ-ONLY (DEFAULT) ============ -->
   <g>
-    <rect x="20" y="44" width="600" height="384" rx="8" fill="#ffffff" stroke="#cbd5e1"/>
-    <rect x="20" y="44" width="600" height="30" fill="#f1f5f9"/>
-    <line x1="20" y1="74" x2="620" y2="74" stroke="#e2e8f0"/>
+    <rect x="20" y="44" width="560" height="384" rx="8" fill="#ffffff" stroke="#cbd5e1"/>
+    <rect x="20" y="44" width="560" height="30" fill="#f1f5f9"/>
+    <line x1="20" y1="74" x2="580" y2="74" stroke="#e2e8f0"/>
     <text x="34" y="63" font-size="12" font-weight="600" fill="#0f172a">Socio-Legal Associations</text>
-    <rect x="250" y="50" width="200" height="18" rx="4" fill="#ffffff" stroke="#cbd5e1"/>
+    <rect x="250" y="50" width="312" height="18" rx="4" fill="#ffffff" stroke="#cbd5e1"/>
     <text x="258" y="63" font-size="10" fill="#94a3b8">search…</text>
-    <rect x="506" y="50" width="86" height="18" rx="4" fill="#2563eb"/>
-    <text x="549" y="63" font-size="10" fill="#ffffff" text-anchor="middle">Sign in</text>
 
-    <!-- side panel -->
     <rect x="32" y="84" width="200" height="330" rx="6" fill="#f8fafc" stroke="#e2e8f0"/>
     <rect x="42" y="94" width="104" height="18" rx="9" fill="#dbeafe" stroke="#bfdbfe"/>
     <text x="50" y="107" font-size="9" fill="#1e40af">Germany  ×</text>
@@ -22,8 +19,7 @@
     <text x="42" y="164" font-size="10" fill="#0f172a">DGS — Sociology of Law</text>
     <text x="42" y="176" font-size="8" fill="#64748b">section · Germany</text>
 
-    <!-- detail card -->
-    <rect x="40" y="188" width="184" height="218" rx="6" fill="#ffffff" stroke="#cbd5e1"/>
+    <rect x="40" y="188" width="184" height="210" rx="6" fill="#ffffff" stroke="#cbd5e1"/>
     <text x="50" y="206" font-size="10" font-weight="600" fill="#0f172a">German Association for</text>
     <text x="50" y="218" font-size="10" font-weight="600" fill="#0f172a">Law &amp; Society</text>
     <text x="50" y="234" font-size="8" fill="#64748b">national · Germany</text>
@@ -32,86 +28,97 @@
     <text x="50" y="281" font-size="9" fill="#0f172a">president: E. Kocher</text>
     <text x="50" y="292" font-size="8" fill="#64748b">Europa-Universität Viadrina</text>
     <text x="50" y="308" font-size="9" fill="#0f172a">journal: —</text>
-    <rect x="50" y="320" width="48" height="18" rx="4" fill="#2563eb"/>
-    <text x="74" y="333" font-size="9" fill="#ffffff" text-anchor="middle">Edit</text>
-    <rect x="106" y="320" width="76" height="18" rx="4" fill="#ffffff" stroke="#2563eb"/>
-    <text x="144" y="333" font-size="9" fill="#2563eb" text-anchor="middle">Notify me</text>
+    <text x="50" y="326" font-size="9" fill="#2563eb" text-decoration="underline">Notify me of changes</text>
 
-    <!-- map area -->
-    <text x="292" y="104" font-size="9" fill="#94a3b8">markers = association seats</text>
+    <text x="270" y="104" font-size="9" fill="#94a3b8">markers = association seats</text>
     <g stroke="#ffffff" stroke-width="1.5">
-      <circle cx="300" cy="150" r="5" fill="#2563eb"/>
-      <circle cx="360" cy="130" r="5" fill="#2563eb"/>
-      <circle cx="430" cy="160" r="5" fill="#2563eb"/>
-      <circle cx="480" cy="120" r="5" fill="#2563eb"/>
-      <circle cx="520" cy="205" r="5" fill="#2563eb"/>
-      <circle cx="350" cy="245" r="5" fill="#2563eb"/>
-      <circle cx="440" cy="275" r="5" fill="#2563eb"/>
-      <circle cx="300" cy="305" r="5" fill="#2563eb"/>
+      <circle cx="280" cy="150" r="5" fill="#2563eb"/>
+      <circle cx="340" cy="130" r="5" fill="#2563eb"/>
+      <circle cx="410" cy="155" r="5" fill="#2563eb"/>
+      <circle cx="470" cy="125" r="5" fill="#2563eb"/>
+      <circle cx="360" cy="235" r="5" fill="#2563eb"/>
+      <circle cx="300" cy="300" r="5" fill="#2563eb"/>
     </g>
-    <circle cx="555" cy="150" r="11" fill="#2563eb"/>
-    <text x="555" y="154" font-size="10" fill="#ffffff" text-anchor="middle">3</text>
-    <rect x="250" y="392" width="11" height="11" fill="#ffffff" stroke="#64748b"/>
-    <text x="268" y="401" font-size="9" fill="#0f172a">show current leadership</text>
+    <circle cx="500" cy="160" r="11" fill="#2563eb"/>
+    <text x="500" y="164" font-size="10" fill="#ffffff" text-anchor="middle">3</text>
+    <rect x="250" y="390" width="11" height="11" fill="#ffffff" stroke="#64748b"/>
+    <text x="268" y="399" font-size="9" fill="#0f172a">show current leadership</text>
 
-    <text x="32" y="448" font-size="11" fill="#475569">Desktop — map with an overlaid, collapsible side panel and detail card</text>
+    <text x="32" y="442" font-size="11" fill="#475569">Desktop — read-only (default): no sign-in, no edit controls</text>
   </g>
 
-  <!-- ============ MOBILE ============ -->
+  <!-- ============ B · MOBILE, READ-ONLY ============ -->
   <g>
-    <rect x="666" y="44" width="150" height="330" rx="16" fill="#ffffff" stroke="#cbd5e1"/>
-    <rect x="721" y="52" width="40" height="6" rx="3" fill="#e2e8f0"/>
-    <rect x="680" y="68" width="88" height="16" rx="8" fill="#f1f5f9" stroke="#e2e8f0"/>
-    <text x="686" y="80" font-size="8" fill="#94a3b8">search…</text>
-    <circle cx="800" cy="76" r="6" fill="#2563eb"/>
+    <rect x="612" y="44" width="150" height="330" rx="16" fill="#ffffff" stroke="#cbd5e1"/>
+    <rect x="667" y="52" width="40" height="6" rx="3" fill="#e2e8f0"/>
+    <rect x="626" y="68" width="120" height="16" rx="8" fill="#f1f5f9" stroke="#e2e8f0"/>
+    <text x="632" y="80" font-size="8" fill="#94a3b8">search…</text>
     <g stroke="#ffffff" stroke-width="1.5">
-      <circle cx="706" cy="140" r="4" fill="#2563eb"/>
-      <circle cx="756" cy="168" r="4" fill="#2563eb"/>
-      <circle cx="726" cy="200" r="4" fill="#2563eb"/>
+      <circle cx="652" cy="140" r="4" fill="#2563eb"/>
+      <circle cx="702" cy="168" r="4" fill="#2563eb"/>
+      <circle cx="672" cy="205" r="4" fill="#2563eb"/>
     </g>
-    <rect x="672" y="250" width="138" height="118" rx="12" fill="#ffffff" stroke="#e2e8f0"/>
-    <rect x="728" y="258" width="24" height="4" rx="2" fill="#cbd5e1"/>
-    <text x="684" y="280" font-size="10" font-weight="600" fill="#0f172a">Associations</text>
-    <text x="684" y="298" font-size="8" fill="#0f172a">• Berlin AK Rechtswirklichkeit</text>
-    <text x="684" y="312" font-size="8" fill="#0f172a">• German Association L&amp;S</text>
-    <text x="684" y="326" font-size="8" fill="#0f172a">• DGS — Sociology of Law</text>
-    <text x="684" y="344" font-size="8" fill="#94a3b8">(drag up for the full list)</text>
+    <rect x="618" y="250" width="138" height="118" rx="12" fill="#ffffff" stroke="#e2e8f0"/>
+    <rect x="674" y="258" width="24" height="4" rx="2" fill="#cbd5e1"/>
+    <text x="630" y="280" font-size="10" font-weight="600" fill="#0f172a">Associations</text>
+    <text x="630" y="298" font-size="8" fill="#0f172a">• Berlin AK Rechtswirklichkeit</text>
+    <text x="630" y="312" font-size="8" fill="#0f172a">• German Association L&amp;S</text>
+    <text x="630" y="326" font-size="8" fill="#0f172a">• DGS — Sociology of Law</text>
+    <text x="630" y="344" font-size="8" fill="#94a3b8">(drag up for the full list)</text>
 
-    <text x="666" y="398" font-size="11" fill="#475569">Mobile — the panel becomes a bottom sheet</text>
+    <text x="612" y="442" font-size="11" fill="#475569">Mobile — read-only</text>
   </g>
 
-  <!-- ============ EDIT WIZARD ============ -->
+  <!-- ============ C · EDIT MODE (opened with ?edit) ============ -->
   <g>
-    <rect x="850" y="44" width="310" height="340" rx="8" fill="#ffffff" stroke="#cbd5e1"/>
-    <rect x="850" y="44" width="310" height="28" fill="#f1f5f9"/>
-    <line x1="850" y1="72" x2="1160" y2="72" stroke="#e2e8f0"/>
-    <text x="864" y="62" font-size="12" font-weight="600" fill="#0f172a">Add association</text>
-    <text x="1142" y="62" font-size="12" fill="#64748b" text-anchor="middle">×</text>
+    <rect x="792" y="44" width="368" height="384" rx="8" fill="#ffffff" stroke="#cbd5e1"/>
+    <rect x="792" y="44" width="368" height="30" fill="#f1f5f9"/>
+    <line x1="792" y1="74" x2="1160" y2="74" stroke="#e2e8f0"/>
+    <text x="806" y="63" font-size="12" font-weight="600" fill="#0f172a">Socio-Legal Associations</text>
+    <rect x="980" y="50" width="90" height="18" rx="4" fill="#ffffff" stroke="#cbd5e1"/>
+    <text x="988" y="63" font-size="9" fill="#94a3b8">search…</text>
+    <rect x="1080" y="50" width="66" height="18" rx="9" fill="#fef3c7" stroke="#fde68a"/>
+    <text x="1113" y="63" font-size="9" fill="#b45309" text-anchor="middle">Edit mode</text>
 
-    <text x="864" y="93" font-size="10" fill="#94a3b8">
-      <tspan fill="#2563eb" font-weight="600">1 Identify</tspan><tspan>    2 Details    3 Seat</tspan>
-    </text>
-    <text x="864" y="109" font-size="10" fill="#94a3b8">4 People    5 Journal    6 Review</text>
-    <line x1="850" y1="120" x2="1160" y2="120" stroke="#e2e8f0"/>
+    <rect x="806" y="90" width="150" height="212" rx="6" fill="#ffffff" stroke="#cbd5e1"/>
+    <text x="814" y="108" font-size="9" font-weight="600" fill="#0f172a">German Association for</text>
+    <text x="814" y="120" font-size="9" font-weight="600" fill="#0f172a">Law &amp; Society</text>
+    <text x="814" y="136" font-size="8" fill="#64748b">national · Germany</text>
+    <text x="814" y="152" font-size="8" fill="#0f172a">seat: Berlin</text>
+    <text x="814" y="168" font-size="8" fill="#2563eb">website · email</text>
+    <text x="814" y="184" font-size="8" fill="#0f172a">president: E. Kocher</text>
+    <text x="814" y="196" font-size="7" fill="#64748b">Europa-Univ. Viadrina</text>
+    <text x="814" y="212" font-size="8" fill="#0f172a">journal: —</text>
+    <rect x="814" y="224" width="44" height="18" rx="4" fill="#2563eb"/>
+    <text x="836" y="237" font-size="9" fill="#ffffff" text-anchor="middle">Edit</text>
+    <rect x="866" y="224" width="78" height="18" rx="4" fill="#ffffff" stroke="#2563eb"/>
+    <text x="905" y="237" font-size="9" fill="#2563eb" text-anchor="middle">Notify me</text>
 
-    <text x="864" y="140" font-size="10" fill="#64748b">Name</text>
-    <rect x="864" y="146" width="282" height="22" rx="4" fill="#ffffff" stroke="#cbd5e1"/>
-    <text x="872" y="161" font-size="10" fill="#0f172a">Asian Law and Society…</text>
+    <rect x="968" y="86" width="180" height="326" rx="8" fill="#ffffff" stroke="#cbd5e1"/>
+    <rect x="968" y="86" width="180" height="24" fill="#f1f5f9"/>
+    <line x1="968" y1="110" x2="1148" y2="110" stroke="#e2e8f0"/>
+    <text x="978" y="102" font-size="10" font-weight="600" fill="#0f172a">Add association</text>
+    <text x="1136" y="102" font-size="10" fill="#64748b" text-anchor="middle">×</text>
+    <text x="978" y="127" font-size="10" fill="#94a3b8"><tspan fill="#2563eb" font-weight="600">1 Identify</tspan><tspan>   2   3</tspan></text>
+    <text x="978" y="141" font-size="9" fill="#94a3b8">4   5   6 Review</text>
+    <line x1="968" y1="150" x2="1148" y2="150" stroke="#e2e8f0"/>
+    <text x="978" y="168" font-size="9" fill="#64748b">Name</text>
+    <rect x="978" y="174" width="160" height="20" rx="4" fill="#ffffff" stroke="#cbd5e1"/>
+    <text x="984" y="188" font-size="9" fill="#0f172a">Asian Law and Society…</text>
+    <text x="978" y="212" font-size="9" fill="#64748b">matches on Wikidata:</text>
+    <circle cx="984" cy="226" r="4" fill="#ffffff" stroke="#64748b"/>
+    <text x="994" y="230" font-size="8" fill="#0f172a">Asian Law and Society Assoc.</text>
+    <circle cx="984" cy="244" r="4" fill="#ffffff" stroke="#64748b"/>
+    <text x="994" y="248" font-size="8" fill="#0f172a">Asian Law Institute</text>
+    <rect x="978" y="258" width="156" height="18" rx="4" fill="#ffffff" stroke="#2563eb" stroke-dasharray="4 3"/>
+    <text x="984" y="271" font-size="8" fill="#2563eb">None of these — create new</text>
+    <line x1="968" y1="384" x2="1148" y2="384" stroke="#e2e8f0"/>
+    <rect x="1000" y="390" width="46" height="16" rx="4" fill="#ffffff" stroke="#cbd5e1"/>
+    <text x="1023" y="402" font-size="8" fill="#64748b" text-anchor="middle">Back</text>
+    <rect x="1052" y="390" width="50" height="16" rx="4" fill="#2563eb"/>
+    <text x="1077" y="402" font-size="8" fill="#ffffff" text-anchor="middle">Next</text>
 
-    <text x="864" y="188" font-size="10" fill="#64748b">possible matches on Wikidata:</text>
-    <circle cx="872" cy="202" r="4" fill="#ffffff" stroke="#64748b"/>
-    <text x="884" y="206" font-size="10" fill="#0f172a">Asian Law and Society Association</text>
-    <circle cx="872" cy="222" r="4" fill="#ffffff" stroke="#64748b"/>
-    <text x="884" y="226" font-size="10" fill="#0f172a">Asian Law Institute</text>
-    <rect x="864" y="236" width="214" height="20" rx="4" fill="#ffffff" stroke="#2563eb" stroke-dasharray="4 3"/>
-    <text x="872" y="250" font-size="9" fill="#2563eb">None of these — create new</text>
-
-    <line x1="850" y1="346" x2="1160" y2="346" stroke="#e2e8f0"/>
-    <rect x="1004" y="352" width="64" height="22" rx="4" fill="#ffffff" stroke="#cbd5e1"/>
-    <text x="1036" y="367" font-size="10" fill="#64748b" text-anchor="middle">Back</text>
-    <rect x="1078" y="352" width="68" height="22" rx="4" fill="#2563eb"/>
-    <text x="1112" y="367" font-size="10" fill="#ffffff" text-anchor="middle">Next</text>
-
-    <text x="850" y="404" font-size="11" fill="#475569">Edit wizard — a drawer over the map; six steps, each validated</text>
+    <text x="792" y="442" font-size="11" fill="#475569">Edit mode — opened with ?edit.</text>
+    <text x="792" y="456" font-size="11" fill="#475569">Edit buttons appear; connect a Wikimedia account once.</text>
   </g>
 </svg>
