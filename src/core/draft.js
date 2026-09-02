@@ -91,6 +91,7 @@ export function validateDraftForChangeset(d) {
   if (d.mode === 'update-field') {
     if (!a.qid) e.push('association.qid is required');
     if (!a.email && !a.website) e.push('nothing to update');
+    if (!a.referenceUrl) e.push('association.referenceUrl is required');
   }
 
   if (d.journal && !d.journal.qid && !d.journal.label) e.push('journal.label is required to create a journal');

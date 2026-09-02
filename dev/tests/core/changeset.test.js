@@ -87,3 +87,25 @@ test('update-field emits one referenced add-statement per provided field', () =>
 test('buildChangeSet throws on an invalid draft', () => {
   assert.throws(() => buildChangeSet(emptyDraft('create-association'), cfg), /association\.label is required/);
 });
+
+test('linking an EXISTING journal emits add-statements, not a create-item', () => {
+  const d = emptyDraft('create-association');
+  Object.assign(d.association, {
+    label: 'Law and Society Association',
+    classQid: 'Q955824', fieldQid: 'Q2734663', referenceUrl: 'https://example.org/about',
+  });
+  d.president.qid = 'Q400';
+  d.journal = { qid: 'Q6502970', label: 'Law & Society Review', url: 'https://example.org/lsr', issn: '0023-9216', referenceUrl: 'https://example.org/lsr' };
+
+  const cs = buildChangeSet(d, cfg);
+  assert.equal(cs.ops.some((o) => o.type === 'create-item' && o.ref === 'journal'), false);
+  const p123 = cs.ops.find((o) => o.type === 'add-statement' && o.property === 'P123' && o.target.qid === 'Q6502970');
+  assert.ok(p123, 'expected a P123 add-statement targeting the existing journal qid');
+  assert.deepEqual(p123.reference, { P854: 'https://example.org/lsr' });
+  const p856 = cs.ops.find((o) => o.type === 'add-statement' && o.property === 'P856' && o.target.qid === 'Q6502970');
+  assert.ok(p856);
+  assert.equal(p856.value.value, 'https://example.org/lsr');
+  const p236 = cs.ops.find((o) => o.type === 'add-statement' && o.property === 'P236' && o.target.qid === 'Q6502970');
+  assert.ok(p236);
+  assert.equal(p236.value.value, '0023-9216');
+});

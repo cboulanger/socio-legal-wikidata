@@ -31,3 +31,13 @@ test('a personal e-mail without emailConfirmedShared is an error', () => {
   const errs = validateDraftForChangeset(d);
   assert.ok(errs.some((e) => /personal/i.test(e)));
 });
+
+test('validateDraftForChangeset: update-field requires a reference URL', () => {
+  const d = emptyDraft('update-field');
+  d.association.qid = 'Q1';
+  d.association.website = 'https://example.org';
+  const errs = validateDraftForChangeset(d);
+  assert.ok(errs.includes('association.referenceUrl is required'));
+  d.association.referenceUrl = 'https://source.example/announcement';
+  assert.equal(validateDraftForChangeset(d).length, 0);
+});
