@@ -7,15 +7,20 @@ test('escapeHtml neutralises angle brackets, quotes, ampersands', () => {
 });
 
 test('html interpolates and escapes string values', () => {
-  const out = html`<p>${'<script>'}</p>`;
-  assert.equal(out, '<p>&lt;script&gt;</p>');
+  assert.equal(String(html`<p>${'<script>'}</p>`), '<p>&lt;script&gt;</p>');
 });
 
 test('html joins arrays without separators and does not double-escape trusted fragments', () => {
   const rows = ['a', 'b'].map((c) => html`<li>${c}</li>`);
-  assert.equal(html`<ul>${rows}</ul>`, '<ul><li>a</li><li>b</li></ul>');
+  assert.equal(String(html`<ul>${rows}</ul>`), '<ul><li>a</li><li>b</li></ul>');
 });
 
 test('html renders null/undefined as empty string', () => {
-  assert.equal(html`x${null}y${undefined}z`, 'xyz');
+  assert.equal(String(html`x${null}y${undefined}z`), 'xyz');
+});
+
+test('a raw string equal to a prior fragment is still escaped (not trusted by value)', () => {
+  const frag = html`<li>x</li>`;
+  assert.equal(String(html`${'<li>x</li>'}`), '&lt;li&gt;x&lt;/li&gt;');
+  assert.equal(String(html`${frag}`), '<li>x</li>');
 });
