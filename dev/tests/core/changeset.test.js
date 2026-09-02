@@ -84,6 +84,33 @@ test('update-field emits one referenced add-statement per provided field', () =>
   assert.ok(cs.ops.every((o) => o.type !== 'add-statement' || o.replace === true));
 });
 
+test('P968 (email) is always stored as a mailto: URI, in both create and update-field modes', () => {
+  const created = emptyDraft('create-association');
+  Object.assign(created.association, {
+    label: 'X', classQid: 'Q955824', fieldQid: 'Q2734663', email: 'office@body.org',
+    referenceUrl: 'https://body.org',
+  });
+  created.president.qid = 'Q400';
+  const csCreate = buildChangeSet(created, cfg);
+  const assoc = csCreate.ops.find((o) => o.type === 'create-item' && o.ref === 'assoc');
+  const p968Create = assoc.claims.find((c) => c.property === 'P968');
+  assert.deepEqual(p968Create.value, { kind: 'url', value: 'mailto:office@body.org' });
+
+  const updated = emptyDraft('update-field');
+  updated.association.qid = 'Q100';
+  updated.association.email = 'office@body.org';
+  updated.association.referenceUrl = 'https://body.org';
+  const csUpdate = buildChangeSet(updated, cfg);
+  const p968Update = csUpdate.ops.find((o) => o.type === 'add-statement' && o.property === 'P968');
+  assert.deepEqual(p968Update.value, { kind: 'url', value: 'mailto:office@body.org' });
+
+  // an already-prefixed address (e.g. round-tripped from a read) must not get double-prefixed
+  updated.association.email = 'mailto:already@prefixed.org';
+  const csIdempotent = buildChangeSet(updated, cfg);
+  const p968Idempotent = csIdempotent.ops.find((o) => o.type === 'add-statement' && o.property === 'P968');
+  assert.deepEqual(p968Idempotent.value, { kind: 'url', value: 'mailto:already@prefixed.org' });
+});
+
 test('buildChangeSet throws on an invalid draft', () => {
   assert.throws(() => buildChangeSet(emptyDraft('create-association'), cfg), /association\.label is required/);
 });

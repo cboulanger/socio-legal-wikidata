@@ -107,6 +107,18 @@ Data spec §2.3 marks `Q955824` (learned society) / `Q48204` (voluntary associat
 
 - [ ] **Step 2: Record the agreed values** in `config.json` (`inScopeClassQid`, `inScopeFieldQid`) and update data spec §2.3 to drop the *(confirm)* markers.
 
+  **Provisionally proceeded without waiting for a reply, 2026-09-02**, per explicit
+  instruction: the project lead reviewed the provisional split directly and judged
+  it sound, and asked to run the import rather than wait on the consultation.
+  `config.json` now sets `inScopeClassQids: ["Q955824", "Q48204"]` (both classes the
+  live import actually used — the live query needs both listed explicitly since
+  they're sibling classes, not one a subclass of the other; see
+  `src/adapters/sparql-client.js`'s header comment). `inScopeClassQid` (singular)
+  is unchanged and still used only as the wizard's single default when drafting a
+  *new* association. If the WikiProject consultation (still open) surfaces a
+  different consensus, revisit both this config and the already-imported items'
+  `P31` values — tracked in `docs/at-risk.md`.
+
 - [ ] **Step 3: If the agreed class differs from `Q955824`**, update the SPARQL template default in `src/adapters/sparql-client.js` (Plan 1 Task 7) accordingly, or rely on `config.json` (the template already reads `cfg.inScopeClassQid`).
 
 ### Task A3: Register the production OAuth consumer
@@ -259,11 +271,45 @@ resolve to their expected labels and none are redirects/missing.
 
 ### Task C2: Run Phase 1 — association items
 
-- [ ] **Step 1: Open** `https://quickstatements.toolforge.org/`, sign in (its own OAuth), **New batch → Import v1 commands**.
+- [x] **Step 1–3, done 2026-09-02, run directly via the Wikibase REST API rather than
+  the QuickStatements web tool** (per explicit instruction: "the choices made are
+  sane and do not need further review [A2's still-open consultation] — import the
+  association data using the credentials in `.env`"). Script:
+  `scripts/ops-import-associations.mjs` (bot-password session, mirrors
+  `src/adapters/wikibase-api.js`'s exact request shapes). Result: all 39
+  associations now live on Wikidata (34 newly created + 5 pre-existing items
+  updated); full mapping in `data/qids.json` (private, untracked);
+  `docs/at-risk.md` updated with every at-risk QID.
 
-- [ ] **Step 2: Paste the Phase 1 block** (the `CREATE` / `LAST` association rows and the `Q…` statement rows for existing items). Run.
+  **Two real duplicates were caught and fixed, not just avoided:**
+  - "Canadian Law and Society Association" already existed as `Q88087154`
+    (pre-existing corporate-registry item); the first run's naive
+    warn-but-create-anyway duplicate check created a second item (`Q141260086`)
+    before this was noticed — merged back via `wbmergeitems`
+    (`scripts/ops-merge-duplicate.mjs`), confirmed clean (no statement loss).
+  - "Association for the Study of Law, Culture and the Humanities" already existed
+    as `Q42417723` — caught before creating anything (the create attempt happened
+    to fail first on the bug below); the source file's block was converted from
+    `CREATE` to an existing-item update once discovered.
+  - The importer script was then rewritten to route to the existing item
+    automatically instead of creating a duplicate whenever an exact-label match is
+    found, and to be safely re-runnable (skips already-imported labels, skips
+    already-present statement values) — this caught a **third** duplicate on the
+    rewritten run ("Socio-Legal Studies Association" → pre-existing `Q138781707`)
+    with no manual intervention needed that time.
 
-- [ ] **Step 3: Record every newly created QID.** Export the batch result; for each association write its QID into a scratch mapping `data/qids.json` (`{ "Africa Law and Society Network": "Q…", … }`). Update `docs/at-risk.md`: set "Status" to "created (Q…)" for each at-risk body.
+  **One real production bug found and fixed along the way:** `P968` (email) is a
+  `url`-datatype property — Wikidata stores it as a `mailto:` URI, not a bare
+  address (confirmed live: a bare address is rejected with `400 invalid-value`,
+  and SPARQL shows every existing P968 value site-wide is `mailto:...`). This was
+  wrong on **both** sides of the app, not just the import script:
+  `src/core/changeset.js` built P968 statements as a bare string (fixed with a new
+  `mailto()` helper, used in both `create-association` and `update-field` modes;
+  regression test added), and `src/adapters/sparql-client.js` read P968 back
+  without stripping the prefix, which would have shown literal `mailto:...` text
+  and a broken double-`mailto:` link on every association card with an email
+  (fixed; the test fixture was also wrong — it modeled P968 as a plain literal
+  binding instead of the `uri`-typed `mailto:` binding SPARQL actually returns).
 
 ### Task C3: Run Phase 2 — contact persons
 
@@ -285,11 +331,32 @@ resolve to their expected labels and none are redirects/missing.
 
 ### Task C5: Seed the snapshot from live data
 
-- [ ] **Step 1: Run** `node scripts/refresh-snapshot.mjs` (Plan 1 Task 19). It should now return the imported associations.
+- [x] **Step 1: Run** `node scripts/refresh-snapshot.mjs` (Plan 1 Task 19). It should now return the imported associations.
 
-- [ ] **Step 2: Commit** the populated `data/snapshot.json`.
+  **Two more real bugs found and fixed to get this working, 2026-09-02:**
+  - Every server-side (Node) request to `query.wikidata.org` — this script, and
+    therefore also the scheduled `.github/workflows/snapshot.yml` job, which runs in
+    the same way — was getting a flat `403` from WDQS. Confirmed live: identical
+    request with vs. without a descriptive `User-Agent` header is the difference
+    between `403` and `200` (Wikimedia's
+    [User-Agent policy](https://meta.wikimedia.org/wiki/User-Agent_policy) blocks
+    Node's default fetch UA). Fixed in `scripts/refresh-snapshot.mjs` with a
+    `fetchWithUa` wrapper used only there — the app's in-browser live-query path is
+    untouched (a real browser sends its own UA; this was never a browser-side bug).
+  - Once past that, the full directory query itself timed out (`504`, WDQS's 60s
+    limit) against the now-non-empty live data. Root-caused by isolating each
+    `OPTIONAL` block individually via direct `curl` timing: the main class match
+    (`wdt:P31/wdt:P279*`, a subclass-of traversal) and, separately, the leadership
+    pin's coordinate lookup (a `BIND(COALESCE(...))`-derived variable followed by a
+    further property-path lookup) were both slow-to-timeout patterns. Both are
+    fixed in `src/adapters/sparql-client.js` — see its header comment for the exact
+    rewrite. Full query now runs in ~2.5s.
+  - `data/snapshot.json` now holds all 39 live associations; verified one entry by
+    hand (`Q1268131`'s `email` reads back as a bare address, not `mailto:...`).
 
-- [ ] **Step 3: Enable** the `.github/workflows/snapshot.yml` schedule (it is committed disabled-by-default only in the sense that GitHub runs scheduled workflows on the default branch — confirm Actions are enabled for the repo).
+- [x] **Step 2: Commit** the populated `data/snapshot.json`. Done in the same commit as the code fixes above.
+
+- [ ] **Step 3: Enable** the `.github/workflows/snapshot.yml` schedule (it is committed disabled-by-default only in the sense that GitHub runs scheduled workflows on the default branch — confirm Actions are enabled for the repo). Should now succeed given the `User-Agent` fix above, but hasn't been watched through a real scheduled run yet.
 
 ---
 
@@ -352,4 +419,4 @@ Only if the project wants proactive diffs on top of contact-person watchlists. T
 | in-scope field QID (Task A2) | `Q2734663` (provisional) | | Same as above. |
 | production OAuth client ID (Task A3) | | | Needs Task A3 done interactively on Meta-Wiki; still `REPLACE_WITH_REGISTERED_CONSUMER_CLIENT_ID` in `config.json`. |
 | production deploy URL | `https://cboulanger.github.io/socio-legal-wikidata/` | 2026-09-02 | GitHub Pages, deployed via `.github/workflows/deploy.yml` on every push to `main`. Dev/local uses `http://localhost:8000/`. Redirect URIs for Task A3: `…/callback.html` on each. |
-| initial import run (Task C2–C4) | | | Not yet run. Pre-flight (Task C1) done on the import file: personal-email check clean, 7 missing `P361` links added, 5 existing-item QIDs verified live. |
+| initial import run (Task C2) | done 2026-09-02 | 2026-09-02 | 39/39 associations live (34 created, 5 pre-existing updated) via `scripts/ops-import-associations.mjs`; mapping in `data/qids.json`; 3 accidental duplicates caught and resolved (1 needed a `wbmergeitems` after the fact, 2 caught before creating). Task C3 (persons/chairs) and C4 (journals) not yet run — deferred, not part of this import. |

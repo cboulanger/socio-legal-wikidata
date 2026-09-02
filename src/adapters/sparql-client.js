@@ -5,6 +5,22 @@ import { parsePoint } from '../core/parse-wkt.js';
  * @typedef {import('../core/model.js').Association} Association
  */
 
+// Performance notes (found live, 2026-09-02, after the first real data import made
+// this query slow enough to hit WDQS's 60s timeout):
+//  - `wdt:P31/wdt:P279* wd:X` (transitive subclass-of traversal) is expensive and,
+//    combined with the rest of this query, timed out outright. The in-scope class is
+//    matched directly via VALUES instead — also fixes a real scope bug: the data
+//    uses two sibling classes (learned society / voluntary association), neither a
+//    subclass of the other, so a single-class P279* match was silently missing half
+//    the directory.
+//  - The leadership pin's coordinate lookup used to go through a
+//    BIND(COALESCE(?leadUniA, ?leadUniB) AS ?leadUni) before looking up ?leadUni's
+//    coordinates — that combination alone made the query time out (leadUni via
+//    direct triples + a subsequent property-path lookup on a BIND-derived variable is
+//    a known slow pattern in Blazegraph/WDQS). Rewritten as a single property-path
+//    alternation directly to the coordinate, which is fast.
+//  - The journal class check keeps its P31/P279* traversal — isolated, it is fast
+//    (few candidate journals per association) and narrowing it further isn't needed.
 const QUERY_TEMPLATE = `SELECT ?assoc ?assocLabel ?assocDescription ?website ?email ?inception
        ?country ?countryLabel ?countryCode ?operating
        ?seat ?seatLabel ?seatCoord ?parent ?parentLabel
@@ -12,7 +28,8 @@ const QUERY_TEMPLATE = `SELECT ?assoc ?assocLabel ?assocDescription ?website ?em
        ?leadUni ?leadUniLabel ?leadCoord
        ?journal ?journalLabel ?journalUrl ?issn
 WHERE {
-  ?assoc wdt:P31/wdt:P279* wd:%CLASS% .
+  VALUES ?class { %CLASSES% }
+  ?assoc wdt:P31 ?class .
   ?assoc wdt:P101 wd:%FIELD% .
   OPTIONAL { ?assoc wdt:P856 ?website. }
   OPTIONAL { ?assoc wdt:P968 ?email. }
@@ -29,11 +46,10 @@ WHERE {
     ?assoc p:P488 ?chair. ?chair ps:P488 ?president.
     FILTER NOT EXISTS { ?chair pq:P582 ?chairEnd. }
     OPTIONAL { ?president wdt:P856 ?presidentUrl. }
-    OPTIONAL { ?president wdt:P108 ?leadUniA. }
-    OPTIONAL { ?president wdt:P1416 ?leadUniB. }
-    BIND(COALESCE(?leadUniA, ?leadUniB) AS ?leadUni)
-    OPTIONAL { ?leadUni wdt:P625 ?leadCoord. }
-    OPTIONAL { ?leadUni wdt:P159/wdt:P625 ?leadCoord. }
+    OPTIONAL {
+      ?president (wdt:P108|wdt:P1416) ?leadUni .
+      { ?leadUni wdt:P625 ?leadCoord . } UNION { ?leadUni wdt:P159/wdt:P625 ?leadCoord . }
+    }
   }
   OPTIONAL {
     ?journal wdt:P123 ?assoc .
@@ -44,10 +60,17 @@ WHERE {
   SERVICE wikibase:label { bd:serviceParam wikibase:language "%LANGS%". }
 }`;
 
-/** @param {{inScopeClassQid: string, inScopeFieldQid: string, labelLanguages: string}} cfg */
+/**
+ * @param {{inScopeClassQid: string, inScopeClassQids?: string[], inScopeFieldQid: string, labelLanguages: string}} cfg
+ *   `inScopeClassQids`, when present, lists every P31 value the live query should
+ *   match directly (no subclass traversal) — falls back to `[inScopeClassQid]` for
+ *   configs/tests that only set the singular key (which `ui/edit-wizard/wizard.js`
+ *   still uses alone, as the single default P31 for a newly-created association).
+ */
 export function buildDirectoryQuery(cfg) {
+  const classes = cfg.inScopeClassQids?.length ? cfg.inScopeClassQids : [cfg.inScopeClassQid];
   return QUERY_TEMPLATE
-    .replace('%CLASS%', cfg.inScopeClassQid)
+    .replace('%CLASSES%', classes.map((q) => `wd:${q}`).join(' '))
     .replace('%FIELD%', cfg.inScopeFieldQid)
     .replace('%LANGS%', cfg.labelLanguages);
 }
@@ -70,7 +93,10 @@ export function mapBindings(sparqlJson) {
     a.label ||= val(row.assocLabel) || id;
     a.description ||= val(row.assocDescription) || '';
     a.website ??= val(row.website) ?? null;
-    a.email ??= val(row.email) ?? null;
+    // P968 (email) is a "url" datatype property on Wikidata — wdt:P968 returns the
+    // full "mailto:..." URI, not a bare address; strip it back to a bare address for
+    // internal use and display (association-card.js builds its own mailto: href).
+    a.email ??= val(row.email)?.replace(/^mailto:/, '') ?? null;
     a.inception ??= val(row.inception) ?? null;
     a.countryCode ??= (val(row.countryCode) || '').toUpperCase() || null;
     a.countryLabel ??= val(row.countryLabel) ?? null;

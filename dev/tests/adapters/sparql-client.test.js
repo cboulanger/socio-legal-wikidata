@@ -14,6 +14,20 @@ test('buildDirectoryQuery injects config and keeps the key triples', () => {
   assert.match(q, /bd:serviceParam wikibase:language "en,de"/);
 });
 
+test('buildDirectoryQuery falls back to a single-class VALUES when inScopeClassQids is absent', () => {
+  const q = buildDirectoryQuery(cfg); // cfg has no inScopeClassQids
+  assert.match(q, /VALUES \?class \{ wd:Q955824 \}/);
+  assert.match(q, /\?assoc wdt:P31 \?class/);
+});
+
+test('buildDirectoryQuery matches every configured class directly (no P279* subclass traversal on the main class)', () => {
+  const multi = { ...cfg, inScopeClassQids: ['Q955824', 'Q48204'] };
+  const q = buildDirectoryQuery(multi);
+  assert.match(q, /VALUES \?class \{ wd:Q955824 wd:Q48204 \}/);
+  assert.match(q, /\?assoc wdt:P31 \?class \./);
+  assert.doesNotMatch(q, /\?assoc wdt:P31\/wdt:P279\*/); // the slow, scope-incomplete pattern this replaced
+});
+
 test('mapBindings reduces rows to one Association per qid with nested refs', async () => {
   const json = JSON.parse(await readFile(new URL('../fixtures/sparql-directory.json', import.meta.url)));
   const list = mapBindings(json);
@@ -22,6 +36,7 @@ test('mapBindings reduces rows to one Association per qid with nested refs', asy
   assert.equal(rcsl.label, 'Research Committee on the Sociology of Law');
   assert.equal(rcsl.seatQid, 'Q1015907');
   assert.deepEqual(rcsl.seatCoord, [2.4102, 43.0356]);
+  assert.equal(rcsl.email, 'm.kortabarria@iisj.es'); // P968 comes back as a "mailto:" URI on live Wikidata; must be stripped
   assert.equal(rcsl.president.qid, 'Q125');
   assert.equal(rcsl.president.url, 'https://example.org/guibentif');
   assert.deepEqual(rcsl.leadCoord, [-9.1533, 38.7486]);

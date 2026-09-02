@@ -19,7 +19,10 @@ import { validateDraftForChangeset } from './draft.js';
 const ref = (r) => ({ kind: 'item', ref: r });
 const item = (qid) => ({ kind: 'item', qid });
 const url = (value) => ({ kind: 'url', value });
-const str = (value) => ({ kind: 'string', value });
+// P968 (email) is a "url" datatype property on Wikidata: the stored value must be a
+// full "mailto:" URI, not a bare address (confirmed live — a bare address is
+// rejected by the REST API with "invalid-value").
+const mailto = (value) => ({ kind: 'url', value: value.startsWith('mailto:') ? value : `mailto:${value}` });
 const extId = (value) => ({ kind: 'external-id', value });
 const year = (value) => ({ kind: 'time', value: `${value}-01-01`, precision: 9 });
 const day = (value) => ({ kind: 'time', value, precision: 11 });
@@ -94,7 +97,7 @@ export function buildChangeSet(draft, cfg) {
     if (a.seatQid) claims.push({ property: 'P159', value: item(a.seatQid) });
     if (a.parentQid) claims.push({ property: 'P361', value: item(a.parentQid) });
     if (a.website) claims.push({ property: 'P856', value: url(a.website) });
-    if (a.email) claims.push({ property: 'P968', value: str(a.email) });
+    if (a.email) claims.push({ property: 'P968', value: mailto(a.email) });
     if (a.inception) claims.push({ property: 'P571', value: year(a.inception) });
     if (personValue) {
       claims.push({
@@ -126,6 +129,6 @@ export function buildChangeSet(draft, cfg) {
   // update-field
   const changed = [];
   if (a.website) { ops.push({ type: 'add-statement', target: { qid: a.qid }, property: 'P856', value: url(a.website), reference: assocRefUrl, replace: true }); changed.push('website'); }
-  if (a.email) { ops.push({ type: 'add-statement', target: { qid: a.qid }, property: 'P968', value: str(a.email), reference: assocRefUrl, replace: true }); changed.push('e-mail'); }
+  if (a.email) { ops.push({ type: 'add-statement', target: { qid: a.qid }, property: 'P968', value: mailto(a.email), reference: assocRefUrl, replace: true }); changed.push('e-mail'); }
   return { summary: `socio-legal directory: update ${changed.join(' and ')}`, ops };
 }

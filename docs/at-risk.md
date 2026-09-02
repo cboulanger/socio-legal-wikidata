@@ -19,11 +19,21 @@ merged, record the outcome and how the directory now represents that body.
 
 | Body | Category | Status | Notes |
 | --- | --- | --- | --- |
-| Law & Social Sciences Network (LASSNET) | Dormant | not yet created | No conference identified since 2018 |
-| Research Committee on Sociology of Law, Swiss Sociological Association (FK Rechtssoziologie) | Dormant | not yet created | Possibly inactive; Swiss activity now via SNLS |
-| Asociación Latinoamericana y del Caribe de Derecho y Sociedad (ALADES) | Brand‑new | not yet created | Founded 2024; successor to RELADES, 20+ countries |
-| Israeli Law and Society Association (ILSA) | Brand‑new / unclear founding | not yet created | Founding date to confirm; annual conference runs |
-| Sociology of Law Section, Polish Sociological Association | National section | not yet created | Link `P361` → Polish Sociological Association |
-| Austrian Sociological Association – Section on Law and Society | National section | not yet created | Link `P361` → Österreichische Gesellschaft für Soziologie |
-| Research Committee on the Sociology of Law, Crime and Deviance (RC‑23), Indian Sociological Society | National section | not yet created | Link `P361` → Indian Sociological Society |
-| DGS Sociology of Law Section; AIS Sociology of Law Section; APS‑SDJ; AFS RT13 | National sections | not yet created | Same `P361` pattern; some have an owned journal that is itself notable |
+| Law & Social Sciences Network (LASSNET) | Dormant | created ([Q141260093](https://www.wikidata.org/wiki/Q141260093)) | No conference identified since 2018 |
+| Research Committee on Sociology of Law, Swiss Sociological Association (FK Rechtssoziologie) | Dormant | created ([Q141260174](https://www.wikidata.org/wiki/Q141260174)) | Possibly inactive; Swiss activity now via SNLS |
+| Asociación Latinoamericana y del Caribe de Derecho y Sociedad (ALADES) | Brand‑new | created ([Q141260163](https://www.wikidata.org/wiki/Q141260163)) | Founded 2024; successor to RELADES, 20+ countries |
+| Israeli Law and Society Association (ILSA) | Brand‑new / unclear founding | created ([Q141260170](https://www.wikidata.org/wiki/Q141260170)) | Founding date to confirm; annual conference runs |
+| Sociology of Law Section, Polish Sociological Association | National section | created ([Q141260096](https://www.wikidata.org/wiki/Q141260096)), `P361`→[Q7209992](https://www.wikidata.org/wiki/Q7209992) | Link `P361` → Polish Sociological Association |
+| Austrian Sociological Association – Section on Law and Society | National section | created ([Q141260165](https://www.wikidata.org/wiki/Q141260165)), `P361`→[Q303283](https://www.wikidata.org/wiki/Q303283) | Link `P361` → Österreichische Gesellschaft für Soziologie |
+| Research Committee on the Sociology of Law, Crime and Deviance (RC‑23), Indian Sociological Society | National section | created ([Q141260175](https://www.wikidata.org/wiki/Q141260175)), `P361`→[Q3488406](https://www.wikidata.org/wiki/Q3488406) | Link `P361` → Indian Sociological Society |
+| DGS Sociology of Law Section | National section | created ([Q141260089](https://www.wikidata.org/wiki/Q141260089)), `P361`→[Q1202999](https://www.wikidata.org/wiki/Q1202999) | Same `P361` pattern; some have an owned journal that is itself notable |
+| AIS Sociology of Law Section (Italian) | National section | created ([Q141260179](https://www.wikidata.org/wiki/Q141260179)), `P361`→[Q2867838](https://www.wikidata.org/wiki/Q2867838) | Same `P361` pattern |
+| APS‑SDJ (Portuguese) | National section | added to pre‑existing item ([Q141260178](https://www.wikidata.org/wiki/Q141260178)), `P361`→[Q139771455](https://www.wikidata.org/wiki/Q139771455) | Same `P361` pattern |
+| AFS RT13 (French) | National section | created ([Q141260095](https://www.wikidata.org/wiki/Q141260095)), `P361`→[Q2867726](https://www.wikidata.org/wiki/Q2867726) | Same `P361` pattern |
+
+All entries above imported 2026-09-02 (runbook Task C2), without waiting for the
+Task A2 WikiProject consultation to conclude — the project lead reviewed the
+provisional `P31`/`P101` choices directly and judged them sound. If the consultation
+(still open at `Wikidata talk:WikiProject Law`) surfaces a different consensus,
+revisit these items' `P31` values then. Full QID mapping for every imported
+association (not just the at-risk ones): `data/qids.json` (private, untracked).

@@ -1,6 +1,7 @@
 {
   "sparqlEndpoint": "https://query.wikidata.org/sparql",
   "inScopeClassQid": "Q955824",
+  "inScopeClassQids": ["Q955824", "Q48204"],
   "inScopeFieldQid": "Q2734663",
   "labelLanguages": "en,de,fr,es",
   "snapshotUrl": "data/snapshot.json",
