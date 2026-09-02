@@ -5,6 +5,7 @@ import { createCache, loadDirectory as loadDirectoryImpl } from './adapters/brow
 import { queryDirectory as queryDirectoryImpl } from './adapters/sparql-client.js';
 import { renderPanel } from './ui/directory-panel.js';
 import { createMapView as createMapViewImpl, toMapPins } from './ui/map-view.js';
+import { renderEditChrome } from './ui/edit-panel.js';
 
 /**
  * Read-only composition root. Every collaborator is injectable so the whole
@@ -15,7 +16,11 @@ import { createMapView as createMapViewImpl, toMapPins } from './ui/map-view.js'
  *   centroids: Object<string, [number,number]>,
  *   loadDirectory: typeof loadDirectoryImpl,
  *   createMapView: typeof createMapViewImpl,
- *   detectMode: () => 'read'|'edit',
+ *   detectMode: () => ('read'|'edit') | Promise<'read'|'edit'>,
+ *   buildEditRuntime?: () => Promise<{
+ *     auth: {disconnect: () => Promise<void>},
+ *     openWizard: (host: HTMLElement, seed: any) => void,
+ *   }>,
  * }} deps
  */
 export async function createApp(deps) {
@@ -25,8 +30,14 @@ export async function createApp(deps) {
   const detectMode = deps.detectMode || (() => 'read');
   const loadDirectory = deps.loadDirectory || loadDirectoryImpl;
 
+  const mode = await detectMode();
+  let editRuntime = null;
+  if (mode === 'edit' && deps.buildEditRuntime) {
+    editRuntime = await deps.buildEditRuntime();
+  }
+
   const store = createStore({
-    mode: detectMode(),
+    mode,
     associations: [],
     filter: {},
     selection: null,
@@ -105,6 +116,33 @@ export async function createApp(deps) {
     renderMapRegion();
   });
 
+  if (mode === 'edit' && editRuntime) {
+    const bar = doc.createElement('div');
+    bar.id = 'edit-chrome';
+    doc.getElementById('app').appendChild(bar);
+    const drawer = doc.createElement('div');
+    drawer.id = 'wizard-host';
+    doc.getElementById('app').appendChild(drawer);
+
+    const paintChrome = () => renderEditChrome(bar, {
+      connected: true,
+      onConnect: () => {},
+      onLeave: async () => { await editRuntime.auth.disconnect(); win.location.search = ''; },
+      onAdd: () => editRuntime.openWizard(drawer, { mode: 'create-association' }),
+    });
+    paintChrome();
+
+    panelHost.addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-action="edit"]');
+      if (!btn) return;
+      const a = store.getState().associations.find((x) => x.qid === btn.dataset.qid);
+      editRuntime.openWizard(drawer, {
+        mode: 'change-president',
+        association: { qid: a.qid, label: a.label },
+      });
+    });
+  }
+
   // ---- initial load ----
   const dir = await loadDirectory({
     cache: createCache({ storage: win.localStorage }),
@@ -126,6 +164,13 @@ if (typeof window !== 'undefined' && window.document?.getElementById('app')) {
   const config = await (await fetch('config.json')).json();
   const centroids = await (await fetch(config.centroidsUrl)).json();
   const countriesGeojson = await (await fetch('data/countries.geojson')).json();
+  const { detectMode } = await import('./ui/mode.js');
+  const { createAuth } = await import('./adapters/oauth-pkce.js');
+  const auth = createAuth({
+    fetch: window.fetch.bind(window),
+    storage: config.tokenPersistence === 'session' ? window.sessionStorage : window.localStorage,
+    location: window.location, crypto: window.crypto, config,
+  });
   await createApp({
     window,
     config,
@@ -133,6 +178,21 @@ if (typeof window !== 'undefined' && window.document?.getElementById('app')) {
     countriesGeojson,
     loadDirectory: loadDirectoryImpl,
     createMapView: createMapViewImpl,
-    detectMode: () => 'read',
+    detectMode: () => detectMode({ location: window.location, auth, config }),
+    buildEditRuntime: async () => {
+      const [{ createWikibaseApi }, { createQuickStatementsWriter }, { createWizard }] = await Promise.all([
+        import('./adapters/wikibase-api.js'),
+        import('./adapters/quickstatements-handoff.js'),
+        import('./ui/edit-wizard/wizard.js'),
+      ]);
+      const api = createWikibaseApi({ fetch: window.fetch.bind(window), config, getToken: () => auth.getToken() });
+      const write = config.writeMode === 'quickstatements'
+        ? createQuickStatementsWriter({ window, config })
+        : api;
+      return {
+        auth,
+        openWizard: (host, seed) => createWizard(host, { window, config, ports: { search: api, write }, seed, onClose: () => { host.innerHTML = ''; } }),
+      };
+    },
   });
 }
