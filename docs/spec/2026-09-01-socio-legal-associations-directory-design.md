@@ -1,9 +1,12 @@
 # Directory of Socio‑Legal Associations — Design Specification
 
 **Status:** Draft for discussion
+
 **Date:** 2026‑09‑01 · **Revised:** 2026‑09‑02 (reviewer comments: map by seat not president; notability/deletion risk; personal e‑mails; journals added to the model; reactive change‑monitoring — no scheduled task)
+
 **Audience:** Part 1 is written for a non‑technical reader (a scholar with no computer‑science background). Part 2 is the precise technical specification.
-**Source data:** `data/Global Law and Society Associations Directory v7 Sept 2026.xlsx` and `data/socio-legal-associations.quickstatements.txt` (see §2.10). The `data/` folder is deliberately kept out of the public repository.
+
+**Source data:** (deliberately kept out of the public repository)
 
 ---
 
