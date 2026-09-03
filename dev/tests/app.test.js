@@ -62,6 +62,33 @@ test('clearing the country filter also clears the #/country/XX URL hash', async 
   assert.doesNotMatch(win.location.hash, /country/);
 });
 
+test('typing in search keeps focus on the search box across re-renders', async () => {
+  const win = domFixture();
+  await createApp({
+    window: win,
+    config: { cacheTtlMs: 1, centroidsUrl: 'x', snapshotUrl: 'y', tileUrl: 't', tileAttribution: 'a' },
+    centroids: { DE: [10.4, 51.1] },
+    loadDirectory: async () => ({ associations, stale: false, asOf: null }),
+    createMapView: () => ({ render() {}, focus() {} }),
+    detectMode: () => 'read',
+  });
+  const host = win.document.getElementById('panel-host');
+  let input = host.querySelector('input[data-role="search"]');
+  input.focus();
+  assert.equal(win.document.activeElement, input);
+
+  // Type character by character, like a real user — each keystroke fires its own
+  // 'input' event and triggers a full re-render of the panel (mount() replaces
+  // innerHTML), which would otherwise destroy and recreate the <input>, losing focus.
+  for (const ch of 'roaming') {
+    input.value += ch;
+    input.dispatchEvent(new win.Event('input', { bubbles: true }));
+    input = host.querySelector('input[data-role="search"]'); // the node was replaced
+    assert.equal(win.document.activeElement, input, `lost focus after typing "${ch}"`);
+  }
+  assert.equal(input.value, 'roaming');
+});
+
 test('typing in search filters the rows', async () => {
   const win = domFixture();
   await createApp({
