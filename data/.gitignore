@@ -1,0 +1,13 @@
+# Ignore everything in data/ by default — the source workbook in particular
+# (`Global Law and Society Associations Directory *.csv`) has a "Personal /
+# individual email" column that must never end up in public git history.
+*
+
+# Exceptions: no personal data, and worth tracking as the audit trail of every
+# write this project has made to Wikidata (QID mappings + the QuickStatements
+# files, with their inline reasoning, that produced them).
+!.gitignore
+!qids.json
+!journal-qids.json
+!socio-legal-associations.quickstatements.txt
+!socio-legal-journals.quickstatements.txt
