@@ -65,6 +65,32 @@
       "journal": null
     },
     {
+      "qid": "Q52636089",
+      "label": "Associação Brasileira de Pesquisadores em Sociologia do Direito",
+      "description": "Academic publisher based in Brazil",
+      "countryCode": "BR",
+      "countryLabel": "Brazil",
+      "operatingAreaQid": null,
+      "seatQid": null,
+      "seatLabel": null,
+      "seatCoord": null,
+      "parentQid": null,
+      "parentLabel": null,
+      "website": "https://www.abrasd.com.br",
+      "email": null,
+      "inception": "2010",
+      "president": null,
+      "leadUniQid": null,
+      "leadUniLabel": null,
+      "leadCoord": null,
+      "journal": {
+        "qid": "Q50817165",
+        "label": "Revista Brasileira de Sociologia do Direito",
+        "url": "http://www.abrasd.com.br/#!edicaoatual/c1yi4",
+        "issn": "2359-5582"
+      }
+    },
+    {
       "qid": "Q42417723",
       "label": "Association for the Study of Law, Culture and the Humanities",
       "description": "scholarly association",
@@ -137,7 +163,12 @@
       "leadUniQid": null,
       "leadUniLabel": null,
       "leadCoord": null,
-      "journal": null
+      "journal": {
+        "qid": "Q141270694",
+        "label": "Indonesian Journal of Socio-Legal Studies",
+        "url": "https://scholarhub.ui.ac.id/ijsls",
+        "issn": null
+      }
     },
     {
       "qid": "Q141260165",
@@ -175,48 +206,6 @@
       "website": "https://barblog.hypotheses.org",
       "email": "info@rechtswirklichkeit.de",
       "inception": "2001",
-      "president": null,
-      "leadUniQid": null,
-      "leadUniLabel": null,
-      "leadCoord": null,
-      "journal": null
-    },
-    {
-      "qid": "Q141260085",
-      "label": "Brazilian Association for the Study of the Sociology of Law",
-      "description": "national association for the sociology of law in Brazil",
-      "countryCode": "BR",
-      "countryLabel": "Brazil",
-      "operatingAreaQid": null,
-      "seatQid": null,
-      "seatLabel": null,
-      "seatCoord": null,
-      "parentQid": null,
-      "parentLabel": null,
-      "website": "https://www.abrasd.com.br",
-      "email": null,
-      "inception": "2010",
-      "president": null,
-      "leadUniQid": null,
-      "leadUniLabel": null,
-      "leadCoord": null,
-      "journal": null
-    },
-    {
-      "qid": "Q141260167",
-      "label": "Brazilian Network for Empirical Legal Studies",
-      "description": "Brazilian network for empirical legal studies",
-      "countryCode": "BR",
-      "countryLabel": "Brazil",
-      "operatingAreaQid": null,
-      "seatQid": null,
-      "seatLabel": null,
-      "seatCoord": null,
-      "parentQid": null,
-      "parentLabel": null,
-      "website": "https://reedpesquisa.org",
-      "email": "reed.pesquisa@gmail.com",
-      "inception": "2011",
       "president": null,
       "leadUniQid": null,
       "leadUniLabel": null,
@@ -305,7 +294,12 @@
       "leadUniQid": null,
       "leadUniLabel": null,
       "leadCoord": null,
-      "journal": null
+      "journal": {
+        "qid": "Q141270695",
+        "label": "European Journal of Empirical Legal Studies",
+        "url": "https://esels.eu/ejels/",
+        "issn": null
+      }
     },
     {
       "qid": "Q141260088",
@@ -452,7 +446,12 @@
       "leadUniQid": null,
       "leadUniLabel": null,
       "leadCoord": null,
-      "journal": null
+      "journal": {
+        "qid": "Q96722758",
+        "label": "Korean Journal of Law and Society",
+        "url": "https://www.dbpia.co.kr/journal/publicationDetail?publicationId=PLCT00015222",
+        "issn": "1227-0954"
+      }
     },
     {
       "qid": "Q141260093",
@@ -581,6 +580,32 @@
       "journal": null
     },
     {
+      "qid": "Q52608574",
+      "label": "Rede de Pesquisa Empírica em Direito",
+      "description": "Academic publisher based in Brazil",
+      "countryCode": "BR",
+      "countryLabel": "Brazil",
+      "operatingAreaQid": null,
+      "seatQid": null,
+      "seatLabel": null,
+      "seatCoord": null,
+      "parentQid": null,
+      "parentLabel": null,
+      "website": "https://reedpesquisa.org",
+      "email": "reed.pesquisa@gmail.com",
+      "inception": "2011",
+      "president": null,
+      "leadUniQid": null,
+      "leadUniLabel": null,
+      "leadCoord": null,
+      "journal": {
+        "qid": "Q50572449",
+        "label": "Brazilian Journal of Empirical Legal Studies",
+        "url": "http://reedrevista.org/",
+        "issn": "2319-0817"
+      }
+    },
+    {
       "qid": "Q2145564",
       "label": "Research Committee on Sociology of Law",
       "description": "",
@@ -662,7 +687,12 @@
       "leadUniQid": null,
       "leadUniLabel": null,
       "leadCoord": null,
-      "journal": null
+      "journal": {
+        "qid": "Q141270696",
+        "label": "Revista Latinoamericana de Sociología Jurídica",
+        "url": "https://usi.edu.ar/publicaciones/revista-latinoamericana-de-sociologia-juridica/",
+        "issn": null
+      }
     },
     {
       "qid": "Q141260177",
@@ -830,7 +860,12 @@
       "leadUniQid": null,
       "leadUniLabel": null,
       "leadCoord": null,
-      "journal": null
+      "journal": {
+        "qid": "Q15757758",
+        "label": "The Sociology of Law",
+        "url": "https://www.jstage.jst.go.jp/browse/jsl/list/-char/ja",
+        "issn": "2424-1423"
+      }
     }
   ]
 }
