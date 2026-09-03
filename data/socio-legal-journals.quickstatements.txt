@@ -30,22 +30,25 @@
 #     This one is a reminder of why the importer's exact-label dedup guard matters:
 #     an English-only search for this journal would have created a real duplicate.
 #
-# Skipped, needs a human editorial call rather than an automatic rule (NOT included
-# below — flagged for the consultation / a follow-up decision, not silently guessed):
+# Two rows needed a human editorial call rather than an automatic rule — resolved
+# 2026-09-03, see the runbook's Task C4 Step 1 follow-up for the full write-up:
 #   - Oñati Socio-Legal Series (RCSL row): the real publisher of record on Wikidata
 #     (Q50815368) is already P123 -> Q52619154 "Oñati International Institute for the
-#     Sociology of Law" (IISL) — a distinct, real organisation, not RCSL itself. Adding
-#     RCSL as a second P123 would misstate who actually publishes it.
+#     Sociology of Law" (IISL) — a distinct, real organisation, not RCSL itself.
+#     DECISION: leave as is — do NOT add RCSL as a second P123 (would misstate who
+#     actually publishes it).
 #   - Sociologia On Line (APS-SDJ row): the workbook tags it "(APS)" — the PARENT
 #     Portuguese Sociological Association, not the Sociology of Law section (APS-SDJ)
-#     this row is about. The existing item (Q96731691) has no P123 yet; the correct
-#     target is arguably Q139771455 (APS, the parent), not Q141260178 (the section) —
-#     left unlinked pending a decision on which.
+#     this row is about. DECISION: link to the parent — Q96731691 P123 -> Q139771455
+#     (APS), not Q141260178 (the section). Added directly (not via this file, since
+#     the importer only supports labels/CREATE + one-off statement rows, and this was
+#     a single, already-decided addition).
+#
+# Also out of scope entirely (not a judgment call, just doesn't fit this task):
 #   - Juris Diversitas "book series (Routledge)": a book series, not a journal
-#     (P31 would be "book series", not Q737498) and commercially published — out of
-#     scope for this task entirely.
+#     (P31 would be "book series", not Q737498) and commercially published.
 #   - Socio-Legal Studies Association: workbook journal cell is "— (Socio-Legal
-#     Newsletter)" with no link — a newsletter, not a scholarly journal — skipped.
+#     Newsletter)" with no link — a newsletter, not a scholarly journal.
 #
 # *** IMPORTANT — two accidental duplicate ASSOCIATION items were found while
 # *** researching this (pre-existing minimal "publisher" stub items that are the
