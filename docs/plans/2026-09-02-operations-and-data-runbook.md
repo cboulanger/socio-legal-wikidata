@@ -405,6 +405,18 @@ resolve to their expected labels and none are redirects/missing.
 
 - [x] **Step 3: Do NOT link** journals published by a commercial house on the society's behalf — deferred (data spec §2.8). Applied above: 12 rows were verified to already carry the correct commercial `P123` and were left untouched.
 
+**The two flagged editorial judgment calls were resolved 2026-09-03** (presented
+to the project lead, who decided):
+
+- **Oñati Socio-Legal Series:** leave as is — the existing `P123` (IISL) stays
+  the sole publisher; RCSL was *not* added as a second one.
+- **Sociologia On Line:** `P123` added to `Q96731691`, pointing to `Q139771455`
+  (APS, the parent Portuguese Sociological Association) rather than `Q141260178`
+  (the APS-SDJ section this directory tracks) — matches the workbook's own
+  "(APS)" tag and who actually publishes it. Added directly via the REST API
+  (a single already-decided statement, outside the QuickStatements file, which
+  only handles `CREATE` blocks and whole-row statement additions).
+
 ### Task C5: Seed the snapshot from live data
 
 - [x] **Step 1: Run** `node scripts/refresh-snapshot.mjs` (Plan 1 Task 19). It should now return the imported associations.
@@ -496,4 +508,4 @@ Only if the project wants proactive diffs on top of contact-person watchlists. T
 | production OAuth client ID (Task A3) | | | Needs Task A3 done interactively on Meta-Wiki; still `REPLACE_WITH_REGISTERED_CONSUMER_CLIENT_ID` in `config.json`. |
 | production deploy URL | `https://cboulanger.github.io/socio-legal-wikidata/` | 2026-09-02 | GitHub Pages, deployed via `.github/workflows/deploy.yml` on every push to `main`. Dev/local uses `http://localhost:8000/`. Redirect URIs for Task A3: `…/callback.html` on each. |
 | initial import run (Task C2) | done 2026-09-02 | 2026-09-02 | 39/39 associations live (34 created, 5 pre-existing updated) via `scripts/ops-import-associations.mjs`; mapping in `data/qids.json`; 3 accidental duplicates caught and resolved (1 needed a `wbmergeitems` after the fact, 2 caught before creating). Task C3 (persons/chairs) not yet run — deferred, not part of this import. |
-| journals import run (Task C4) | done 2026-09-03 | 2026-09-03 | 5/5 journal blocks live via `scripts/ops-import-journals.mjs`; mapping in `data/journal-qids.json`; 12 commercially-published journals correctly left untouched; 2 more accidental association duplicates found and resolved the same way as Task C2 (`Q141260085`→`Q52636089`, `Q141260167`→`Q52608574`); 1 more real journal duplicate avoided (Korean journal, found only via native-script search). 2 rows (Oñati Socio-Legal Series, Sociologia On Line) deliberately left unlinked — genuine editorial judgment call, see Task C4 Step 1. |
+| journals import run (Task C4) | done 2026-09-03 | 2026-09-03 | 5/5 journal blocks live via `scripts/ops-import-journals.mjs`; mapping in `data/journal-qids.json`; 12 commercially-published journals correctly left untouched; 2 more accidental association duplicates found and resolved the same way as Task C2 (`Q141260085`→`Q52636089`, `Q141260167`→`Q52608574`); 1 more real journal duplicate avoided (Korean journal, found only via native-script search). 2 rows flagged for a human call, resolved 2026-09-03: Oñati Socio-Legal Series left as-is (IISL stays sole publisher); Sociologia On Line's `P123` set to `Q139771455` (APS, the parent), not the APS-SDJ section. |
