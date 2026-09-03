@@ -56,10 +56,61 @@ export function html(strings, ...values) {
 }
 
 /**
+ * Build a selector that should identify the same element again after a full
+ * innerHTML replace, preferring the most stable/unique attribute available.
+ * @param {Element} el @returns {string|null}
+ */
+function stableSelector(el) {
+  if (el.id) return `#${CSS?.escape ? CSS.escape(el.id) : el.id}`;
+  const role = el.getAttribute('data-role');
+  if (role) return `${el.tagName.toLowerCase()}[data-role="${role}"]`;
+  const name = el.getAttribute('name');
+  if (name) return `${el.tagName.toLowerCase()}[name="${name}"]`;
+  return null;
+}
+
+/**
  * Replace the contents of `parent` with the rendered fragment.
+ *
+ * A full innerHTML replace destroys and recreates every node, including whichever
+ * one currently has focus — e.g. a search box would lose focus (and the caret
+ * position) on every keystroke, since each keystroke triggers a re-render. This
+ * restores focus (and, for text-like inputs, the selection range) onto the
+ * corresponding new node when the previously-focused element is identifiable via
+ * `stableSelector` (id, then `data-role`, then `name`).
+ *
  * @param {Element} parent
  * @param {Trusted|string} rendered
  */
 export function mount(parent, rendered) {
+  const doc = parent.ownerDocument;
+  const active = doc?.activeElement;
+  let refocus = null;
+  if (active && parent.contains(active)) {
+    const selector = stableSelector(active);
+    if (selector) {
+      refocus = {
+        selector,
+        selectionStart: 'selectionStart' in active ? active.selectionStart : null,
+        selectionEnd: 'selectionEnd' in active ? active.selectionEnd : null,
+      };
+    }
+  }
+
   parent.innerHTML = rendered instanceof Trusted ? rendered.value : String(rendered);
+
+  if (refocus) {
+    const el = parent.querySelector(refocus.selector);
+    if (el) {
+      el.focus();
+      if (refocus.selectionStart != null && typeof el.setSelectionRange === 'function') {
+        try {
+          el.setSelectionRange(refocus.selectionStart, refocus.selectionEnd);
+        } catch {
+          // Some input types (number, email, ...) don't support selection ranges
+          // and throw — focus is already restored, which is the important part.
+        }
+      }
+    }
+  }
 }
