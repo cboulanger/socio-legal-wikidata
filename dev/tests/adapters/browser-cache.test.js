@@ -48,6 +48,27 @@ test('loadDirectory: live query used and cached when cache is cold', async () =>
   assert.deepEqual(cache.get('directory', 1000), [{ qid: 'Q2' }]);
 });
 
+test('loadDirectory: an empty live result is not cached, so a later non-empty query is not shadowed', async () => {
+  const storage = memStorage();
+  const cache = createCache({ storage, now: () => 0 });
+  const first = await loadDirectory({
+    cache, ttlMs: 1000, now: () => 0,
+    queryDirectory: async () => [],
+    fetch: async () => { throw new Error('should not be called'); },
+    snapshotUrl: 'data/snapshot.json',
+  });
+  assert.deepEqual(first.associations, []);
+  assert.equal(cache.get('directory', 1000), null); // must not have poisoned the cache
+
+  const second = await loadDirectory({
+    cache, ttlMs: 1000, now: () => 1, // still well within the same TTL window
+    queryDirectory: async () => [{ qid: 'Q9' }],
+    fetch: async () => { throw new Error('should not be called'); },
+    snapshotUrl: 'data/snapshot.json',
+  });
+  assert.deepEqual(second.associations, [{ qid: 'Q9' }]); // re-queried instead of reusing a stale empty cache
+});
+
 test('loadDirectory: falls back to the bundled snapshot on live failure', async () => {
   const cache = createCache({ storage: memStorage(), now: () => 0 });
   const out = await loadDirectory({
