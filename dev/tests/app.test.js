@@ -39,6 +39,29 @@ test('createApp renders the panel rows and shows a card on row click', async () 
   assert.doesNotMatch(host.innerHTML, /data-action="edit"/); // read-only
 });
 
+test('clearing the country filter also clears the #/country/XX URL hash', async () => {
+  const win = domFixture();
+  win.location.hash = '#/country/DE';
+  await createApp({
+    window: win,
+    config: { cacheTtlMs: 1, centroidsUrl: 'x', snapshotUrl: 'y', tileUrl: 't', tileAttribution: 'a' },
+    centroids: { DE: [10.4, 51.1] },
+    loadDirectory: async () => ({ associations, stale: false, asOf: null }),
+    createMapView: () => ({ render() {}, focus() {} }),
+    detectMode: () => 'read',
+  });
+  const host = win.document.getElementById('panel-host');
+  assert.match(host.innerHTML, /Germany/); // filter applied from the initial hash
+  assert.doesNotMatch(host.innerHTML, /Roaming body/);
+
+  host.querySelector('[data-role="clear-filter"]').click();
+  assert.match(host.innerHTML, /Roaming body/); // filter cleared in the UI
+  assert.equal(win.location.hash, ''); // ...and the hash must not still say #/country/DE
+
+  // A reload-equivalent (re-reading the now-cleared hash) must not re-apply the filter.
+  assert.doesNotMatch(win.location.hash, /country/);
+});
+
 test('typing in search filters the rows', async () => {
   const win = domFixture();
   await createApp({

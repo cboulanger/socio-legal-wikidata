@@ -90,6 +90,10 @@ export async function createApp(deps) {
     if (row) return select(row.dataset.qid);
     if (e.target.closest('[data-role="clear-filter"]')) {
       store.setState((s) => ({ filter: { ...s.filter, countryCode: undefined } }));
+      // The country filter can only ever have been set by way of #/country/XX (see
+      // onSelectCountry below), so clearing it must also clear that hash — otherwise
+      // a reload (or copying the URL) re-applies a filter the UI just showed as cleared.
+      if (/^#\/country\//.test(win.location.hash)) win.location.hash = '';
     }
   });
   panelHost.addEventListener('input', (e) => {
