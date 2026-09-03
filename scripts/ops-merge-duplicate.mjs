@@ -64,22 +64,27 @@ async function login(username, password) {
 }
 
 async function main() {
-  const [fromid, toid] = process.argv.slice(2);
+  const [fromid, toid, ignoreconflicts] = process.argv.slice(2);
   if (!fromid || !toid) {
-    console.error('Usage: node scripts/ops-merge-duplicate.mjs <fromQid> <toQid>');
+    console.error('Usage: node scripts/ops-merge-duplicate.mjs <fromQid> <toQid> [ignoreconflicts]');
+    console.error('  ignoreconflicts: pipe-separated subset of "description|label|sitelink|statement",');
+    console.error('  e.g. "description" when wbmergeitems fails with "Conflicting descriptions" —');
+    console.error('  it moves the losing description to an alias instead of failing outright.');
     process.exit(1);
   }
   const env = { ...loadEnv(), ...process.env };
   const jar = await login(env.WIKIDATA_BOT_USERNAME, env.WIKIDATA_BOT_PASSWORD);
   const csrf = await actionApi(jar, { action: 'query', meta: 'tokens', type: 'csrf' });
   const token = csrf.query.tokens.csrftoken;
-  const res = await actionApiPost(jar, {
+  const params = {
     action: 'wbmergeitems',
     fromid,
     toid,
     token,
     summary: 'Merge accidental duplicate created by socio-legal-wikidata import script',
-  });
+  };
+  if (ignoreconflicts) params.ignoreconflicts = ignoreconflicts;
+  const res = await actionApiPost(jar, params);
   console.log(JSON.stringify(res, null, 2));
 }
 

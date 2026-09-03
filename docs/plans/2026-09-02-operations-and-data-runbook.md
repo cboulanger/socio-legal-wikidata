@@ -323,11 +323,87 @@ resolve to their expected labels and none are redirects/missing.
 
 ### Task C4: Run Phase 3 — association-published journals
 
-- [ ] **Step 1: For the subset the association is the publisher of record for** (workbook *Journal* column + the "published by the association" editorial call from data spec §2.7): search Wikidata for the journal (many exist, e.g. ARSP `Q15710036`, LSR `Q6502970`).
+- [x] **Step 1: For the subset the association is the publisher of record for** (workbook *Journal* column + the "published by the association" editorial call from data spec §2.7): search Wikidata for the journal (many exist, e.g. ARSP `Q15710036`, LSR `Q6502970`).
 
-- [ ] **Step 2: Link** `Q<journal>\tP123\tQ<assoc>` and add `P856` / `P236` if missing. Create a minimal journal item only if none exists (`P31 Q737498`, `P123 Q<assoc>`, `P856`, `P236`).
+  **Done 2026-09-03** (research only, no writes yet): all 24 workbook rows with a
+  non-empty *Journal* cell were resolved via `wbsearchentities`/`wbgetentities`
+  (read-only, no credentials). 12 already have a commercial or unrelated publisher
+  correctly set on Wikidata (CUP, SAGE, Wiley, De Gruyter, Taylor & Francis, Boom,
+  Steiner, Edinburgh UP, FrancoAngeli) and are deliberately left alone per Step 3.
+  1 (Juris Diversitas) is a book series, not a journal — out of scope. 1 (SLSA) is a
+  newsletter cell with no link — not a scholarly journal. 5 are genuinely
+  self-published by the association: 4 need a brand-new journal item (Indonesian
+  Journal of Socio-Legal Studies; European Journal of Empirical Legal Studies; the
+  Korean association's 법과사회 — the only existing "Law and Society" item on
+  Wikidata, `Q96724470`, is a *different*, Ukrainian journal, confirmed via its
+  `P17`/uk-label; Revista Latinoamericana de Sociología Jurídica), 1 (JASL's *The
+  Sociology of Law*, `Q15757758`) already exists with `P123` empty. 2 are flagged as
+  a genuine editorial judgment call rather than resolved automatically (Oñati
+  Socio-Legal Series — real publisher is IISL, not RCSL; Sociologia On Line — tagged
+  "(APS)", the *parent* body, not the APS-SDJ section this row is about). Full
+  reasoning and the QuickStatements blocks are in
+  [`../../data/socio-legal-journals.quickstatements.txt`](../../data/socio-legal-journals.quickstatements.txt).
 
-- [ ] **Step 3: Do NOT link** journals published by a commercial house on the society's behalf — deferred (data spec §2.8).
+  **Duplicate associations found during this research (must be fixed before
+  importing the journals file):** two of the pre-existing minimal Wikidata
+  "publisher" stub items used as a journal's `P123` turned out to be the *same
+  real-world organisation*, under its native-language name, as an item this
+  project created in Task C2 under an English name — the same failure mode as the
+  CLSA/SLSA duplicates found during the association import, just not caught then
+  because that dedup pass only matched on exact label.
+  - `Q141260085` "Brazilian Association for the Study of the Sociology of Law" is
+    the same org as `Q52636089` "Associação Brasileira de Pesquisadores em
+    Sociologia do Direito" (already `P123` on `Q50817165`, *Revista Brasileira de
+    Sociologia do Direito*) → `node scripts/ops-merge-duplicate.mjs Q141260085 Q52636089`
+  - `Q141260167` "Brazilian Network for Empirical Legal Studies" is the same org as
+    `Q52608574` "Rede de Pesquisa Empírica em Direito" (already `P123` on
+    `Q50572449`, *Revista de Estudos Empíricos em Direito*) →
+    `node scripts/ops-merge-duplicate.mjs Q141260167 Q52608574`
+
+  Merging *into* the pre-existing stub (rather than the other way around) means the
+  journal's existing `P123` value stays correct with no follow-up edit; the richer
+  association statements (P31, P101, P856, P571, …) move onto the surviving item
+  automatically via `wbmergeitems`. `data/qids.json` needs both names repointed to
+  the surviving QID after merging.
+
+  **Done 2026-09-03.** Both merges ran cleanly via `ops-merge-duplicate.mjs
+  <from> <to> description` (the `description` `ignoreconflicts` flag was needed —
+  both item pairs had a conflicting English description; the script was extended to
+  accept it as an optional 3rd argument). `wbmergeitems` moved every statement
+  across but, because of the description conflict, left the "from" item non-empty
+  and didn't auto-redirect it (`"redirected": 0` in the response) — each needed one
+  follow-up `wbsetdescription` (clear the leftover English description) +
+  `wbcreateredirect` call to finish cleanly. Verified after: `Q52636089` and
+  `Q52608574` both now carry the full set of association statements (P17, P31 ×2 —
+  the original "open-access publisher" typing plus our "learned society"/"voluntary
+  association" one —, P101, P856, P571) alongside their pre-existing journal-facing
+  data (P5008, P10283, …), and `Q141260085`/`Q141260167` are confirmed redirects.
+  `data/qids.json` updated to map both names to the surviving QIDs.
+
+- [x] **Step 2: Link** `Q<journal>\tP123\tQ<assoc>` and add `P856` / `P236` if missing. Create a minimal journal item only if none exists (`P31 Q737498`, `P123 Q<assoc>`, `P856`, `P236`).
+
+  **Done 2026-09-03** via `scripts/ops-import-journals.mjs` (a fork of
+  `ops-import-associations.mjs` pointed at
+  [`../../data/socio-legal-journals.quickstatements.txt`](../../data/socio-legal-journals.quickstatements.txt)
+  and `data/journal-qids.json`) — all 5 blocks succeeded, 0 failures: created
+  *Indonesian Journal of Socio-Legal Studies* (`Q141270694`), *European Journal of
+  Empirical Legal Studies* (`Q141270695`), and *Revista Latinoamericana de
+  Sociología Jurídica* (`Q141270696`); added `P123` to JASL's existing journal
+  (`Q15757758`).
+
+  **One more real duplicate caught before it happened:** re-checking the Korean
+  journal turned up that it already exists on Wikidata as `Q96722758` — its English
+  label is *"Korean Journal of Law and Society"*, not *"Law and Society"*, so the
+  original English-only search in Step 1 missed it entirely (the only English match,
+  `Q96724470`, is the unrelated Ukrainian journal already ruled out). Only found by
+  searching the Korean title "법과사회" directly; confirmed the same journal via its
+  DBpia external ID (`P11431` = `PLCT00015222`, an exact match to the workbook's
+  journal link). Added `P123` + `P856` to it instead of creating a duplicate — a live
+  demonstration of why the importer's exact-label dedup guard (added after the
+  CLSA/SLSA incident in Task C2) is worth having even on a file that looked
+  fully pre-researched.
+
+- [x] **Step 3: Do NOT link** journals published by a commercial house on the society's behalf — deferred (data spec §2.8). Applied above: 12 rows were verified to already carry the correct commercial `P123` and were left untouched.
 
 ### Task C5: Seed the snapshot from live data
 
@@ -419,4 +495,5 @@ Only if the project wants proactive diffs on top of contact-person watchlists. T
 | in-scope field QID (Task A2) | `Q2734663` (provisional) | | Same as above. |
 | production OAuth client ID (Task A3) | | | Needs Task A3 done interactively on Meta-Wiki; still `REPLACE_WITH_REGISTERED_CONSUMER_CLIENT_ID` in `config.json`. |
 | production deploy URL | `https://cboulanger.github.io/socio-legal-wikidata/` | 2026-09-02 | GitHub Pages, deployed via `.github/workflows/deploy.yml` on every push to `main`. Dev/local uses `http://localhost:8000/`. Redirect URIs for Task A3: `…/callback.html` on each. |
-| initial import run (Task C2) | done 2026-09-02 | 2026-09-02 | 39/39 associations live (34 created, 5 pre-existing updated) via `scripts/ops-import-associations.mjs`; mapping in `data/qids.json`; 3 accidental duplicates caught and resolved (1 needed a `wbmergeitems` after the fact, 2 caught before creating). Task C3 (persons/chairs) and C4 (journals) not yet run — deferred, not part of this import. |
+| initial import run (Task C2) | done 2026-09-02 | 2026-09-02 | 39/39 associations live (34 created, 5 pre-existing updated) via `scripts/ops-import-associations.mjs`; mapping in `data/qids.json`; 3 accidental duplicates caught and resolved (1 needed a `wbmergeitems` after the fact, 2 caught before creating). Task C3 (persons/chairs) not yet run — deferred, not part of this import. |
+| journals import run (Task C4) | done 2026-09-03 | 2026-09-03 | 5/5 journal blocks live via `scripts/ops-import-journals.mjs`; mapping in `data/journal-qids.json`; 12 commercially-published journals correctly left untouched; 2 more accidental association duplicates found and resolved the same way as Task C2 (`Q141260085`→`Q52636089`, `Q141260167`→`Q52608574`); 1 more real journal duplicate avoided (Korean journal, found only via native-script search). 2 rows (Oñati Socio-Legal Series, Sociologia On Line) deliberately left unlinked — genuine editorial judgment call, see Task C4 Step 1. |
