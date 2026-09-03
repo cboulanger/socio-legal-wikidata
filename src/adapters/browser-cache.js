@@ -43,7 +43,12 @@ export async function loadDirectory({ cache, queryDirectory, fetch, snapshotUrl,
 
   try {
     const associations = await queryDirectory();
-    cache.set('directory', associations);
+    // Don't cache an empty result: a live query can legitimately return zero rows
+    // (e.g. before any in-scope items exist yet on Wikidata, or a transient partial
+    // failure upstream), and caching that for the full TTL would silently hide real
+    // data appearing later for as long as ttlMs — up to 24h with this app's default
+    // config. An empty result is cheap to re-fetch, so just don't cache it.
+    if (associations.length > 0) cache.set('directory', associations);
     return { associations, stale: false, asOf: null };
   } catch {
     const res = await fetch(snapshotUrl);
