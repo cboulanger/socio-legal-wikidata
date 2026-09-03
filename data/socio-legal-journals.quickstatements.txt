@@ -1,0 +1,98 @@
+# QuickStatements v1 — socio-legal association-published journals (runbook Task C4)
+# Import at https://quickstatements.toolforge.org/  (V1 syntax; TAB-separated)
+# Source: workbook `data/Global Law and Society Associations Directory v7 Sept 2026.csv`,
+# *Journal* / *Journal link* columns, cross-checked against live Wikidata search
+# (wbsearchentities + wbgetentities, read-only, 2026-09-03).
+#
+# Scope rule applied (data spec §2.7/§2.8): only link P123 (publisher) from a journal
+# to the ASSOCIATION when the association is the actual publisher of record. The
+# workbook marks most rows with "(Publisher)" in the Journal column — CUP, SAGE,
+# Wiley, De Gruyter, Taylor & Francis, Boom, Steiner, FrancoAngeli, Edinburgh UP,
+# Routledge — meaning a commercial house (or unrelated learned society, in one case)
+# holds P123 already on Wikidata. Verified live: every one of those already has the
+# correct commercial P123 set, so nothing to do for them; per §2.8 they are
+# deliberately NOT relinked to the association below.
+#
+# Journals confirmed genuinely self-published by the association (no P123 yet, or a
+# pre-existing item that IS the association under its native-language name):
+#   - Indonesian Journal of Socio-Legal Studies      -> new item (not on Wikidata yet)
+#   - European Journal of Empirical Legal Studies    -> new item (not on Wikidata yet)
+#   - Revista Latinoamericana de Sociología Jurídica -> new item (not on Wikidata yet)
+#   - The Sociology of Law / 法社会学 (JASL, hosted on J-Stage, not a separate
+#     publisher) -> existing item Q15757758, P123 currently empty, add it
+#   - 법과사회 (Korean assoc.'s journal) -> existing item Q96722758 "Korean Journal of
+#     Law and Society", found ONLY via a Korean-text search — its English label is
+#     "Korean Journal of Law and Society", not "Law and Society" (the only match for
+#     that English phrase, Q96724470, is a different, unrelated Ukrainian journal,
+#     confirmed via its P17/uk-label "Право і суспільство"). Confirmed the same
+#     journal via its DBpia external ID (P11431 = "PLCT00015222", exact match to the
+#     workbook's journal link); has ISSN (P236) already, no P123/P856 yet — add both.
+#     This one is a reminder of why the importer's exact-label dedup guard matters:
+#     an English-only search for this journal would have created a real duplicate.
+#
+# Skipped, needs a human editorial call rather than an automatic rule (NOT included
+# below — flagged for the consultation / a follow-up decision, not silently guessed):
+#   - Oñati Socio-Legal Series (RCSL row): the real publisher of record on Wikidata
+#     (Q50815368) is already P123 -> Q52619154 "Oñati International Institute for the
+#     Sociology of Law" (IISL) — a distinct, real organisation, not RCSL itself. Adding
+#     RCSL as a second P123 would misstate who actually publishes it.
+#   - Sociologia On Line (APS-SDJ row): the workbook tags it "(APS)" — the PARENT
+#     Portuguese Sociological Association, not the Sociology of Law section (APS-SDJ)
+#     this row is about. The existing item (Q96731691) has no P123 yet; the correct
+#     target is arguably Q139771455 (APS, the parent), not Q141260178 (the section) —
+#     left unlinked pending a decision on which.
+#   - Juris Diversitas "book series (Routledge)": a book series, not a journal
+#     (P31 would be "book series", not Q737498) and commercially published — out of
+#     scope for this task entirely.
+#   - Socio-Legal Studies Association: workbook journal cell is "— (Socio-Legal
+#     Newsletter)" with no link — a newsletter, not a scholarly journal — skipped.
+#
+# *** IMPORTANT — two accidental duplicate ASSOCIATION items were found while
+# *** researching this (pre-existing minimal "publisher" stub items that are the
+# *** same real-world organisation as items this project created in Task C2, just
+# *** under their native-language name). These must be merged BEFORE this file is
+# *** imported, or the P123 statements below will point past a live item to one
+# *** that should no longer exist. See `docs/plans/2026-09-02-operations-and-data-runbook.md`
+# *** Task C4 decision log for the exact `ops-merge-duplicate.mjs` commands:
+# ***   Q141260085 "Brazilian Association for the Study of the Sociology of Law"
+# ***     -> merge INTO Q52636089 "Associação Brasileira de Pesquisadores em
+# ***        Sociologia do Direito" (same org; Q52636089 is already the journal's
+# ***        publisher, so merging keeps that statement correct with no fix-up)
+# ***   Q141260167 "Brazilian Network for Empirical Legal Studies"
+# ***     -> merge INTO Q52608574 "Rede de Pesquisa Empírica em Direito" (same org;
+# ***        already the journal's publisher, same reasoning)
+# *** After merging, update data/qids.json: both names should map to the *_to_* QID.
+# *** The two journals themselves (Q50817165, Q50572449) need NO edits below — their
+# *** P123 is already correct once the merge lands.
+
+CREATE
+LAST	Len	"Indonesian Journal of Socio-Legal Studies"
+LAST	Den	"academic journal on socio-legal studies published by the Association of Indonesian Socio-Legal Scholars"
+LAST	P31	Q737498
+LAST	P123	Q141260164
+LAST	P856	"https://scholarhub.ui.ac.id/ijsls"
+
+CREATE
+LAST	Len	"European Journal of Empirical Legal Studies"
+LAST	Den	"academic journal on empirical legal studies published by the European Society for Empirical Legal Studies"
+LAST	P31	Q737498
+LAST	P123	Q141260169
+LAST	P856	"https://esels.eu/ejels/"
+
+CREATE
+LAST	Len	"Revista Latinoamericana de Sociología Jurídica"
+LAST	Den	"academic journal on the sociology of law published by Sociedad Argentina de Sociología Jurídica"
+LAST	P31	Q737498
+LAST	P123	Q141260176
+LAST	P856	"https://usi.edu.ar/publicaciones/revista-latinoamericana-de-sociologia-juridica/"
+
+# --- existing item Q15757758: The Sociology of Law / 法社会学 (JASL's journal,
+#   hosted on the J-Stage platform — not a separate commercial publisher). P123 was
+#   empty; label/description/P856/P236 left untouched (already correct).
+Q15757758	P123	Q111548489
+
+# --- existing item Q96722758: Korean Journal of Law and Society / 법과사회 (KLSA's
+#   journal, hosted on DBpia — not a separate commercial publisher). P123 and P856
+#   were both empty; label/description/P236 left untouched (already correct).
+Q96722758	P123	Q141260092
+Q96722758	P856	"https://www.dbpia.co.kr/journal/publicationDetail?publicationId=PLCT00015222"

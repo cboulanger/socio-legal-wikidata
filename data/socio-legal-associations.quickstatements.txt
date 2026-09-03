@@ -1,0 +1,375 @@
+# QuickStatements v1 — socio-legal associations bootstrap (generated Sept 2026)
+# Import at https://quickstatements.toolforge.org/  (V1 syntax; TAB-separated)
+# Phase 1 below = ASSOCIATION items. P101=Q2734663 (sociology of law) marks the domain.
+# P31 provisional: Q955824 learned society / Q48204 voluntary association — review per body;
+#   national SECTIONS should also get P361 (part of) their parent association's item.
+# 2026-09-02 pre-flight (runbook Task C1): added P361 to the 7 national-section/network
+#   rows against these parent items (resolved via wbsearchentities, unverified beyond
+#   label match — re-check before import):
+#   Q303283 Österreichische Gesellschaft für Soziologie (Austrian section)
+#   Q1202999 German Sociological Association (DGS section)
+#   Q3488406 Indian Sociological Society (RC-23)
+#   Q139771455 Associação Portuguesa de Sociologia (APS-SDJ section)
+#   Q2867726 Association française de sociologie (AFS RT13)
+#   Q2867838 Italian Sociological Association (AIS section)
+#   Q7209992 Polish Sociological Association (section)
+#   Also fixed: a stray trailing ";" inside the RC-23 P968 email value.
+# Only INSTITUTIONAL emails are included (P968); personal addresses deliberately omitted.
+# Rows with an existing QID add statements to that item; blank-QID rows CREATE a new item.
+#
+# Phase 2 (do after): create each chair as a Person (P31=Q5, P106 researcher, P108 employer,
+#   P496 ORCID), then link Association P488 -> personQID with P580/P582 term qualifiers.
+#   Verified ORCIDs so far: Guibentif 0000-0002-4319-9537; Kheria 0000-0002-4628-9407;
+#   de Winter 0000-0002-8885-2587; Erlings 0000-0002-9346-5290.
+
+CREATE
+LAST	Len	"Africa Law and Society Network"
+LAST	Den	"socio-legal research network for Africa"
+LAST	P31	Q48204
+LAST	P101	Q2734663
+LAST	P856	"https://africalawandsociety.org"
+LAST	P968	"africa-irc@uct.ac.za"
+LAST	P571	+2016-01-01T00:00:00Z/9
+
+CREATE
+LAST	Len	"Asian Law and Society Association"
+LAST	Den	"regional scholarly association for law and society in Asia"
+LAST	P31	Q955824
+LAST	P101	Q2734663
+LAST	P17	Q17
+LAST	P856	"https://www.alsa.network"
+LAST	P968	"alsaexecoffice@gmail.com"
+LAST	P571	+2015-01-01T00:00:00Z/9
+
+CREATE
+LAST	Len	"Asociación Latinoamericana y del Caribe de Derecho y Sociedad"
+LAST	Den	"regional association for law and society in Latin America and the Caribbean"
+LAST	P31	Q955824
+LAST	P101	Q2734663
+LAST	P856	"https://www.alades.org"
+LAST	P968	"contactoalades@gmail.com"
+LAST	P571	+2024-01-01T00:00:00Z/9
+
+# --- existing item Q42417723: Association for the Study of Law, Culture and the
+#   Humanities (label/description left untouched). Discovered during the C2 import
+#   run 2026-09-02: a wbsearchentities exact-label match found this pre-existing item
+#   before create, but the create attempt failed anyway (P968 mailto: bug, since
+#   fixed) and never actually ran — no duplicate was created for this one. Its
+#   existing P17 (Q30, USA) already matches; it has no P31/P101/P856/P968 yet.
+Q42417723	P31	Q955824
+Q42417723	P101	Q2734663
+Q42417723	P856	"https://lawculturehumanities.com"
+Q42417723	P968	"lch@lawculturehumanities.com"
+
+# --- existing item Q2867822: Association Internationale des Sociologues de Langue Française (label/description left untouched)
+Q2867822	P31	Q955824
+Q2867822	P101	Q2734663
+Q2867822	P17	Q142
+Q2867822	P856	"https://www.aislf.org"
+Q2867822	P571	+1958-01-01T00:00:00Z/9
+
+CREATE
+LAST	Len	"Association of Indonesian Socio-Legal Scholars"
+LAST	Den	"national association of socio-legal scholars in Indonesia"
+LAST	P31	Q955824
+LAST	P101	Q2734663
+LAST	P17	Q252
+LAST	P856	"https://asslesi.id"
+LAST	P968	"sosiolegal.indonesia@gmail.com"
+LAST	P571	+2011-01-01T00:00:00Z/9
+
+CREATE
+LAST	Len	"Austrian Sociological Association – Section on Law and Society"
+LAST	Den	"law and society section of the Austrian Sociological Association"
+LAST	P31	Q48204
+LAST	P101	Q2734663
+LAST	P17	Q40
+LAST	P856	"https://oegs.ac.at/recht-und-gesellschaft/"
+LAST	P968	"rechtundgesellschaft@oegs.ac.at"
+LAST	P361	Q303283
+
+CREATE
+LAST	Len	"Berliner Arbeitskreis Rechtswirklichkeit"
+LAST	Den	"German network for interdisciplinary legal research"
+LAST	P31	Q48204
+LAST	P101	Q2734663
+LAST	P17	Q183
+LAST	P856	"https://barblog.hypotheses.org"
+LAST	P968	"info@rechtswirklichkeit.de"
+LAST	P571	+2001-01-01T00:00:00Z/9
+
+CREATE
+LAST	Len	"Brazilian Association for the Study of the Sociology of Law"
+LAST	Den	"national association for the sociology of law in Brazil"
+LAST	P31	Q955824
+LAST	P101	Q2734663
+LAST	P17	Q155
+LAST	P856	"https://www.abrasd.com.br"
+LAST	P571	+2010-01-01T00:00:00Z/9
+
+CREATE
+LAST	Len	"Brazilian Network for Empirical Legal Studies"
+LAST	Den	"Brazilian network for empirical legal studies"
+LAST	P31	Q48204
+LAST	P101	Q2734663
+LAST	P17	Q155
+LAST	P856	"https://reedpesquisa.org"
+LAST	P968	"reed.pesquisa@gmail.com"
+LAST	P571	+2011-01-01T00:00:00Z/9
+
+CREATE
+LAST	Len	"Canadian Law and Society Association"
+LAST	Den	"national association for law and society in Canada"
+LAST	P31	Q955824
+LAST	P101	Q2734663
+LAST	P17	Q16
+LAST	P856	"https://www.acds-clsa.ca"
+LAST	P571	+1985-01-01T00:00:00Z/9
+
+CREATE
+LAST	Len	"Commission on Legal Pluralism"
+LAST	Den	"international commission on legal pluralism"
+LAST	P31	Q955824
+LAST	P101	Q2734663
+LAST	P856	"https://commission-on-legal-pluralism.com"
+LAST	P571	+1978-01-01T00:00:00Z/9
+
+CREATE
+LAST	Len	"Dutch-Flemish Law and Society Association"
+LAST	Den	"Dutch-Flemish law and society association"
+LAST	P31	Q955824
+LAST	P101	Q2734663
+LAST	P17	Q55
+LAST	P856	"https://www.rechtensamenleving.nl"
+LAST	P968	"vsr.email@gmail.com"
+LAST	P571	+1980-01-01T00:00:00Z/9
+
+CREATE
+LAST	Len	"European Society for Empirical Legal Studies"
+LAST	Den	"European society for empirical legal studies"
+LAST	P31	Q955824
+LAST	P101	Q2734663
+LAST	P17	Q55
+LAST	P856	"https://esels.eu"
+LAST	P968	"contact@esels.eu"
+LAST	P571	+2021-01-01T00:00:00Z/9
+
+CREATE
+LAST	Len	"German Association for Law and Society"
+LAST	Den	"German association for law and society"
+LAST	P31	Q955824
+LAST	P101	Q2734663
+LAST	P17	Q183
+LAST	P856	"https://rechtssoziologie.info"
+
+CREATE
+LAST	Len	"German Sociological Association – Sociology of Law Section"
+LAST	Den	"sociology of law section of the German Sociological Association"
+LAST	P31	Q48204
+LAST	P101	Q2734663
+LAST	P17	Q183
+LAST	P856	"https://soziologie.de/sektionen/rechtssoziologie"
+LAST	P361	Q1202999
+
+# --- existing item Q1268131: International Association for Philosophy of Law and Social Philosophy (label/description left untouched)
+Q1268131	P31	Q955824
+Q1268131	P101	Q2734663
+Q1268131	P856	"https://ivronlineblog.wordpress.com"
+Q1268131	P968	"ivrint.web@gmail.com"
+Q1268131	P571	+1909-01-01T00:00:00Z/9
+
+CREATE
+LAST	Len	"Israeli Law and Society Association"
+LAST	Den	"Israeli law and society association"
+LAST	P31	Q955824
+LAST	P101	Q2734663
+LAST	P17	Q801
+LAST	P856	"https://lp.pac.ac.il/he/law-and-society-conference"
+LAST	P968	"isrlawsoc@gmail.com"
+
+CREATE
+LAST	Len	"Italian Association for the Study of Law and Society"
+LAST	Den	"Italian association for the study of law and society"
+LAST	P31	Q955824
+LAST	P101	Q2734663
+LAST	P17	Q38
+LAST	P856	"https://dirittoesocieta.org"
+
+# --- existing item Q111548489: Japanese Association of Sociology of Law (label/description left untouched)
+Q111548489	P31	Q955824
+Q111548489	P101	Q2734663
+Q111548489	P17	Q17
+Q111548489	P856	"https://jasl.info"
+Q111548489	P571	+1947-01-01T00:00:00Z/9
+
+CREATE
+LAST	Len	"Juris Diversitas"
+LAST	Den	"international association for comparative law and legal diversity"
+LAST	P31	Q955824
+LAST	P101	Q2734663
+LAST	P856	"http://jurisdiversitas.blogspot.com"
+
+CREATE
+LAST	Len	"Korean Law and Society Association"
+LAST	Den	"Korean law and society association"
+LAST	P31	Q955824
+LAST	P101	Q2734663
+LAST	P17	Q884
+LAST	P856	"https://klsa.jams.or.kr"
+
+CREATE
+LAST	Len	"Law & Social Sciences Network"
+LAST	Den	"South Asian law and social sciences research network"
+LAST	P31	Q48204
+LAST	P101	Q2734663
+LAST	P856	"http://lassnet.blogspot.com"
+LAST	P571	+2008-01-01T00:00:00Z/9
+
+# --- existing item Q6503159: Law and Society Association (label/description left untouched)
+Q6503159	P31	Q955824
+Q6503159	P101	Q2734663
+Q6503159	P17	Q30
+Q6503159	P856	"https://www.lawandsociety.org"
+Q6503159	P968	"lsa@lawandsociety.org"
+Q6503159	P571	+1964-01-01T00:00:00Z/9
+
+CREATE
+LAST	Len	"Law and Society Association of Australia and New Zealand"
+LAST	Den	"law and society association of Australia and New Zealand"
+LAST	P31	Q955824
+LAST	P101	Q2734663
+LAST	P856	"https://www.lsaanz.org"
+LAST	P968	"lsaanzcomms@gmail.com"
+LAST	P571	+2006-01-01T00:00:00Z/9
+
+CREATE
+LAST	Len	"Netherlands Academy for Empirical Legal Studies"
+LAST	Den	"Dutch interuniversity academy for empirical legal studies"
+LAST	P31	Q48204
+LAST	P101	Q2734663
+LAST	P17	Q55
+LAST	P856	"https://elsacademy.nl"
+LAST	P968	"contact@elsacademy.nl"
+
+CREATE
+LAST	Len	"Red Derecho y Sociedad"
+LAST	Den	"Spanish law and society network"
+LAST	P31	Q48204
+LAST	P101	Q2734663
+LAST	P17	Q29
+LAST	P856	"http://derechoysociedad.unizar.es/red-derecho-y-sociedad"
+LAST	P968	"sociojur@unizar.es"
+
+CREATE
+LAST	Len	"Red Sociojurídica"
+LAST	Den	"Colombian network of legal and socio-legal research groups"
+LAST	P31	Q48204
+LAST	P101	Q2734663
+LAST	P17	Q739
+LAST	P856	"https://www.redjuridicaysociojuridica.com"
+
+CREATE
+LAST	Len	"Research Committee on Sociology of Law of the Swiss Sociological Association"
+LAST	Den	"sociology of law committee of the Swiss Sociological Association"
+LAST	P31	Q48204
+LAST	P101	Q2734663
+LAST	P17	Q39
+LAST	P856	"https://www.sgs-sss.ch"
+LAST	P968	"law@sgs-sss.ch"
+
+# --- existing item Q2145564: Research Committee on the Sociology of Law (label/description left untouched)
+Q2145564	P31	Q955824
+Q2145564	P101	Q2734663
+Q2145564	P17	Q29
+Q2145564	P856	"https://rcsl.hypotheses.org"
+Q2145564	P968	"m.kortabarria@iisj.es"
+Q2145564	P571	+1962-01-01T00:00:00Z/9
+
+CREATE
+LAST	Len	"Research Committee on the Sociology of Law, Crime and Deviance, Indian Sociological Society"
+LAST	Den	"sociology of law/crime/deviance committee of the Indian Sociological Society"
+LAST	P31	Q48204
+LAST	P101	Q2734663
+LAST	P17	Q668
+LAST	P856	"http://www.insoso.org/committees/research-committees"
+LAST	P968	"iss23crime20@gmail.com"
+LAST	P361	Q3488406
+
+CREATE
+LAST	Len	"Sociedad Argentina de Sociología Jurídica"
+LAST	Den	"Argentine society for the sociology of law"
+LAST	P31	Q955824
+LAST	P101	Q2734663
+LAST	P17	Q414
+LAST	P856	"https://www.sasju.org"
+LAST	P968	"contactosasju@gmail.com"
+LAST	P571	+2005-01-01T00:00:00Z/9
+
+CREATE
+LAST	Len	"Society for Empirical Legal Studies"
+LAST	Den	"US society for empirical legal studies"
+LAST	P31	Q955824
+LAST	P101	Q2734663
+LAST	P17	Q30
+LAST	P856	"https://community.lawschool.cornell.edu/sels/"
+LAST	P968	"sels@cornell.edu"
+LAST	P571	+2006-01-01T00:00:00Z/9
+
+CREATE
+LAST	Len	"Socio-Legal Studies Association"
+LAST	Den	"UK socio-legal studies association"
+LAST	P31	Q955824
+LAST	P101	Q2734663
+LAST	P17	Q145
+LAST	P856	"https://www.slsa.ac.uk"
+LAST	P968	"admin@slsa.ac.uk"
+LAST	P571	+1990-01-01T00:00:00Z/9
+
+CREATE
+LAST	Len	"Sociology of Law and Justice Section of the Portuguese Sociological Association"
+LAST	Den	"sociology of law and justice section of the Portuguese Sociological Association"
+LAST	P31	Q48204
+LAST	P101	Q2734663
+LAST	P17	Q45
+LAST	P856	"https://aps.pt/pt/seccao-tematica-sociologia-do-direito-e-da-justica/"
+LAST	P968	"direito@aps.pt"
+LAST	P571	+2014-01-01T00:00:00Z/9
+LAST	P361	Q139771455
+
+CREATE
+LAST	Len	"Sociology of Law and Justice Thematic Network of the French Sociological Association"
+LAST	Den	"sociology of law and justice network (RT13) of the French Sociological Association"
+LAST	P31	Q48204
+LAST	P101	Q2734663
+LAST	P17	Q142
+LAST	P856	"https://droitscisoc.hypotheses.org"
+LAST	P361	Q2867726
+
+CREATE
+LAST	Len	"Sociology of Law Section of the Italian Sociological Association"
+LAST	Den	"sociology of law section of the Italian Sociological Association"
+LAST	P31	Q48204
+LAST	P101	Q2734663
+LAST	P17	Q38
+LAST	P856	"https://www.ais-sociologia.it/en/sociologia-del-diritto/"
+LAST	P968	"diritto@ais-sociologia.it"
+LAST	P361	Q2867838
+
+CREATE
+LAST	Len	"Sociology of Law Section of the Polish Sociological Association"
+LAST	Den	"sociology of law section of the Polish Sociological Association"
+LAST	P31	Q48204
+LAST	P101	Q2734663
+LAST	P17	Q36
+LAST	P856	"https://pts.org.pl/sekcja/sekcja-socjologii-prawa/"
+LAST	P361	Q7209992
+
+CREATE
+LAST	Len	"Swiss Network for Law and Society"
+LAST	Den	"Swiss network for law and society"
+LAST	P31	Q48204
+LAST	P101	Q2734663
+LAST	P17	Q39
+LAST	P856	"https://www.lawandsociety.ch"
+LAST	P968	"info@lawandsociety.ch"
+LAST	P571	+2022-01-01T00:00:00Z/9
