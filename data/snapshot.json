@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-03",
+  "generatedAt": "2026-09-04",
   "associations": [
     {
       "qid": "Q141260161",
@@ -300,27 +300,6 @@
         "url": "https://esels.eu/ejels/",
         "issn": null
       }
-    },
-    {
-      "qid": "Q141260088",
-      "label": "German Association for Law and Society",
-      "description": "German association for law and society",
-      "countryCode": "DE",
-      "countryLabel": "Germany",
-      "operatingAreaQid": null,
-      "seatQid": null,
-      "seatLabel": null,
-      "seatCoord": null,
-      "parentQid": null,
-      "parentLabel": null,
-      "website": "https://rechtssoziologie.info",
-      "email": null,
-      "inception": null,
-      "president": null,
-      "leadUniQid": null,
-      "leadUniLabel": null,
-      "leadCoord": null,
-      "journal": null
     },
     {
       "qid": "Q141260089",
