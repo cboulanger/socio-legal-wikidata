@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-08",
+  "generatedAt": "2026-09-09",
   "associations": [
     {
       "qid": "Q141260161",
@@ -110,39 +110,6 @@
       "leadUniLabel": null,
       "leadCoord": null,
       "journal": null
-    },
-    {
-      "qid": "Q2867822",
-      "label": "Association internationale des sociologues de langue française",
-      "description": "association of sociologists",
-      "countryCode": "FR",
-      "countryLabel": "France",
-      "operatingAreaQid": null,
-      "seatQid": "Q7880",
-      "seatLabel": "Toulouse",
-      "seatCoord": [
-        1.443333333,
-        43.604444444
-      ],
-      "parentQid": null,
-      "parentLabel": null,
-      "website": "https://www.aislf.org",
-      "email": null,
-      "inception": "1958",
-      "president": {
-        "qid": "Q109453621",
-        "label": "Imed Melliti",
-        "url": null
-      },
-      "leadUniQid": null,
-      "leadUniLabel": null,
-      "leadCoord": null,
-      "journal": {
-        "qid": "Q3487483",
-        "label": "Sociologies",
-        "url": "http://sociologies.revues.org/",
-        "issn": "1992-2655"
-      }
     },
     {
       "qid": "Q141260164",
