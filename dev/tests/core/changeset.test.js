@@ -332,3 +332,20 @@ test('create-association carries the abbreviation on the new item', () => {
   assert.deepEqual(claim.reference, { P854: 'https://alsa.example' });
   assert.deepEqual(create.aliases, { en: ['ALSA'] });
 });
+
+test('update-field: a changed operating area alone is a valid change and replaces P2541', () => {
+  const d = emptyDraft('update-field');
+  d.association.qid = 'Q100';
+  d.association.original = { labels: {}, descriptions: {}, website: null, email: null, operatingAreaQid: null };
+  d.association.operatingAreaQid = 'Q48';
+  d.association.operatingAreaLabel = 'Asia';
+  d.association.referenceUrl = 'https://example.org/about';
+
+  const cs = buildChangeSet(d, cfg);
+  const op = cs.ops.find((o) => o.property === 'P2541');
+  assert.deepEqual(op.target, { qid: 'Q100' });
+  assert.deepEqual(op.value, { kind: 'item', qid: 'Q48' });
+  assert.equal(op.replace, true);
+  assert.match(cs.summary, /operating area/);
+  assert.ok(describeChanges(d).includes('operating area: Asia'));
+});

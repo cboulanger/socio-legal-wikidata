@@ -362,7 +362,7 @@ export function validateDraftForChangeset(d) {
   if (d.mode === 'update-field') {
     if (!a.qid) e.push('association.qid is required');
     const former = hasFormerNames(a);
-    const parent = !!changedParent(a);
+    const parent = !!changedParent(a) || !!changedOperatingArea(a);
     const abbr = hasAbbreviations(a);
     if (!hasTermChanges(a) && !changedStatement && !scopeChange && !former && !parent && !abbr) e.push('nothing to update');
     if ((changedStatement || scopeChange || former || parent || abbr) && !a.referenceUrl) e.push('association.referenceUrl is required');
