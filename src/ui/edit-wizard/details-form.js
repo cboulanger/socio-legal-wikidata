@@ -55,15 +55,15 @@ export function renderDetailsForm({ draft, langs, suggestions, labelLanguages = 
             this association will appear as its Wikidata ID in the directory until a name in one of those languages is added.</p>`
         : ''}
       <label>Website
-        <input type="url" name="website" data-field="website" value="${a.website || ''}" autocomplete="off"></label>
+        <input type="text" inputmode="url" name="website" data-field="website" value="${a.website || ''}" autocomplete="off"></label>
       <label>E-mail (shared role address)
-        <input type="email" name="email" data-field="email" value="${a.email || ''}" autocomplete="off"></label>
+        <input type="text" inputmode="email" name="email" data-field="email" value="${a.email || ''}" autocomplete="off"></label>
       ${needsConfirm
         ? html`<label class="details__confirm"><input type="checkbox" name="emailConfirmedShared" data-field="emailConfirmedShared"
               ${a.emailConfirmedShared ? 'checked' : ''}> This is a shared role address, not a personal one</label>`
         : ''}
       <label>Reference URL ${refRequired ? '(required)' : '(needed when website or e-mail change)'}
-        <input type="url" name="referenceUrl" data-field="referenceUrl" value="${a.referenceUrl || ''}" autocomplete="off"></label>
+        <input type="text" inputmode="url" name="referenceUrl" data-field="referenceUrl" value="${a.referenceUrl || ''}" autocomplete="off"></label>
     </div>`;
 }
 

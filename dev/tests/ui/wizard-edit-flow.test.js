@@ -201,3 +201,23 @@ test('reopening the wizard on the same host does not leave the old wizard handli
   assert.equal(host.querySelectorAll('.wizard__steps li[aria-current="true"]').length, 1);
   assert.match(host.querySelector('.wizard__steps li[aria-current="true"]').textContent, /2 review/);
 });
+
+test('typing in website, e-mail and reference fields keeps the caret at the end (no reversed text)', async () => {
+  const { win, host, ports } = setup();
+  createWizard(host, { window: win, config: cfg, ports, seed: { mode: 'update-field', association: { qid: 'Q1' } } });
+  await settle();
+  for (const name of ['website', 'email', 'referenceUrl']) {
+    const before = host.querySelector(`input[name="${name}"]`);
+    // email/url input types have no selection API in browsers, which loses the caret on re-render
+    assert.equal(before.type, 'text', `${name} must be a text input`);
+    before.focus();
+    before.value = 'abc';
+    before.setSelectionRange(3, 3);
+    before.dispatchEvent(new win.Event('input', { bubbles: true }));
+    const after = host.querySelector(`input[name="${name}"]`);
+    assert.notEqual(after, before);                      // the form was re-rendered
+    assert.equal(win.document.activeElement, after);
+    assert.equal(after.selectionStart, 3);
+    assert.equal(after.value, 'abc');
+  }
+});
