@@ -202,22 +202,74 @@ test('reopening the wizard on the same host does not leave the old wizard handli
   assert.match(host.querySelector('.wizard__steps li[aria-current="true"]').textContent, /2 review/);
 });
 
-test('typing in website, e-mail and reference fields keeps the caret at the end (no reversed text)', async () => {
+test('typing never replaces the input being typed in (focus, caret and value survive)', async () => {
   const { win, host, ports } = setup();
   createWizard(host, { window: win, config: cfg, ports, seed: { mode: 'update-field', association: { qid: 'Q1' } } });
   await settle();
-  for (const name of ['website', 'email', 'referenceUrl']) {
-    const before = host.querySelector(`input[name="${name}"]`);
-    // email/url input types have no selection API in browsers, which loses the caret on re-render
-    assert.equal(before.type, 'text', `${name} must be a text input`);
-    before.focus();
-    before.value = 'abc';
-    before.setSelectionRange(3, 3);
-    before.dispatchEvent(new win.Event('input', { bubbles: true }));
-    const after = host.querySelector(`input[name="${name}"]`);
-    assert.notEqual(after, before);                      // the form was re-rendered
-    assert.equal(win.document.activeElement, after);
-    assert.equal(after.selectionStart, 3);
-    assert.equal(after.value, 'abc');
+  for (const name of ['label-en', 'description-pt', 'website', 'email', 'referenceUrl']) {
+    const el = host.querySelector(`input[name="${name}"]`);
+    el.focus();
+    el.value = 'abc';
+    el.setSelectionRange(3, 3);
+    el.dispatchEvent(new win.Event('input', { bubbles: true }));
+    assert.equal(host.querySelector(`input[name="${name}"]`), el, `${name} was re-created`);
+    assert.equal(win.document.activeElement, el);
+    assert.equal(el.selectionStart, 3);
+    assert.equal(el.value, 'abc');
   }
+});
+
+test('typing still updates errors and the Next button without a full re-render', async () => {
+  const { win, host, ports, type } = setup();
+  createWizard(host, { window: win, config: cfg, ports, seed: { mode: 'update-field', association: { qid: 'Q1' } } });
+  await settle();
+  const next = host.querySelector('[data-role="next"]');
+  const website = host.querySelector('input[name="website"]');
+  assert.ok(next.disabled);
+  assert.match(host.querySelector('[data-role="errors"]').textContent, /change at least one field/);
+
+  type(website, 'https://reed.example');
+  assert.match(host.querySelector('[data-role="errors"]').textContent, /a reference URL is required/);
+  assert.ok(next.disabled);
+  assert.match(host.querySelector('[data-role="ref-label"]').textContent, /(required)/);
+
+  type(host.querySelector('input[name="referenceUrl"]'), 'https://reed.example/sobre');
+  assert.equal(host.querySelector('[data-role="errors"]').textContent.trim(), '');
+  assert.equal(next.disabled, false);
+  assert.equal(host.querySelector('[data-role="next"]'), next);          // same button node, just enabled
+  assert.equal(host.querySelector('input[name="website"]'), website);
+});
+
+test('the shared-address checkbox appears and disappears as the e-mail changes, without replacing the e-mail input', async () => {
+  const { win, host, ports, type } = setup();
+  createWizard(host, { window: win, config: cfg, ports, seed: { mode: 'update-field', association: { qid: 'Q1' } } });
+  await settle();
+  const email = host.querySelector('input[name="email"]');
+  assert.equal(host.querySelector('input[name="emailConfirmedShared"]'), null);
+
+  type(email, 'jane.doe@uni.edu');
+  const box = host.querySelector('input[name="emailConfirmedShared"]');
+  assert.ok(box, 'a personal-looking address asks for confirmation');
+  assert.equal(host.querySelector('input[name="email"]'), email);
+  assert.match(host.querySelector('[data-role="errors"]').textContent, /shared role address/);
+
+  box.checked = true;
+  box.dispatchEvent(new win.Event('input', { bubbles: true }));
+  assert.doesNotMatch(host.querySelector('[data-role="errors"]').textContent, /shared role address/);
+
+  type(email, 'office@reed.example');                                    // a role address: no confirmation needed
+  assert.equal(host.querySelector('input[name="emailConfirmedShared"]'), null);
+
+  type(email, 'john.smith@uni.edu');                                     // personal again: confirmation was reset
+  assert.equal(host.querySelector('input[name="emailConfirmedShared"]').checked, false);
+});
+
+test('the directory-visibility warning follows the names as they are typed', async () => {
+  const { win, host, ports, type } = setup();
+  createWizard(host, { window: win, config: cfg, ports, seed: { mode: 'update-field', association: { qid: 'Q1' } } });
+  await settle();
+  const warn = () => host.querySelector('[data-role="visibility-warn"]').textContent;
+  assert.match(warn(), /appear as its Wikidata ID/);                     // only a Portuguese name so far
+  type(host.querySelector('input[name="label-en"]'), 'Brazilian Network');
+  assert.doesNotMatch(warn(), /appear as its Wikidata ID/);              // English is a directory language
 });

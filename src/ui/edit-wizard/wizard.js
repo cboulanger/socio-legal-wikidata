@@ -4,7 +4,7 @@ import { buildChangeSet, describeChanges } from '../../core/changeset.js';
 import { initialLanguages, languageSuggestions, isValidLangCode } from '../../core/languages.js';
 import { createTypeahead } from '../components/entity-typeahead.js';
 import { STEP_ORDER, validateStep } from './steps.js';
-import { renderDetailsForm, applyFieldInput } from './details-form.js';
+import { renderDetailsForm, refreshDetailsDerived, applyFieldInput } from './details-form.js';
 
 const DRAFT_KEY = 'slw:wizard:draft';
 
@@ -184,7 +184,7 @@ export function createWizard(host, opts) {
         </ol>
         <div class="wizard__body" data-step="${currentStep()}">
           ${stepBody()}
-          ${errs.length ? html`<ul class="wizard__errors">${errs.map((e) => html`<li>${e}</li>`)}</ul>` : ''}
+          <div data-role="errors">${errorList(errs)}</div>
         </div>
         <footer class="wizard__foot">
           ${index > 0 ? html`<button type="button" data-role="back">Back</button>` : ''}
@@ -194,6 +194,22 @@ export function createWizard(host, opts) {
         </footer>
       </section>`);
     mountPickers();
+  }
+
+  /**
+   * After a keystroke only the parts that depend on the values change: the error list, the
+   * Next/Confirm buttons and the derived bits of the details form. The inputs are left alone,
+   * so focus, caret, IME composition and undo history survive. Structural changes (adding a
+   * language, changing step, picking from a list) still go through render().
+   */
+  function refreshDerived() {
+    const errs = loading || loadError ? [] : validateStep(currentStep(), draft);
+    const errBox = host.querySelector('[data-role="errors"]');
+    if (errBox) errBox.innerHTML = String(errorList(errs)); // '' when valid, so not `.value`
+    for (const btn of host.querySelectorAll('[data-role="next"], [data-role="submit"]')) {
+      btn.disabled = errs.length > 0 || loading || !!loadError;
+    }
+    if (currentStep() === 'details') refreshDetailsDerived(host, draft, config.labelLanguages || '');
   }
 
   /** Search pickers are self-contained widgets mounted into placeholders after each render. */
@@ -266,7 +282,7 @@ export function createWizard(host, opts) {
 
   on('input', (e) => {
     if (e.target.closest('.typeahead')) return; // the pickers manage their own state
-    if (applyFieldInput(draft, e.target)) { failure = ''; persist(); render(); }
+    if (applyFieldInput(draft, e.target)) { failure = ''; persist(); refreshDerived(); }
   });
 
   on('click', async (e) => {
@@ -320,6 +336,10 @@ export function createWizard(host, opts) {
     async submit() { return submitInternal(); },
     destroy() { ac.abort(); host.innerHTML = ''; },
   };
+}
+
+function errorList(errs) {
+  return errs.length ? html`<ul class="wizard__errors">${errs.map((e) => html`<li>${e}</li>`)}</ul>` : '';
 }
 
 function title(mode) {

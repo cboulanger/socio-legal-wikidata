@@ -6,6 +6,33 @@ import { COMMON_LANGUAGES, languageName } from '../../core/languages.js';
 const label = (code) => `${languageName(code)} (${code})`;
 
 /**
+ * Everything on the form that depends on the current values but is not an input itself.
+ * Typing must only refresh these parts (see `refreshDetailsDerived`), never rebuild the inputs.
+ */
+function derived(draft, labelLanguages) {
+  const a = draft.association;
+  const visible = labelLanguages.split(',').map((s) => s.trim()).filter(Boolean);
+  const named = Object.keys({ ...cleanTerms(a.original?.labels), ...cleanTerms(a.labels) });
+  const changed = changedStatements(a);
+  return {
+    visible,
+    invisible: visible.length > 0 && named.length > 0 && !named.some((l) => visible.includes(l)),
+    needsConfirm: !!(a.email && looksPersonal(a.email) && (draft.mode === 'create-association' || changed.email)),
+    refRequired: draft.mode === 'create-association' || !!(changed.website || changed.email),
+  };
+}
+
+const warnMarkup = (d) => (d.invisible
+  ? html`<p class="details__warn">The directory shows names in ${d.visible.join(', ')}. With only the languages above,
+      this association will appear as its Wikidata ID in the directory until a name in one of those languages is added.</p>`
+  : '');
+
+const confirmMarkup = (draft) => html`<label class="details__confirm"><input type="checkbox" name="emailConfirmedShared"
+    data-field="emailConfirmedShared" ${draft.association.emailConfirmedShared ? 'checked' : ''}> This is a shared role address, not a personal one</label>`;
+
+const refLabel = (d) => (d.refRequired ? '(required)' : '(needed when website or e-mail change)');
+
+/**
  * Shared "details" step body for Add association and Edit details.
  * @param {{
  *   draft: import('../../core/draft.js').DirectoryDraft,
@@ -18,12 +45,7 @@ const label = (code) => `${languageName(code)} (${code})`;
 export function renderDetailsForm({ draft, langs, suggestions, labelLanguages = '', langError = '' }) {
   const a = draft.association;
   const addable = COMMON_LANGUAGES.filter((c) => !langs.includes(c));
-  const visible = labelLanguages.split(',').map((s) => s.trim()).filter(Boolean);
-  const named = Object.keys({ ...cleanTerms(a.original?.labels), ...cleanTerms(a.labels) });
-  const invisible = visible.length > 0 && named.length > 0 && !named.some((l) => visible.includes(l));
-  const emailChanged = !!changedStatements(a).email;
-  const needsConfirm = a.email && looksPersonal(a.email) && (draft.mode === 'create-association' || emailChanged);
-  const refRequired = draft.mode === 'create-association' || !!(changedStatements(a).website || emailChanged);
+  const d = derived(draft, labelLanguages);
 
   return html`
     <div class="details">
@@ -50,21 +72,38 @@ export function renderDetailsForm({ draft, langs, suggestions, labelLanguages = 
         <button type="button" data-role="add-lang-go">Add</button>
       </div>
       ${langError ? html`<p class="wizard__errors">${langError}</p>` : ''}
-      ${invisible
-        ? html`<p class="details__warn">The directory shows names in ${visible.join(', ')}. With only the languages above,
-            this association will appear as its Wikidata ID in the directory until a name in one of those languages is added.</p>`
-        : ''}
+      <div data-role="visibility-warn">${warnMarkup(d)}</div>
       <label>Website
         <input type="text" inputmode="url" name="website" data-field="website" value="${a.website || ''}" autocomplete="off"></label>
       <label>E-mail (shared role address)
         <input type="text" inputmode="email" name="email" data-field="email" value="${a.email || ''}" autocomplete="off"></label>
-      ${needsConfirm
-        ? html`<label class="details__confirm"><input type="checkbox" name="emailConfirmedShared" data-field="emailConfirmedShared"
-              ${a.emailConfirmedShared ? 'checked' : ''}> This is a shared role address, not a personal one</label>`
-        : ''}
-      <label>Reference URL ${refRequired ? '(required)' : '(needed when website or e-mail change)'}
+      <div data-role="email-confirm">${d.needsConfirm ? confirmMarkup(draft) : ''}</div>
+      <label>Reference URL <span data-role="ref-label">${refLabel(d)}</span>
         <input type="text" inputmode="url" name="referenceUrl" data-field="referenceUrl" value="${a.referenceUrl || ''}" autocomplete="off"></label>
     </div>`;
+}
+
+/**
+ * After a keystroke: update only what depends on the values. The inputs themselves are never
+ * replaced, so focus, caret, IME composition and undo history in the field being typed in survive.
+ * @param {ParentNode} root
+ * @param {import('../../core/draft.js').DirectoryDraft} draft
+ * @param {string} [labelLanguages]
+ */
+export function refreshDetailsDerived(root, draft, labelLanguages = '') {
+  const d = derived(draft, labelLanguages);
+  const warn = root.querySelector('[data-role="visibility-warn"]');
+  if (warn) warn.innerHTML = String(warnMarkup(d));
+  const ref = root.querySelector('[data-role="ref-label"]');
+  if (ref) ref.textContent = refLabel(d);
+  const box = root.querySelector('[data-role="email-confirm"]');
+  if (box) {
+    const present = !!box.querySelector('input');
+    if (d.needsConfirm && !present) box.innerHTML = confirmMarkup(draft).value;
+    else if (!d.needsConfirm && present) box.innerHTML = '';
+    const cb = box.querySelector('input');
+    if (cb) cb.checked = !!draft.association.emailConfirmedShared; // changing the e-mail resets the confirmation
+  }
 }
 
 /**
