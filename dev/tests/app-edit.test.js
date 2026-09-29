@@ -143,13 +143,3 @@ test('after Add association is saved the new association is listed and selected'
   assert.equal(added.countryLabel, 'Brazil');
   assert.match(w.document.getElementById('detail-host').innerHTML, /Network/);
 });
-
-test('?sandbox adds a shortcut that opens Edit details on the Wikidata Sandbox item', async () => {
-  const { w, opened, ready } = editApp('https://app.example/?edit&sandbox');
-  await ready;
-  w.document.querySelector('[data-role="sandbox"]').click();
-  assert.deepEqual(opened[0].seed, { mode: 'update-field', association: { qid: 'Q4115189', label: 'Wikidata Sandbox' } });
-  const plain = editApp('https://app.example/?edit');
-  await plain.ready;
-  assert.equal(plain.w.document.querySelector('[data-role="sandbox"]'), null);
-});

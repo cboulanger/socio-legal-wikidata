@@ -26,9 +26,6 @@ import { renderEditChrome } from './ui/edit-panel.js';
  *   }>,
  * }} deps
  */
-/** The public "Wikidata Sandbox" item, meant for trying out edits. */
-const SANDBOX_QID = 'Q4115189';
-
 export async function createApp(deps) {
   const { window: win, config, centroids } = deps;
   const doc = win.document;
@@ -160,10 +157,6 @@ export async function createApp(deps) {
       onConnect: () => editRuntime.auth.connect(),
       onLeave: async () => { await editRuntime.auth.disconnect(); win.location.search = ''; },
       onAdd: () => editRuntime.openWizard(drawer, { mode: 'create-association' }, { onSaved: applySaved }),
-      // ?sandbox adds a shortcut to the public Wikidata Sandbox item, for trying edits safely
-      onSandbox: new URLSearchParams(win.location.search).has('sandbox')
-        ? () => editRuntime.openWizard(drawer, { mode: 'update-field', association: { qid: SANDBOX_QID, label: 'Wikidata Sandbox' } }, { onSaved: applySaved })
-        : undefined,
     });
 
     // The SPARQL-backed list lags behind Wikidata, so show what was just saved right away.

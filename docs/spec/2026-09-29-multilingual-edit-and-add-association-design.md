@@ -237,8 +237,8 @@ Differences from the design above, and behaviour worth knowing:
   multilingual support (no `labels` map) are discarded.
 - **New association in the list** is added without a country code or seat coordinate, so it
   appears under "No fixed location" until the next directory refresh.
-- **`?sandbox`**: with `?edit&sandbox` the edit bar gets an "Edit sandbox item" button that
-  opens Edit details on the public Wikidata Sandbox item (Q4115189), for trying edits safely.
+- A temporary `?sandbox` shortcut to the public Wikidata Sandbox item (Q4115189) was added for
+  the first live test and removed again afterwards.
 - **Listeners:** reopening the wizard on the same drawer replaces the previous wizard's
   listeners (previously they accumulated).
 - **Not verified live:** nothing has been written to Wikidata yet. The REST calls follow the
