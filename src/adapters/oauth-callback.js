@@ -30,5 +30,6 @@ export async function handleCallback({ location, storage, fetch, config }) {
   if (j.refresh_token) storage.setItem('slw:oauth:refresh', j.refresh_token);
   storage.removeItem('slw:oauth:verifier');
   storage.removeItem('slw:oauth:state');
-  return `${location.origin}/#/`;
+  // callback.html lives at the app root, so its directory is the app base (incl. any /project/ path)
+  return `${new URL('./', config.oauth.redirectUri).href}#/`;
 }

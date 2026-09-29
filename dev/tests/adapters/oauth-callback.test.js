@@ -8,6 +8,14 @@ function memStorage(seed = {}) {
 }
 const config = { oauth: { tokenUrl: 'https://meta.example/token', clientId: 'abc', redirectUri: 'https://app.example/callback.html' } };
 
+test('returns to the app base path when hosted under a subpath', async () => {
+  const storage = memStorage({ 'slw:oauth:verifier': 'VER', 'slw:oauth:state': 'STATE' });
+  const location = { search: '?code=CODE&state=STATE', origin: 'https://user.github.io' };
+  const cfg = { oauth: { ...config.oauth, redirectUri: 'https://user.github.io/proj/callback.html' } };
+  const fetch = async () => ({ ok: true, json: async () => ({ access_token: 'A', refresh_token: 'R' }) });
+  assert.equal(await handleCallback({ location, storage, fetch, config: cfg }), 'https://user.github.io/proj/#/');
+});
+
 test('exchanges the code, stores the refresh token, returns the post-login target', async () => {
   const storage = memStorage({ 'slw:oauth:verifier': 'VER', 'slw:oauth:state': 'STATE' });
   const location = { search: '?code=CODE&state=STATE', origin: 'https://app.example' };
