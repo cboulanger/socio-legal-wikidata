@@ -12,6 +12,7 @@ export function renderAssociationCard(a, { editMode = false } = {}) {
   const place = a.seatLabel || a.countryLabel || 'no fixed location';
   return html`
     <article class="card" data-qid="${a.qid}">
+      <button type="button" class="card__close" data-role="close-card" aria-label="Close">×</button>
       <h2 class="card__title">${a.label}</h2>
       <p class="card__meta">${scope}${a.countryLabel ? html` · ${a.countryLabel}` : ''}</p>
       ${a.parentLabel ? html`<p class="card__row">part of ${a.parentLabel}</p>` : ''}
@@ -32,7 +33,9 @@ export function renderAssociationCard(a, { editMode = false } = {}) {
       <p class="card__actions">
         <a class="card__notify" href="${watchlistUrl(a.qid)}" rel="noopener" target="_blank"
            data-feed="${historyFeedUrl(a.qid)}">Notify me of changes</a>
-        ${editMode ? html`<button type="button" data-action="edit" data-qid="${a.qid}">Edit</button>` : ''}
       </p>
+      ${editMode
+        ? html`<p class="card__actions"><button type="button" data-action="edit" data-qid="${a.qid}">Edit</button></p>`
+        : ''}
     </article>`;
 }

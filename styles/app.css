@@ -31,8 +31,10 @@ body { font-family: var(--font); color: var(--text); background: var(--bg); }
 .row__meta { display: block; font-size: 0.8rem; color: var(--text-muted); }
 .panel__group { font-size: 0.8rem; text-transform: uppercase; color: var(--text-muted); margin-top: var(--space-4); }
 
-.card { border: 1px solid var(--border); border-radius: var(--radius); padding: var(--space-3); margin-bottom: var(--space-3); }
-.card__title { font-size: 1rem; margin: 0 0 var(--space-1); }
+.card { position: relative; border: 1px solid var(--border); border-radius: var(--radius); padding: var(--space-3); margin-bottom: var(--space-3); }
+.card__close { position: absolute; top: var(--space-1); right: var(--space-1); border: 0; background: none; font-size: 1.4rem; line-height: 1; padding: var(--space-1) var(--space-2); cursor: pointer; color: var(--text-muted); }
+.card__close:hover { color: inherit; }
+.card__title { font-size: 1rem; margin: 0 0 var(--space-1); padding-right: var(--space-4, 2rem); }
 .card__meta { font-size: 0.8rem; color: var(--text-muted); margin: 0 0 var(--space-2); }
 .card__row { margin: var(--space-1) 0; font-size: 0.9rem; }
 .card__sub { display: block; font-size: 0.8rem; color: var(--text-muted); }

@@ -88,6 +88,12 @@ export async function createApp(deps) {
   panelHost.addEventListener('click', (e) => {
     const row = e.target.closest('button.row');
     if (row) return select(row.dataset.qid);
+    if (e.target.closest('[data-role="close-card"]')) {
+      store.setState({ selection: null });
+      // a selection can also come from #/assoc/Q…; clear it so a reload doesn't re-open the card
+      if (/^#\/assoc\//.test(win.location.hash)) win.location.hash = '';
+      return;
+    }
     if (e.target.closest('[data-role="clear-filter"]')) {
       store.setState((s) => ({ filter: { ...s.filter, countryCode: undefined } }));
       // The country filter can only ever have been set by way of #/country/XX (see

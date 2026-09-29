@@ -39,6 +39,24 @@ test('createApp renders the panel rows and shows a card on row click', async () 
   assert.doesNotMatch(host.innerHTML, /data-action="edit"/); // read-only
 });
 
+test('the close button dismisses the selected association card', async () => {
+  const win = domFixture();
+  win.location.hash = '#/assoc/Q1';
+  await createApp({
+    window: win,
+    config: { cacheTtlMs: 1, centroidsUrl: 'x', snapshotUrl: 'y', tileUrl: 't', tileAttribution: 'a' },
+    centroids: { DE: [10.4, 51.1] },
+    loadDirectory: async () => ({ associations, stale: false, asOf: null }),
+    createMapView: () => ({ render() {}, focus() {} }),
+    detectMode: () => 'read',
+  });
+  const host = win.document.getElementById('panel-host');
+  assert.ok(host.querySelector('article.card'));
+  host.querySelector('[data-role="close-card"]').click();
+  assert.equal(host.querySelector('article.card'), null);
+  assert.equal(win.location.hash, '');
+});
+
 test('clearing the country filter also clears the #/country/XX URL hash', async () => {
   const win = domFixture();
   win.location.hash = '#/country/DE';
