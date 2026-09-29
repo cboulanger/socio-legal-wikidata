@@ -1,5 +1,4 @@
 import { resolveSeatPin, resolveLeadershipPin } from '../core/resolve-location.js';
-import { escapeHtml } from '../render.js';
 
 /**
  * @typedef {Object} MapPin
@@ -12,8 +11,11 @@ import { escapeHtml } from '../render.js';
 
 /** @param {any} feature @returns {string|null} ISO 3166-1 alpha-2, uppercase */
 export function isoOfFeature(feature) {
-  const raw = feature?.properties?.ISO_A2 || feature?.properties?.iso_a2 || '';
-  const iso = String(raw).toUpperCase();
+  const props = feature?.properties || {};
+  let iso = String(props.ISO_A2 || props.iso_a2 || '').toUpperCase();
+  // Natural Earth marks a few real countries (France, Norway) as '-99' in
+  // ISO_A2; the '_EH' variant carries the correct alpha-2 code.
+  if (iso === '-99') iso = String(props.ISO_A2_EH || props.iso_a2_eh || '').toUpperCase();
   return iso && iso !== '-99' ? iso : null;
 }
 
@@ -40,49 +42,99 @@ export function toMapPins(associations, { centroids, showLeadership }) {
   return pins;
 }
 
+const DEFAULT_SIZE = [960, 480];
+const MAX_ZOOM = 40;
+const FOCUS_ZOOM = 5;
+const SEAT_RADIUS = 7;
+const LEAD_RADIUS = 5;
+
 /**
- * Thin Leaflet wrapper. Requires the global `L` from the vendored script.
- * Not unit-tested (needs real layout); covered by manual QA.
+ * Equal Earth world map drawn as SVG with d3-geo (equal-area, no tile server).
+ * Requires the global `d3` from the vendored bundle (or pass `d3` in opts).
+ * Layout needs a real browser; covered by manual QA plus a jsdom smoke test.
  * @param {HTMLElement} container
- * @param {{tileUrl: string, tileAttribution: string, onSelect: (assocQid: string) => void}} opts
+ * @param {{onSelect: (assocQid: string) => void, onSelectCountry?: (iso: string) => void, countriesGeojson?: any, getInsets?: () => {left?: number, bottom?: number}, d3?: any}} opts
+ * getInsets reports overlay space (px) the world should not be fitted under, e.g. the side panel.
  */
-export function createMapView(container, { tileUrl, tileAttribution, onSelect, onSelectCountry, countriesGeojson }) {
-  /* global L */
-  const map = L.map(container, { worldCopyJump: true }).setView([20, 10], 2);
-  L.tileLayer(tileUrl, { attribution: tileAttribution, maxZoom: 12 }).addTo(map);
+export function createMapView(container, { onSelect, onSelectCountry, countriesGeojson, getInsets = () => ({}), d3 = globalThis.d3 }) {
+  const svg = d3.select(container).append('svg')
+    .attr('class', 'map-svg')
+    .attr('width', '100%')
+    .attr('height', '100%')
+    .attr('role', 'img')
+    .attr('aria-label', 'Equal Earth world map');
+  const world = svg.append('g');
+  const sphere = world.append('path').attr('class', 'map-sphere');
+  const countries = world.append('g').attr('class', 'map-countries');
+  const seatLayer = world.append('g').attr('class', 'map-seats');
+  const leadLayer = world.append('g').attr('class', 'map-leadership');
+
+  const projection = d3.geoEqualEarth();
+  const path = d3.geoPath(projection);
+  let width = DEFAULT_SIZE[0];
+  let height = DEFAULT_SIZE[1];
+  let k = 1;
+  /** @type {MapPin[]} */
+  let lastPins = [];
+
+  const zoom = d3.zoom()
+    .scaleExtent([1, MAX_ZOOM])
+    .on('zoom', (event) => {
+      k = event.transform.k;
+      world.attr('transform', event.transform);
+      // keep pins a constant on-screen size while the map scales
+      seatLayer.selectAll('circle').attr('r', SEAT_RADIUS / k);
+      leadLayer.selectAll('circle').attr('r', LEAD_RADIUS / k);
+    });
+  svg.call(zoom);
 
   if (countriesGeojson) {
-    L.geoJSON(countriesGeojson, {
-      style: { color: '#94a3b8', weight: 1, fillOpacity: 0.02 },
-      onEachFeature: (feature, layer) => {
+    countries.selectAll('path')
+      .data(countriesGeojson.features)
+      .join('path')
+      .attr('class', 'map-country')
+      .on('click', (event, feature) => {
         const iso = isoOfFeature(feature);
-        if (!iso) return;
-        layer.on('click', () => onSelectCountry && onSelectCountry(iso));
-        layer.on('mouseover', () => layer.setStyle({ fillOpacity: 0.12 }));
-        layer.on('mouseout', () => layer.setStyle({ fillOpacity: 0.02 }));
-      },
-    }).addTo(map);
+        if (iso && onSelectCountry) onSelectCountry(iso);
+      });
   }
 
-  const seatLayer = L.layerGroup().addTo(map);
-  const leadLayer = L.layerGroup().addTo(map);
-
   function render(pins) {
-    seatLayer.clearLayers();
-    leadLayer.clearLayers();
-    for (const p of pins) {
-      const marker = L.circleMarker([p.coord[1], p.coord[0]], {
-        radius: p.layer === 'seat' ? 7 : 5,
-        className: p.layer === 'seat' ? 'pin pin--seat' : 'pin pin--lead',
-      }).bindTooltip(escapeHtml(p.label));
-      marker.on('click', () => onSelect(p.assocQid));
-      (p.layer === 'seat' ? seatLayer : leadLayer).addLayer(marker);
+    lastPins = pins;
+    for (const [layer, sel, radius] of [['seat', seatLayer, SEAT_RADIUS], ['leadership', leadLayer, LEAD_RADIUS]]) {
+      sel.selectAll('circle')
+        .data(pins.filter((p) => p.layer === layer), (p) => p.id)
+        .join((enter) => enter.append('circle').call((c) => c.append('title')))
+        .attr('class', layer === 'seat' ? 'pin pin--seat' : 'pin pin--lead')
+        .attr('r', radius / k)
+        .attr('transform', (p) => `translate(${projection(p.coord)})`)
+        .on('click', (event, p) => onSelect(p.assocQid))
+        .select('title').text((p) => p.label);
     }
   }
 
-  function focus(coord) {
-    map.setView([coord[1], coord[0]], Math.max(map.getZoom(), 5));
+  function layout() {
+    width = container.clientWidth || DEFAULT_SIZE[0];
+    height = container.clientHeight || DEFAULT_SIZE[1];
+    const { left = 0, bottom = 0 } = getInsets();
+    projection.fitExtent([[left + 8, 8], [width - 8, height - bottom - 8]], { type: 'Sphere' });
+    svg.attr('viewBox', `0 0 ${width} ${height}`);
+    zoom.extent([[0, 0], [width, height]]).translateExtent([[0, 0], [width, height]]);
+    sphere.datum({ type: 'Sphere' }).attr('d', path);
+    countries.selectAll('path').attr('d', path);
+    render(lastPins);
   }
 
-  return { render, focus, leaflet: map };
+  function focus(coord) {
+    const [x, y] = projection(coord);
+    const scale = Math.min(MAX_ZOOM, Math.max(k, FOCUS_ZOOM));
+    const transform = d3.zoomIdentity.translate(width / 2 - x * scale, height / 2 - y * scale).scale(scale);
+    svg.transition().duration(500).call(zoom.transform, transform);
+  }
+
+  layout();
+  const ResizeObserverImpl = container.ownerDocument.defaultView?.ResizeObserver;
+  if (ResizeObserverImpl) new ResizeObserverImpl(layout).observe(container);
+
+  return { render, focus, projection };
 }

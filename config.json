@@ -7,8 +7,6 @@
   "snapshotUrl": "data/snapshot.json",
   "centroidsUrl": "data/centroids.json",
   "cacheTtlMs": 86400000,
-  "tileUrl": "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
-  "tileAttribution": "© OpenStreetMap contributors",
   "leadershipLayerDefault": false,
   "oauth": {
     "authorizeUrl": "https://meta.wikimedia.org/w/rest.php/oauth2/authorize",

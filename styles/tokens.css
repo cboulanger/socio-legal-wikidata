@@ -8,6 +8,10 @@
   --accent-contrast: #ffffff;
   --pin-seat: #2563eb;
   --pin-lead: #94a3b8;
+  --map-sea: #e8f1fa;
+  --map-land: #f1f5f9;
+  --map-land-hover: #dbe6f3;
+  --map-border: #94a3b8;
   --banner-bg: #fef3c7;
   --banner-text: #92400e;
   --space-1: 4px;
@@ -27,6 +31,10 @@
     --accent: #60a5fa;
     --accent-contrast: #0b1220;
     --pin-lead: #64748b;
+    --map-sea: #0b1220;
+    --map-land: #1e293b;
+    --map-land-hover: #2b3a52;
+    --map-border: #475569;
     --banner-bg: #422006;
     --banner-text: #fde68a;
   }
