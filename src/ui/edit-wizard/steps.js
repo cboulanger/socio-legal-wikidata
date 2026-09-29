@@ -1,5 +1,5 @@
 import { looksPersonal } from '../../core/email-guard.js';
-import { cleanTerms, changedStatements, hasTermChanges, hasScopeChanges, hasFormerNames, validateTerms, validateFormerNames } from '../../core/draft.js';
+import { cleanTerms, changedStatements, hasTermChanges, hasScopeChanges, hasFormerNames, changedParent, validateTerms, validateFormerNames } from '../../core/draft.js';
 
 /** @type {Object<import('../../core/draft.js').DirectoryDraft['mode'], string[]>} */
 export const STEP_ORDER = {
@@ -29,7 +29,7 @@ export function validateStep(step, d) {
 
   if (step === 'details') {
     const changed = changedStatements(a);
-    const statementChanged = !!(changed.website || changed.email || hasScopeChanges(a) || hasFormerNames(a));
+    const statementChanged = !!(changed.website || changed.email || hasScopeChanges(a) || hasFormerNames(a) || !!changedParent(a));
     if (d.mode === 'create-association') {
       if (!a.classQid) e.push('pick the association type');
       if (!a.fieldQid) e.push('the field of work is required');

@@ -90,15 +90,16 @@ test('originalFromEntity reads terms, website, e-mail (without mailto:) and coun
       P17: [{ rank: 'normal', mainsnak: { datavalue: { value: { id: 'Q155' } } } }],
       P31: [{ rank: 'normal', mainsnak: { datavalue: { value: { id: 'Q43229' } } } }, { rank: 'deprecated', mainsnak: { datavalue: { value: { id: 'Q1' } } } }],
       P101: [{ rank: 'normal', mainsnak: { datavalue: { value: { id: 'Q2734663' } } } }],
+      P361: [{ rank: 'normal', mainsnak: { datavalue: { value: { id: 'Q1202999' } } } }],
     },
   };
   assert.deepEqual(originalFromEntity(entity), {
     labels: { pt: 'Rede', en: 'Network' }, descriptions: { en: 'a network' },
-    website: 'https://reed.example', email: 'reed@example.org', countryQid: 'Q155',
+    website: 'https://reed.example', email: 'reed@example.org', parentQid: 'Q1202999', countryQid: 'Q155',
     classQids: ['Q43229'], fieldQids: ['Q2734663'], aliases: {}, formerNames: [],
   });
   assert.deepEqual(originalFromEntity({}), {
-    labels: {}, descriptions: {}, website: null, email: null, countryQid: null, classQids: [], fieldQids: [],
+    labels: {}, descriptions: {}, website: null, email: null, parentQid: null, countryQid: null, classQids: [], fieldQids: [],
     aliases: {}, formerNames: [],
   });
 });

@@ -24,6 +24,7 @@
  * @property {LonLat|null} seatCoord
  * @property {string|null} parentQid        // P361
  * @property {string|null} parentLabel
+ * @property {string|null} parentUrl        // official website (P856) of the parent organization
  * @property {string|null} website          // P856
  * @property {string|null} email            // P968
  * @property {string|null} inception        // year as string
@@ -53,6 +54,7 @@ export function emptyAssociation(qid = '') {
     seatCoord: null,
     parentQid: null,
     parentLabel: null,
+    parentUrl: null,
     website: null,
     email: null,
     inception: null,

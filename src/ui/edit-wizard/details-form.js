@@ -1,6 +1,6 @@
 import { html } from '../../render.js';
 import { looksPersonal } from '../../core/email-guard.js';
-import { cleanTerms, changedStatements, hasScopeChanges, hasFormerNames } from '../../core/draft.js';
+import { cleanTerms, changedStatements, hasScopeChanges, hasFormerNames, changedParent } from '../../core/draft.js';
 import { COMMON_LANGUAGES, languageName } from '../../core/languages.js';
 
 const label = (code) => `${languageName(code)} (${code})`;
@@ -18,7 +18,7 @@ function derived(draft, labelLanguages) {
     visible,
     invisible: visible.length > 0 && named.length > 0 && !named.some((l) => visible.includes(l)),
     needsConfirm: !!(a.email && looksPersonal(a.email) && (draft.mode === 'create-association' || changed.email)),
-    refRequired: draft.mode === 'create-association' || !!(changed.website || changed.email || hasScopeChanges(a) || hasFormerNames(a)),
+    refRequired: draft.mode === 'create-association' || !!(changed.website || changed.email || hasScopeChanges(a) || hasFormerNames(a) || !!changedParent(a)),
   };
 }
 
@@ -92,6 +92,16 @@ function formerSection(draft) {
     </fieldset>`;
 }
 
+/** "Part of": the host organization, picked by typing (the picker is mounted by the wizard). */
+function parentSection(a) {
+  return html`<div class="details__parent" data-role="parent-field">
+      ${a.parentQid
+        ? html`<p class="wizard__chosen">Part of (organization): <strong>${a.parentLabel || a.parentQid}</strong>
+            <button type="button" data-role="clear-parent">change</button></p>`
+        : html`<div data-role="ta-parent"></div>`}
+    </div>`;
+}
+
 const refLabel = (d) => (d.refRequired ? '(required)' : '(needed when website or e-mail change)');
 
 /**
@@ -137,6 +147,7 @@ export function renderDetailsForm({ draft, langs, suggestions, labelLanguages = 
       ${langError ? html`<p class="wizard__errors">${langError}</p>` : ''}
       <div data-role="visibility-warn">${warnMarkup(d)}</div>
       ${formerSection(draft)}
+      ${parentSection(a)}
       <label>Website
         <input type="text" inputmode="url" name="website" data-field="website" value="${a.website || ''}" autocomplete="off"></label>
       <label>E-mail (shared role address)

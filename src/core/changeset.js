@@ -1,4 +1,4 @@
-import { validateDraftForChangeset, changedTerms, changedStatements, scopeStatements, activeFormerNames, aliasesToSet } from './draft.js';
+import { validateDraftForChangeset, changedTerms, changedStatements, scopeStatements, changedParent, activeFormerNames, aliasesToSet } from './draft.js';
 
 /**
  * @typedef {{kind:'item', qid:string}|{kind:'item', ref:string}
@@ -167,6 +167,8 @@ export function buildChangeSet(draft, cfg) {
   if (formerClaims.length) changed.push(`former names (${formerClaims.length})`);
   if (stmts.website) { ops.push({ type: 'add-statement', target: { qid: a.qid }, property: 'P856', value: url(stmts.website), reference: assocRefUrl, replace: true }); changed.push('website'); }
   if (stmts.email) { ops.push({ type: 'add-statement', target: { qid: a.qid }, property: 'P968', value: mailto(stmts.email), reference: assocRefUrl, replace: true }); changed.push('e-mail'); }
+  const parent = changedParent(a);
+  if (parent) { ops.push({ type: 'add-statement', target: { qid: a.qid }, property: 'P361', value: item(parent), reference: assocRefUrl, replace: true }); changed.push('part of'); }
   const scope = scopeStatements(a);
   if (scope.class) ops.push({ type: 'add-statement', target: { qid: a.qid }, property: 'P31', value: item(scope.class), reference: assocRefUrl });
   if (scope.field) ops.push({ type: 'add-statement', target: { qid: a.qid }, property: 'P101', value: item(scope.field), reference: assocRefUrl });
@@ -198,12 +200,16 @@ export function describeChanges(draft) {
     const years = r.start || r.end ? ` (${r.start || '?'}–${r.end || 'now'})` : '';
     lines.push(`former name (${r.lang}): “${r.text}”${years}${r.alias ? ', also an alias' : ''}`);
   }
+  if (changedParent(a) && draft.mode !== 'create-association') {
+    lines.push(`part of: ${a.original?.parentQid ? `${a.original.parentQid} → ` : ''}${a.parentLabel || a.parentQid}`);
+  }
   const scope = scopeStatements(a);
   if (scope.class) lines.push(`add to directory: instance of ${scope.class}`);
   if (scope.field) lines.push(`add to directory: field of work ${scope.field}`);
   if (draft.mode === 'create-association') {
     if (a.countryLabel || a.countryQid) lines.push(`country: ${a.countryLabel || a.countryQid}`);
     if (a.seatLabel || a.seatQid) lines.push(`seat: ${a.seatLabel || a.seatQid}`);
+    if (a.parentQid) lines.push(`part of: ${a.parentLabel || a.parentQid}`);
     if (a.referenceUrl) lines.push(`reference: ${a.referenceUrl}`);
   }
   return lines;

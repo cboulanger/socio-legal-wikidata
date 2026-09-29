@@ -23,7 +23,7 @@ import { parsePoint } from '../core/parse-wkt.js';
 //    (few candidate journals per association) and narrowing it further isn't needed.
 const QUERY_TEMPLATE = `SELECT ?assoc ?assocLabel ?assocDescription ?website ?email ?inception
        ?country ?countryLabel ?countryCode ?operating
-       ?seat ?seatLabel ?seatCoord ?parent ?parentLabel
+       ?seat ?seatLabel ?seatCoord ?parent ?parentLabel ?parentUrl
        ?president ?presidentLabel ?presidentUrl
        ?leadUni ?leadUniLabel ?leadCoord
        ?journal ?journalLabel ?journalUrl ?issn
@@ -36,7 +36,7 @@ WHERE {
   OPTIONAL { ?assoc wdt:P571 ?inceptionDate. BIND(STR(YEAR(?inceptionDate)) AS ?inception) }
   OPTIONAL { ?assoc wdt:P17 ?country. OPTIONAL { ?country wdt:P297 ?countryCode. } }
   OPTIONAL { ?assoc wdt:P2541 ?operating. }
-  OPTIONAL { ?assoc wdt:P361 ?parent. }
+  OPTIONAL { ?assoc wdt:P361 ?parent. OPTIONAL { ?parent wdt:P856 ?parentUrl. } }
   OPTIONAL {
     ?assoc wdt:P159 ?seat.
     OPTIONAL { ?seat wdt:P625 ?seatCoord. }
@@ -106,6 +106,7 @@ export function mapBindings(sparqlJson) {
     a.seatCoord ??= parsePoint(val(row.seatCoord));
     a.parentQid ??= qid(row.parent);
     a.parentLabel ??= val(row.parentLabel) ?? null;
+    a.parentUrl ??= val(row.parentUrl) ?? null;
     a.leadUniQid ??= qid(row.leadUni);
     a.leadUniLabel ??= val(row.leadUniLabel) ?? null;
     a.leadCoord ??= parsePoint(val(row.leadCoord));

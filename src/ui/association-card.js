@@ -16,7 +16,11 @@ export function renderAssociationCard(a, { editMode = false, lastEdit = null } =
       <button type="button" class="card__close" data-role="close-card" aria-label="Close">×</button>
       <h2 class="card__title">${a.label}</h2>
       <p class="card__meta">${scope}${a.countryLabel ? html` · ${a.countryLabel}` : ''}</p>
-      ${a.parentLabel ? html`<p class="card__row">part of ${a.parentLabel}</p>` : ''}
+      ${a.parentLabel
+        ? html`<p class="card__row">part of ${a.parentUrl
+            ? html`<a href="${safeHref(a.parentUrl)}" rel="noopener" target="_blank">${a.parentLabel}</a>`
+            : a.parentLabel}</p>`
+        : ''}
       <p class="card__row">seat: ${place}</p>
       ${a.website ? html`<p class="card__row"><a href="${safeHref(a.website)}" rel="noopener" target="_blank">website</a></p>` : ''}
       ${a.email ? html`<p class="card__row"><a href="mailto:${a.email}">${a.email}</a></p>` : ''}

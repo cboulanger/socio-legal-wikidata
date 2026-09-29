@@ -275,3 +275,26 @@ test('a create without former names has no aliases key and no P1448 claim', () =
   assert.equal('aliases' in create, false);
   assert.equal(create.claims.some((c) => c.property === 'P1448'), false);
 });
+
+test('update-field: picking a host organization writes a replacing P361 statement with a reference', () => {
+  const d = emptyDraft('update-field');
+  d.association.qid = 'Q100';
+  d.association.original = { labels: {}, descriptions: {}, website: null, email: null, parentQid: null };
+  d.association.parentQid = 'Q500';
+  d.association.parentLabel = 'German Sociological Association';
+  d.association.referenceUrl = 'https://dgs.example/sections';
+  const cs = buildChangeSet(d, cfg);
+  const op = cs.ops.find((o) => o.property === 'P361');
+  assert.deepEqual(op.value, { kind: 'item', qid: 'Q500' });
+  assert.equal(op.replace, true);
+  assert.deepEqual(op.reference, { P854: 'https://dgs.example/sections' });
+  assert.ok(describeChanges(d).some((l) => /part of: German Sociological Association/.test(l)));
+});
+
+test('update-field: an unchanged host organization is not a change', () => {
+  const d = emptyDraft('update-field');
+  d.association.qid = 'Q100';
+  d.association.original = { labels: {}, descriptions: {}, website: null, email: null, parentQid: 'Q500' };
+  d.association.parentQid = 'Q500';
+  assert.throws(() => buildChangeSet(d, cfg), /nothing to update/);
+});

@@ -95,8 +95,10 @@ export function createWizard(host, opts) {
       const needsField = !!config.inScopeFieldQid && !o.fieldQids.includes(config.inScopeFieldQid);
       a.original = {
         labels: { ...o.labels }, descriptions: { ...o.descriptions }, aliases: o.aliases, formerNames: o.formerNames,
-        website: o.website, email: o.email, needsClass, needsField,
+        website: o.website, email: o.email, parentQid: o.parentQid, needsClass, needsField,
       };
+      a.parentQid = o.parentQid;
+      a.parentLabel = o.parentQid ? await labelOf(o.parentQid) : null;
       // someone who searched for this association to add it most likely wants it in the directory
       a.addToDirectory = arrivedFromSearch && (needsClass || needsField);
       a.labels = { ...o.labels };
@@ -112,6 +114,14 @@ export function createWizard(host, opts) {
     }
     loading = false;
     render();
+  }
+
+  /** Best-effort display label of an item; falls back to the bare id. */
+  async function labelOf(qid) {
+    try {
+      const labels = (await ports.search.getEntity(qid))?.labels || {};
+      return (labels.en || Object.values(labels)[0])?.value || qid;
+    } catch { return qid; }
   }
 
   /** Make sure the details step has its language rows (national, English, existing, chosen). */
@@ -228,6 +238,7 @@ export function createWizard(host, opts) {
 
   /** Search pickers are self-contained widgets mounted into placeholders after each render. */
   function mountPickers() {
+    mountParentPicker();
     const search = (text) => ports.search.searchEntities(text, 'item');
     const a = draft.association;
     const identify = host.querySelector('[data-role="ta-identify"]');
@@ -263,6 +274,17 @@ export function createWizard(host, opts) {
         onPick: (c) => { a.seatQid = c.qid; a.seatLabel = c.label; persist(); render(); },
       });
     }
+  }
+
+  /** Hook for the "part of" picker in the details step. */
+  function mountParentPicker() {
+    const parent = host.querySelector('[data-role="ta-parent"]');
+    if (!parent) return;
+    createTypeahead(parent, {
+      label: 'Part of (organization, e.g. the society a section belongs to)',
+      searchEntities: (text) => ports.search.searchEntities(text, 'item'),
+      onPick: (c) => { draft.association.parentQid = c.qid; draft.association.parentLabel = c.label; persist(); render(); },
+    });
   }
 
   /** The user found the association already on Wikidata: continue as "Edit details" for it. */
@@ -316,6 +338,7 @@ export function createWizard(host, opts) {
     else if (role('retry-load')) { loadOriginal(); }
     else if (role('clear-name')) { a.identifyName = ''; persist(); render(); }
     else if (role('clear-country')) { a.countryQid = null; a.countryLabel = null; official = []; persist(); render(); }
+    else if (role('clear-parent')) { a.parentQid = null; a.parentLabel = null; persist(); render(); }
     else if (role('clear-seat')) { a.seatQid = null; a.seatLabel = null; persist(); render(); }
     else if (role('add-lang')) { addLanguage(role('add-lang').dataset.lang); }
     else if (role('add-former')) {

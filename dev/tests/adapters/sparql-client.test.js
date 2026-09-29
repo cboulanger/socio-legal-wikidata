@@ -68,3 +68,12 @@ test('queryDirectory throws on non-ok response', async () => {
     /SPARQL query failed: 503/,
   );
 });
+
+test('mapBindings keeps the parent organization website for the snapshot', () => {
+  const [a] = mapBindings({ results: { bindings: [{
+    assoc: { value: 'http://www.wikidata.org/entity/Q1' }, assocLabel: { value: 'Section' },
+    parent: { value: 'http://www.wikidata.org/entity/Q2' }, parentLabel: { value: 'Society' },
+    parentUrl: { value: 'https://society.example/' },
+  }] } });
+  assert.equal(a.parentUrl, 'https://society.example/');
+});

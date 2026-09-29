@@ -16,6 +16,7 @@ export const MAX_TERM_LENGTH = 250; // Wikidata's limit for labels and descripti
  * @property {Object<string,string>} descriptions
  * @property {string|null} website
  * @property {string|null} email
+ * @property {string|null} [parentQid]    // "part of" (P361) as loaded
  * @property {Object<string,string[]>} [aliases]     // existing aliases per language
  * @property {FormerName[]} [formerNames]              // existing official-name (P1448) statements
  * @property {boolean} [needsClass]   // the item lacks an in-scope instance-of (P31), so it is not in the directory
@@ -36,7 +37,8 @@ export const MAX_TERM_LENGTH = 250; // Wikidata's limit for labels and descripti
  * @property {string|null} operatingAreaQid
  * @property {string|null} seatQid
  * @property {string|null} seatLabel      // display only
- * @property {string|null} parentQid
+ * @property {string|null} parentQid      // the organization this association is part of (P361)
+ * @property {string|null} parentLabel    // display only
  * @property {string|null} website
  * @property {string|null} email
  * @property {boolean} emailConfirmedShared
@@ -78,7 +80,7 @@ export function emptyDraft(mode) {
       formerNames: [],
       addToDirectory: false,
       classQid: null, fieldQid: null,
-      countryQid: null, countryLabel: null, operatingAreaQid: null, seatQid: null, seatLabel: null, parentQid: null,
+      countryQid: null, countryLabel: null, operatingAreaQid: null, seatQid: null, seatLabel: null, parentQid: null, parentLabel: null,
       website: null, email: null, emailConfirmedShared: false, inception: null, referenceUrl: null,
     },
     president: {
@@ -215,6 +217,15 @@ export function hasScopeChanges(a) {
   return !!(s.class || s.field);
 }
 
+/**
+ * The "part of" organization to write: only when picked and different from what is on Wikidata.
+ * @param {DraftAssociation} a
+ * @returns {string|null}
+ */
+export function changedParent(a) {
+  return a.parentQid && a.parentQid !== (a.original?.parentQid || null) ? a.parentQid : null;
+}
+
 /** Whether an association draft would write anything beyond terms. */
 export function hasTermChanges(a) {
   const t = changedTerms(a);
@@ -236,7 +247,7 @@ export function validateTerms(a) {
 /**
  * Read what the editor needs from a `wbgetentities` entity.
  * @param {any} entity
- * @returns {{labels: Object<string,string>, descriptions: Object<string,string>, aliases: Object<string,string[]>, formerNames: FormerName[], website: string|null, email: string|null, countryQid: string|null, classQids: string[], fieldQids: string[]}}
+ * @returns {{labels: Object<string,string>, descriptions: Object<string,string>, aliases: Object<string,string[]>, formerNames: FormerName[], website: string|null, email: string|null, parentQid: string|null, countryQid: string|null, classQids: string[], fieldQids: string[]}}
  */
 export function originalFromEntity(entity) {
   const terms = (obj) => Object.fromEntries(Object.entries(obj || {}).map(([lang, v]) => [lang, v.value]));
@@ -268,6 +279,7 @@ export function originalFromEntity(entity) {
     formerNames,
     website: first('P856'),
     email: email ? bareEmail(email) : null,
+    parentQid: ids('P361')[0] || null,
     countryQid: country && typeof country === 'object' ? country.id : null,
     classQids: ids('P31'),
     fieldQids: ids('P101'),
@@ -308,8 +320,9 @@ export function validateDraftForChangeset(d) {
   if (d.mode === 'update-field') {
     if (!a.qid) e.push('association.qid is required');
     const former = hasFormerNames(a);
-    if (!hasTermChanges(a) && !changedStatement && !scopeChange && !former) e.push('nothing to update');
-    if ((changedStatement || scopeChange || former) && !a.referenceUrl) e.push('association.referenceUrl is required');
+    const parent = !!changedParent(a);
+    if (!hasTermChanges(a) && !changedStatement && !scopeChange && !former && !parent) e.push('nothing to update');
+    if ((changedStatement || scopeChange || former || parent) && !a.referenceUrl) e.push('association.referenceUrl is required');
     e.push(...validateTerms(a), ...validateFormerNames(a));
   }
 
