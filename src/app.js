@@ -40,6 +40,7 @@ export async function createApp(deps) {
     editRuntime = await deps.buildEditRuntime();
   }
 
+  const cache = createCache({ storage: win.localStorage });
   const store = createStore({
     mode,
     associations: [],
@@ -179,6 +180,13 @@ export async function createApp(deps) {
 
     // The SPARQL-backed list lags behind Wikidata, so show what was just saved right away.
     function applySaved(result, draft) {
+      patchStore(result, draft);
+      // keep the browser cache in step, so a reload before the query service catches up still shows the edit
+      const s = store.getState();
+      if (!s.stale) { try { cache.set('directory', s.associations); } catch { /* storage full or blocked */ } }
+    }
+
+    function patchStore(result, draft) {
       const a = draft.association;
       if (a.qid) { revisions?.forget(a.qid); liveEdits.delete(a.qid); requestedEdits.delete(a.qid); } // the item just changed
       const labels = cleanTerms({ ...a.original.labels, ...a.labels });
@@ -228,7 +236,7 @@ export async function createApp(deps) {
 
   // ---- initial load ----
   const dir = await loadDirectory({
-    cache: createCache({ storage: win.localStorage }),
+    cache,
     queryDirectory: () => queryDirectoryImpl({ fetch: win.fetch.bind(win), endpoint: config.sparqlEndpoint, cfg: config }),
     fetch: win.fetch ? win.fetch.bind(win) : undefined,
     snapshotUrl: config.snapshotUrl,
