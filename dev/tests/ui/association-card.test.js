@@ -25,14 +25,15 @@ test('renders the label, seat, website, email, president and university', () => 
   assert.match(out, /Europa-Universität Viadrina/);
 });
 
-test('shows a "Notify me of changes" link and NO Edit button in read-only mode', () => {
+test('shows neither the "Notify me of changes" link nor an Edit button in read-only mode', () => {
   const out = renderAssociationCard(a, { editMode: false }).value;
-  assert.match(out, /Notify me of changes/);
+  assert.doesNotMatch(out, /Notify me of changes/);
   assert.doesNotMatch(out, /data-action="edit"/);
 });
 
-test('shows an Edit button when editMode is true', () => {
+test('shows the "Notify me of changes" link and an Edit button when editMode is true', () => {
   const out = renderAssociationCard(a, { editMode: true }).value;
+  assert.match(out, /Notify me of changes/);
   assert.match(out, /data-action="edit"/);
 });
 

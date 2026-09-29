@@ -6,7 +6,7 @@ import { createApp } from '../../src/app.js';
 
 function domFixture() {
   const dom = new JSDOM(`<!doctype html><div id="app">
-    <div id="map"></div><aside id="panel-host"></aside>
+    <div id="map"></div><aside id="panel-host"></aside><aside id="detail-host" hidden></aside>
     <label class="map-toggle"><input type="checkbox" data-role="leadership-toggle"></label>
   </div>`, { url: 'https://example.org/' });
   return dom.window;
@@ -33,10 +33,15 @@ test('createApp renders the panel rows and shows a card on row click', async () 
   assert.match(host.innerHTML, /data-qid="Q1"/);
   assert.match(host.innerHTML, /No fixed location/);
 
+  const detail = win.document.getElementById('detail-host');
+  assert.equal(detail.hidden, true);
   host.querySelector('button.row[data-qid="Q1"]').click();
-  assert.match(host.innerHTML, /class="card"/);
-  assert.match(host.innerHTML, /German Association/);
-  assert.doesNotMatch(host.innerHTML, /data-action="edit"/); // read-only
+  assert.doesNotMatch(host.innerHTML, /class="card"/); // the card is in the right sidebar, not the list panel
+  assert.equal(detail.hidden, false);
+  assert.match(detail.innerHTML, /class="card"/);
+  assert.match(detail.innerHTML, /German Association/);
+  assert.doesNotMatch(detail.innerHTML, /data-action="edit"/); // read-only
+  assert.doesNotMatch(detail.innerHTML, /Notify me of changes/); // edit mode only
 });
 
 test('the close button dismisses the selected association card', async () => {
@@ -50,10 +55,11 @@ test('the close button dismisses the selected association card', async () => {
     createMapView: () => ({ render() {}, focus() {} }),
     detectMode: () => 'read',
   });
-  const host = win.document.getElementById('panel-host');
+  const host = win.document.getElementById('detail-host');
   assert.ok(host.querySelector('article.card'));
   host.querySelector('[data-role="close-card"]').click();
   assert.equal(host.querySelector('article.card'), null);
+  assert.equal(host.hidden, true);
   assert.equal(win.location.hash, '');
 });
 

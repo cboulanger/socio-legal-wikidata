@@ -4,6 +4,7 @@ import { filterAssociations } from './core/filter.js';
 import { createCache, loadDirectory as loadDirectoryImpl } from './adapters/browser-cache.js';
 import { queryDirectory as queryDirectoryImpl } from './adapters/sparql-client.js';
 import { renderPanel } from './ui/directory-panel.js';
+import { renderAssociationCard } from './ui/association-card.js';
 import { createMapView as createMapViewImpl, toMapPins } from './ui/map-view.js';
 import { renderEditChrome } from './ui/edit-panel.js';
 
@@ -47,6 +48,7 @@ export async function createApp(deps) {
   });
 
   const panelHost = doc.getElementById('panel-host');
+  const detailHost = doc.getElementById('detail-host');
   const mapHost = doc.getElementById('map');
   const toggle = doc.querySelector('[data-role="leadership-toggle"]');
 
@@ -71,8 +73,17 @@ export async function createApp(deps) {
       centroids,
       stale: s.stale,
       asOf: s.asOf,
-      editMode: s.mode === 'edit',
     }));
+  }
+
+  // the selected association's card lives in a right-hand sidebar (the edit drawer covers it)
+  function renderDetailRegion() {
+    const s = store.getState();
+    const a = s.selection ? s.associations.find((x) => x.qid === s.selection) : null;
+    if (a) mount(detailHost, renderAssociationCard(a, { editMode: s.mode === 'edit' }));
+    else detailHost.innerHTML = '';
+    detailHost.hidden = !a;
+    doc.getElementById('app').classList.toggle('has-detail', !!a);
   }
 
   function renderMapRegion() {
@@ -92,12 +103,6 @@ export async function createApp(deps) {
   panelHost.addEventListener('click', (e) => {
     const row = e.target.closest('button.row');
     if (row) return select(row.dataset.qid);
-    if (e.target.closest('[data-role="close-card"]')) {
-      store.setState({ selection: null });
-      // a selection can also come from #/assoc/Q…; clear it so a reload doesn't re-open the card
-      if (/^#\/assoc\//.test(win.location.hash)) win.location.hash = '';
-      return;
-    }
     if (e.target.closest('[data-role="clear-filter"]')) {
       store.setState((s) => ({ filter: { ...s.filter, countryCode: undefined } }));
       // The country filter can only ever have been set by way of #/country/XX (see
@@ -105,6 +110,12 @@ export async function createApp(deps) {
       // a reload (or copying the URL) re-applies a filter the UI just showed as cleared.
       if (/^#\/country\//.test(win.location.hash)) win.location.hash = '';
     }
+  });
+  detailHost.addEventListener('click', (e) => {
+    if (!e.target.closest('[data-role="close-card"]')) return;
+    store.setState({ selection: null });
+    // a selection can also come from #/assoc/Q…; clear it so a reload doesn't re-open the card
+    if (/^#\/assoc\//.test(win.location.hash)) win.location.hash = '';
   });
   panelHost.addEventListener('input', (e) => {
     if (e.target.matches('input[data-role="search"]')) {
@@ -127,6 +138,7 @@ export async function createApp(deps) {
 
   store.subscribe(() => {
     renderPanelRegion();
+    renderDetailRegion();
     renderMapRegion();
   });
 
@@ -146,7 +158,7 @@ export async function createApp(deps) {
     });
     paintChrome();
 
-    panelHost.addEventListener('click', (e) => {
+    detailHost.addEventListener('click', (e) => {
       const btn = e.target.closest('[data-action="edit"]');
       if (!btn) return;
       const a = store.getState().associations.find((x) => x.qid === btn.dataset.qid);
@@ -169,6 +181,7 @@ export async function createApp(deps) {
   store.setState({ associations: dir.associations, stale: dir.stale, asOf: dir.asOf });
   applyRoute();
   renderPanelRegion();
+  renderDetailRegion();
   renderMapRegion();
 
   return { store };

@@ -1,7 +1,6 @@
 import { html } from '../render.js';
 import { deriveScope } from '../core/model.js';
 import { filterAssociations, partitionByLocation } from '../core/filter.js';
-import { renderAssociationCard } from './association-card.js';
 
 /**
  * @param {{
@@ -11,15 +10,13 @@ import { renderAssociationCard } from './association-card.js';
  *   centroids: Object<string, [number,number]>,
  *   stale: boolean,
  *   asOf?: string|null,
- *   editMode?: boolean,
  * }} state
  * @returns {import('../render.js').Trusted}
  */
 export function renderPanel(state) {
-  const { associations, filter, selection, centroids, stale, asOf, editMode = false } = state;
+  const { associations, filter, selection, centroids, stale, asOf } = state;
   const filtered = filterAssociations(associations, filter);
   const { mapped, unlocated } = partitionByLocation(filtered, centroids);
-  const selected = selection ? associations.find((a) => a.qid === selection) : null;
 
   const row = (a) => html`
     <li>
@@ -40,7 +37,6 @@ export function renderPanel(state) {
         ? html`<p class="panel__filter">filter: ${filter.countryCode}
             <button type="button" data-role="clear-filter" aria-label="Clear country filter">×</button></p>`
         : ''}
-      ${selected ? renderAssociationCard(selected, { editMode }) : ''}
       <ul class="panel__list">${mapped.map(row)}</ul>
       ${unlocated.length
         ? html`<h3 class="panel__group">No fixed location</h3><ul class="panel__list">${unlocated.map(row)}</ul>`

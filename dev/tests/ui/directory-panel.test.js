@@ -34,8 +34,8 @@ test('shows the stale banner when stale', () => {
   assert.match(out, /saved copy from 2026-09-01/);
 });
 
-test('renders the selected association card inline', () => {
+test('does not render the card in the list panel (it lives in the right sidebar)', () => {
   const out = renderPanel({ associations: list, filter: {}, selection: 'Q1', centroids, stale: false }).value;
-  assert.match(out, /class="card"/);
-  assert.match(out, /German Association/);
+  assert.doesNotMatch(out, /class="card"/);
+  assert.match(out, /aria-current="true"/);
 });

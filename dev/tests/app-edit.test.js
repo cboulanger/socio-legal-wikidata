@@ -6,7 +6,7 @@ import { createApp } from '../../src/app.js';
 
 function win(url) {
   return new JSDOM(`<!doctype html><div id="app">
-    <div id="map"></div><aside id="panel-host"></aside>
+    <div id="map"></div><aside id="panel-host"></aside><aside id="detail-host" hidden></aside>
     <label class="map-toggle"><input type="checkbox" data-role="leadership-toggle"></label>
   </div>`, { url }).window;
 }
@@ -24,7 +24,7 @@ test('in read mode there is no Edit button and no "Edit mode" badge', async () =
     detectMode: async () => 'read',
     buildEditRuntime: () => { throw new Error('must not build edit runtime in read mode'); },
   });
-  const host = w.document.getElementById('panel-host');
+  const host = w.document.getElementById('detail-host');
   w.document.querySelector('button.row[data-qid="Q1"]').click();
   assert.doesNotMatch(host.innerHTML, /data-action="edit"/);
   assert.doesNotMatch(w.document.body.innerHTML, /Edit mode/);
@@ -46,9 +46,10 @@ test('in edit mode the badge and Edit button show; clicking Edit mounts the wiza
     }),
   });
   assert.match(w.document.body.innerHTML, /Edit mode/);
-  const host = w.document.getElementById('panel-host');
+  const host = w.document.getElementById('detail-host');
   w.document.querySelector('button.row[data-qid="Q1"]').click();
   assert.match(host.innerHTML, /data-action="edit"/);
+  assert.match(host.innerHTML, /Notify me of changes/);
   host.querySelector('[data-action="edit"]').click();
   assert.equal(wizardMounted, true);
 });

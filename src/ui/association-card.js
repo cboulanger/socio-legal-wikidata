@@ -30,12 +30,12 @@ export function renderAssociationCard(a, { editMode = false } = {}) {
         ${a.journal
           ? html`<a href="${safeHref(a.journal.url || '#')}" rel="noopener" target="_blank">${a.journal.label}</a>`
           : '—'}</p>
-      <p class="card__actions">
-        <a class="card__notify" href="${watchlistUrl(a.qid)}" rel="noopener" target="_blank"
-           data-feed="${historyFeedUrl(a.qid)}">Notify me of changes</a>
-      </p>
       ${editMode
-        ? html`<p class="card__actions"><button type="button" data-action="edit" data-qid="${a.qid}">Edit</button></p>`
+        ? html`<p class="card__actions">
+            <a class="card__notify" href="${watchlistUrl(a.qid)}" rel="noopener" target="_blank"
+               data-feed="${historyFeedUrl(a.qid)}">Notify me of changes</a>
+          </p>
+          <p class="card__actions"><button type="button" data-action="edit" data-qid="${a.qid}">Edit</button></p>`
         : ''}
     </article>`;
 }
