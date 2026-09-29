@@ -3,6 +3,8 @@
 A public, read-only world map of socio-legal scholarly associations, reading
 live from Wikidata. Hand-written static files — **no build step**.
 
+**Live site: <https://cboulanger.github.io/socio-legal-wikidata/>**
+
 - Design specs: [`docs/spec/`](docs/spec/)
 - Implementation plans: [`docs/plans/`](docs/plans/)
 
@@ -43,17 +45,8 @@ cache lifetime.
    `snapshot.json` — see `git ls-files data/`), not the whole folder: it
    also holds a private, git-ignored working spreadsheet that must never
    be published.
-4. Open the deployed URL and run the manual QA checklist below (requires a
-   real browser — not automatable in CI or by an agent).
-
-## Manual QA checklist (requires a browser)
-
-- [ ] Equal Earth map loads; panel lists associations.
-- [ ] No sign-in or edit affordance anywhere in the DOM.
-- [ ] Row click → card shows; map pans.
-- [ ] Search box filters rows.
-- [ ] Clicking a country polygon (or visiting `#/country/DE`) filters to that country; the `×` clears it.
-- [ ] Simulate offline (DevTools → Network → Offline, reload): the snapshot loads with a "saved copy from …" banner.
+4. Open the deployed URL and check that the map loads and the panel lists
+   associations.
 
 ## Edit mode
 
@@ -73,20 +66,44 @@ Config keys to fill in before deploying (see `docs/plans/2026-09-02-operations-a
 exactly), `editTrigger`, `tokenPersistence` (`persistent` | `session`),
 `writeMode` (`direct` | `quickstatements`).
 
-## Manual QA checklist — edit mode (requires a browser and a registered OAuth consumer)
+### Wikidata OAuth app as the "backend"
 
-- [ ] `?edit` on a fresh browser profile shows the "Edit mode" badge and a
-      "Connect a Wikimedia account" button — no Add/Leave buttons yet.
-- [ ] Clicking Connect redirects to Wikimedia, then back to `…/callback.html`,
-      then to `/#/` with the badge now showing "Add association" / "Leave edit mode".
-- [ ] Reloading the site **without** `?edit` still shows edit mode (silent
-      session restore) — confirms `editTrigger: either`/`session` works.
-- [ ] Opening a card shows an **Edit** button; clicking it opens the six-step
-      (or shorter) wizard as a drawer.
-- [ ] Typing an association/person/journal name shows ranked Wikidata matches;
-      "None of these — create new" appears only once there are zero matches.
-- [ ] Completing a wizard flow with `writeMode: "direct"` shows a success panel
-      with a real Wikidata diff link.
-- [ ] Completing a wizard flow with `writeMode: "quickstatements"` opens a
-      QuickStatements tab with the prepared batch instead of writing directly.
-- [ ] "Leave edit mode" returns to the plain read-only view with no badge.
+The site has no server of its own, so there is nowhere to keep a password or
+API secret. Editing therefore works **only** through a registered Wikimedia
+OAuth 2.0 consumer (an "OAuth app") that acts as the backend:
+
+- The consumer is registered once at
+  [Special:OAuthConsumerRegistration](https://meta.wikimedia.org/wiki/Special:OAuthConsumerRegistration/propose)
+  on Meta-Wiki. It must be a **public client** (no secret) using the
+  authorization-code flow with PKCE, with the grants `basic`, `editpage` and
+  `createeditmovepage`.
+- Its **callback URL must exactly match** the deployed
+  `…/callback.html` (`oauth.redirectUri` in `config.json`); its client ID goes
+  in `oauth.clientId`. Register a second consumer with
+  `http://localhost:8000/callback.html` for local testing.
+- When an editor connects, the browser is sent to Wikimedia to log in and
+  approve the grant, then returns to `callback.html` with a code that is
+  exchanged for an access token (kept in the browser, see `tokenPersistence`).
+- Every edit is then sent **directly from the editor's browser to the Wikidata
+  API**, made under the editor's own Wikimedia account and attributed to
+  them in the item history. The site never sees their password and cannot
+  edit on anyone's behalf without their approval.
+- New consumers must be approved by Wikimedia before other users can
+  authorize them, which can take days. Without a working consumer (missing or
+  mismatched `oauth.clientId` / `redirectUri`), edit mode cannot connect and
+  the site stays effectively read-only.
+
+Step-by-step registration is in
+[`docs/plans/2026-09-02-operations-and-data-runbook.md`](docs/plans/2026-09-02-operations-and-data-runbook.md)
+(Task A3).
+
+### What edit mode can do
+
+- **Edit details** of an association: names, descriptions and abbreviations
+  (P1813) in several languages, website, e-mail.
+- **Add association**: create a new item after a duplicate check, or add an
+  existing Wikidata item to the directory.
+- Record **former names** as dated official-name statements.
+- Pick the **host organization** an association is part of.
+
+Design: [`docs/spec/2026-09-29-multilingual-edit-and-add-association-design.md`](docs/spec/2026-09-29-multilingual-edit-and-add-association-design.md).
