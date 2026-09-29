@@ -65,7 +65,8 @@ export async function createApp(deps) {
     getInsets: () => {
       const r = panelHost.getBoundingClientRect();
       if (!r.width || !r.height) return {};
-      return r.top > 0 ? { bottom: mapHost.clientHeight - r.top } : { left: r.right };
+      const m = mapHost.getBoundingClientRect();
+      return r.top > m.top ? { bottom: m.bottom - r.top } : { left: r.right };
     },
     onSelect: (qid) => select(qid),
     onSelectCountry: (iso) => { win.location.hash = `#/country/${iso}`; },
@@ -120,6 +121,11 @@ export async function createApp(deps) {
   panelHost.addEventListener('click', (e) => {
     const row = e.target.closest('button.row');
     if (row) return select(row.dataset.qid);
+    if (e.target.closest('[data-role="clear-search"]')) {
+      store.setState((s) => ({ filter: { ...s.filter, text: '' } }));
+      panelHost.querySelector('input[data-role="search"]')?.focus();
+      return;
+    }
     if (e.target.closest('[data-role="clear-filter"]')) {
       store.setState((s) => ({ filter: { ...s.filter, countryCode: undefined } }));
       // The country filter can only ever have been set by way of #/country/XX (see

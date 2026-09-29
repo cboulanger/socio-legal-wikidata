@@ -32,6 +32,9 @@ export function renderPanel(state) {
       <label class="panel__search">
         <span class="visually-hidden">Search associations</span>
         <input type="search" placeholder="Search…" value="${filter.text || ''}" data-role="search">
+        ${filter.text
+          ? html`<button type="button" class="panel__searchclear" data-role="clear-search" aria-label="Clear search">×</button>`
+          : ''}
       </label>
       ${filter.countryCode
         ? html`<p class="panel__filter">filter: ${filter.countryCode}
