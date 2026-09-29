@@ -36,6 +36,9 @@ export function renderPanel(state) {
           ? html`<button type="button" class="panel__searchclear" data-role="clear-search" aria-label="Clear search">×</button>`
           : ''}
       </label>
+      <div class="panel__toolbar">
+        <button type="button" data-role="reload-data" title="Clear the saved copy and reload the data from Wikidata">Reload data</button>
+      </div>
       ${filter.countryCode
         ? html`<p class="panel__filter">filter: ${filter.countryCode}
             <button type="button" data-role="clear-filter" aria-label="Clear country filter">×</button></p>`

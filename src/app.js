@@ -121,6 +121,12 @@ export async function createApp(deps) {
   panelHost.addEventListener('click', (e) => {
     const row = e.target.closest('button.row');
     if (row) return select(row.dataset.qid);
+    if (e.target.closest('[data-role="reload-data"]')) {
+      // drop only the cached directory (not the login session or a wizard draft), then re-query Wikidata
+      try { cache.remove('directory'); } catch { /* storage blocked */ }
+      win.location.reload();
+      return;
+    }
     if (e.target.closest('[data-role="clear-search"]')) {
       store.setState((s) => ({ filter: { ...s.filter, text: '' } }));
       panelHost.querySelector('input[data-role="search"]')?.focus();

@@ -22,6 +22,9 @@ export function createCache({ storage, now = () => Date.now() }) {
     set(key, value) {
       storage.setItem(`slw:${key}`, JSON.stringify({ t: now(), v: value }));
     },
+    remove(key) {
+      storage.removeItem(`slw:${key}`);
+    },
   };
 }
 
