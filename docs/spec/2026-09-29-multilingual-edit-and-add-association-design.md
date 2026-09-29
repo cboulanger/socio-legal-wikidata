@@ -1,6 +1,6 @@
 # Multilingual "Edit details" and "Add association" — Design
 
-**Status:** Draft for review
+**Status:** Implemented (prototype); see "Implementation notes" at the end
 **Date:** 2026-09-29
 **Builds on:** [`2026-09-02-ui-design.md`](2026-09-02-ui-design.md) (edit mode UI) and the
 write path in [`../plans/2026-09-02-edit-mode-and-write-path.md`](../plans/2026-09-02-edit-mode-and-write-path.md).
@@ -46,7 +46,7 @@ association card, which now lives in the right sidebar `#detail-host`.
 | Mode | Entry | Steps |
 |---|---|---|
 | `update-field` ("Edit details") | **Edit** button on the card | `details` → `review` |
-| `create-association` ("Add association") | **Add association** in the edit bar | `identify` → `details` → `place` → `review` |
+| `create-association` ("Add association") | **Add association** in the edit bar | `identify` → `place` → `details` → `review` |
 
 ### 3.1 identify (create only)
 
@@ -57,6 +57,8 @@ The user types the association's name. The app searches Wikidata
 duplicate items.
 
 ### 3.2 details (both modes)
+
+*(For "Add association" this step comes after `place`, so the country is already known.)*
 
 One shared component (`ui/edit-wizard/details-form.js`):
 
@@ -84,7 +86,7 @@ One shared component (`ui/edit-wizard/details-form.js`):
   This is a warning, not an error, because national-language-only items are valid on
   Wikidata.
 
-### 3.3 place (create only)
+### 3.3 place (create only, before details)
 
 Replaces the current `seat` step. A country picker (search, restricted to items that are
 instances of "country", Q6256) and an optional seat picker (search). At least a country
@@ -176,10 +178,10 @@ performs the write. The same screen shows results or errors (§7).
 
 - **Duplicate label + description** in a language (Wikidata rejects this): the API error
   message is shown on the review screen; the draft is kept and editable.
-- **Partial success** (terms saved, a statement failed): the result screen lists what
-  was saved (with the item/diff link) and what was not; a retry re-runs only the failed
-  part because the change set is diffed against `original`, which is updated after the
-  terms succeed.
+- **Partial success** (terms saved, a statement failed): the error is shown on the
+  review screen and the draft is kept. Retrying re-sends the whole change set; that is safe
+  because setting a label/description to the same value and replacing a statement are both
+  idempotent.
 - **Auth expired**: `getToken` failure prompts reconnect; the draft persists in
   `localStorage` (existing `slw:wizard:draft` mechanism, now keyed per mode+QID).
 - **Load failure** on open (edit): inline error with Retry; nothing is written.
@@ -223,3 +225,24 @@ exceeds one clear responsibility.
 3. **Country search filter** (instance of Q6256) relies on Wikidata search supporting the
    constraint; if it does not, the picker falls back to unfiltered search plus a
    post-filter on the fetched entity's P31.
+
+## 11. Implementation notes (2026-09-29)
+
+Differences from the design above, and behaviour worth knowing:
+
+- **Step order for create** is `identify → place → details → review` (§3 was corrected to
+  match): the country must be known before `details` to suggest the national language.
+- **Restored drafts:** if a saved draft exists for the same mode and item, it is reused as-is
+  and the item is **not** re-fetched; otherwise the item is fetched fresh. Drafts saved before
+  multilingual support (no `labels` map) are discarded.
+- **New association in the list** is added without a country code or seat coordinate, so it
+  appears under "No fixed location" until the next directory refresh.
+- **`?sandbox`**: with `?edit&sandbox` the edit bar gets an "Edit sandbox item" button that
+  opens Edit details on the public Wikidata Sandbox item (Q4115189), for trying edits safely.
+- **Listeners:** reopening the wizard on the same drawer replaces the previous wizard's
+  listeners (previously they accumulated).
+- **Not verified live:** nothing has been written to Wikidata yet. The REST calls follow the
+  documented Wikibase REST API v1 (`PATCH /entities/items/{id}`, `PUT /statements/{id}`,
+  `GET /entities/items/{id}/statements?property=`) and are covered by tests against a fake
+  `fetch`, but CORS from the GitHub Pages origin and the response shapes still need the first
+  real edit (see §9).

@@ -80,3 +80,76 @@ test('edit mode without a session shows Connect, not Add/Leave, and wires onConn
   chrome.querySelector('[data-role="connect"]').click();
   assert.equal(connectCalled, true);
 });
+
+function editApp(url, associations2 = associations) {
+  const w = win(url);
+  const opened = [];
+  const config = { cacheTtlMs: 1, tileUrl: 't', tileAttribution: 'a', editTrigger: 'either', editParam: 'edit', labelLanguages: 'en,de,fr,es' };
+  const ready = createApp({
+    window: w,
+    config,
+    centroids: { DE: [10.4, 51.1] },
+    loadDirectory: async () => ({ associations: associations2, stale: false, asOf: null }),
+    createMapView: () => ({ render() {}, focus() {} }),
+    detectMode: async () => 'edit',
+    buildEditRuntime: async () => ({
+      auth: { hasSession: () => true, connect: async () => {}, disconnect: async () => {} },
+      openWizard: (host, seed, hooks) => { opened.push({ seed, hooks }); },
+    }),
+  });
+  return { w, opened, ready };
+}
+
+test('Edit opens "Edit details" (update-field) for the selected association', async () => {
+  const { w, opened, ready } = editApp('https://app.example/?edit');
+  const { store } = await ready;
+  w.document.querySelector('button.row[data-qid="Q1"]').click();
+  w.document.querySelector('[data-action="edit"]').click();
+  assert.deepEqual(opened[0].seed, { mode: 'update-field', association: { qid: 'Q1', label: 'Body' } });
+  assert.equal(store.getState().selection, 'Q1');
+});
+
+test('after Edit details is saved the card shows the new name at once (in a directory language)', async () => {
+  const { w, opened, ready } = editApp('https://app.example/?edit');
+  const { store } = await ready;
+  w.document.querySelector('button.row[data-qid="Q1"]').click();
+  w.document.querySelector('[data-action="edit"]').click();
+  opened[0].hooks.onSaved({ created: [], diffUrls: [] }, {
+    mode: 'update-field',
+    association: { qid: 'Q1', original: { labels: { pt: 'Corpo' }, descriptions: {} }, labels: { pt: 'Corpo', de: 'Körper' }, descriptions: {}, website: 'https://new.example', email: null },
+  });
+  const a = store.getState().associations.find((x) => x.qid === 'Q1');
+  assert.equal(a.label, 'Körper');           // de is a directory language, pt is not
+  assert.equal(a.website, 'https://new.example');
+  assert.match(w.document.getElementById('detail-host').innerHTML, /Körper/);
+});
+
+test('after Add association is saved the new association is listed and selected', async () => {
+  const { w, opened, ready } = editApp('https://app.example/?edit');
+  const { store } = await ready;
+  w.document.querySelector('[data-role="add"]').click();
+  assert.deepEqual(opened[0].seed, { mode: 'create-association' });
+  opened[0].hooks.onSaved({ created: [{ ref: 'assoc', qid: 'Q999' }], diffUrls: [] }, {
+    mode: 'create-association',
+    association: {
+      qid: null, original: { labels: {}, descriptions: {} },
+      labels: { pt: 'Rede', en: 'Network' }, descriptions: {}, website: null, email: null, countryLabel: 'Brazil', seatQid: null, seatLabel: null,
+    },
+  });
+  const s = store.getState();
+  assert.equal(s.selection, 'Q999');
+  const added = s.associations.find((x) => x.qid === 'Q999');
+  assert.equal(added.label, 'Network');
+  assert.equal(added.countryLabel, 'Brazil');
+  assert.match(w.document.getElementById('detail-host').innerHTML, /Network/);
+});
+
+test('?sandbox adds a shortcut that opens Edit details on the Wikidata Sandbox item', async () => {
+  const { w, opened, ready } = editApp('https://app.example/?edit&sandbox');
+  await ready;
+  w.document.querySelector('[data-role="sandbox"]').click();
+  assert.deepEqual(opened[0].seed, { mode: 'update-field', association: { qid: 'Q4115189', label: 'Wikidata Sandbox' } });
+  const plain = editApp('https://app.example/?edit');
+  await plain.ready;
+  assert.equal(plain.w.document.querySelector('[data-role="sandbox"]'), null);
+});

@@ -1,6 +1,8 @@
 import { createStore } from './store.js';
 import { mount } from './render.js';
 import { filterAssociations } from './core/filter.js';
+import { emptyAssociation } from './core/model.js';
+import { cleanTerms } from './core/draft.js';
 import { createCache, loadDirectory as loadDirectoryImpl } from './adapters/browser-cache.js';
 import { queryDirectory as queryDirectoryImpl } from './adapters/sparql-client.js';
 import { renderPanel } from './ui/directory-panel.js';
@@ -20,10 +22,13 @@ import { renderEditChrome } from './ui/edit-panel.js';
  *   detectMode: () => ('read'|'edit') | Promise<'read'|'edit'>,
  *   buildEditRuntime?: () => Promise<{
  *     auth: {hasSession: () => boolean, connect: () => Promise<void>, disconnect: () => Promise<void>},
- *     openWizard: (host: HTMLElement, seed: any) => void,
+ *     openWizard: (host: HTMLElement, seed: any, hooks?: {onSaved?: Function}) => void,
  *   }>,
  * }} deps
  */
+/** The public "Wikidata Sandbox" item, meant for trying out edits. */
+const SANDBOX_QID = 'Q4115189';
+
 export async function createApp(deps) {
   const { window: win, config, centroids } = deps;
   const doc = win.document;
@@ -154,8 +159,37 @@ export async function createApp(deps) {
       connected: editRuntime.auth.hasSession(),
       onConnect: () => editRuntime.auth.connect(),
       onLeave: async () => { await editRuntime.auth.disconnect(); win.location.search = ''; },
-      onAdd: () => editRuntime.openWizard(drawer, { mode: 'create-association' }),
+      onAdd: () => editRuntime.openWizard(drawer, { mode: 'create-association' }, { onSaved: applySaved }),
+      // ?sandbox adds a shortcut to the public Wikidata Sandbox item, for trying edits safely
+      onSandbox: new URLSearchParams(win.location.search).has('sandbox')
+        ? () => editRuntime.openWizard(drawer, { mode: 'update-field', association: { qid: SANDBOX_QID, label: 'Wikidata Sandbox' } }, { onSaved: applySaved })
+        : undefined,
     });
+
+    // The SPARQL-backed list lags behind Wikidata, so show what was just saved right away.
+    function applySaved(result, draft) {
+      const a = draft.association;
+      const labels = cleanTerms({ ...a.original.labels, ...a.labels });
+      const descriptions = cleanTerms({ ...a.original.descriptions, ...a.descriptions });
+      const pick = (m) => (config.labelLanguages || 'en').split(',').map((l) => l.trim()).map((l) => m[l]).find(Boolean) || '';
+      if (draft.mode === 'update-field') {
+        store.setState((s) => ({
+          associations: s.associations.map((x) => (x.qid !== a.qid ? x : {
+            ...x, label: pick(labels) || x.label, description: pick(descriptions) || x.description,
+            website: a.website || x.website, email: a.email || x.email,
+          })),
+        }));
+      } else if (draft.mode === 'create-association') {
+        const created = result.created?.find((c) => c.ref === 'assoc');
+        if (!created) return;
+        const added = {
+          ...emptyAssociation(created.qid), label: pick(labels) || Object.values(labels)[0] || created.qid,
+          description: pick(descriptions), website: a.website, email: a.email,
+          countryLabel: a.countryLabel, seatQid: a.seatQid, seatLabel: a.seatLabel,
+        };
+        store.setState((s) => ({ associations: [...s.associations, added], selection: created.qid }));
+      }
+    }
     paintChrome();
 
     detailHost.addEventListener('click', (e) => {
@@ -164,9 +198,9 @@ export async function createApp(deps) {
       const a = store.getState().associations.find((x) => x.qid === btn.dataset.qid);
       if (!a) return;
       editRuntime.openWizard(drawer, {
-        mode: 'change-president',
+        mode: 'update-field',
         association: { qid: a.qid, label: a.label },
-      });
+      }, { onSaved: applySaved });
     });
   }
 
@@ -243,7 +277,7 @@ if (typeof window !== 'undefined' && window.document?.getElementById('app')) {
         : api;
       return {
         auth,
-        openWizard: (host, seed) => createWizard(host, { window, config, ports: { search: api, write }, seed, onClose: () => { host.innerHTML = ''; } }),
+        openWizard: (host, seed, hooks = {}) => createWizard(host, { window, config, ports: { search: api, write }, seed, onClose: () => { host.innerHTML = ''; }, ...hooks }),
       };
     },
   });

@@ -1,4 +1,4 @@
-import { validateDraftForChangeset } from './draft.js';
+import { validateDraftForChangeset, changedTerms, changedStatements } from './draft.js';
 
 /**
  * @typedef {{kind:'item', qid:string}|{kind:'item', ref:string}
@@ -10,6 +10,7 @@ import { validateDraftForChangeset } from './draft.js';
  * @typedef {{property:string, value:Value, qualifiers?:Qualifier[], reference?:Reference}} Claim
  *
  * @typedef {{type:'create-item', ref:string, labels:Object<string,string>, descriptions:Object<string,string>, claims:Claim[]}
+ *   |{type:'set-terms', target:{qid:string}, labels:Object<string,string>, descriptions:Object<string,string>}
  *   |{type:'add-statement', target:{qid:string}|{ref:string}, property:string, value:Value, qualifiers?:Qualifier[], reference?:Reference, replace?:boolean}
  *   |{type:'end-statement', statementId:string, endDate:string}} Op
  *
@@ -50,7 +51,7 @@ export function buildChangeSet(draft, cfg) {
       if (p.universityQid) {
         ops.push({ type: 'add-statement', target: { qid: p.qid }, property: 'P108', value: item(p.universityQid), reference: p.referenceUrl ? { P854: p.referenceUrl } : undefined });
       }
-    } else {
+    } else if (p.label) {
       /** @type {Claim[]} */
       const claims = [
         { property: 'P31', value: item(cfg.humanQid) },
@@ -107,8 +108,10 @@ export function buildChangeSet(draft, cfg) {
       });
     }
     for (const c of claims) if (assocRefUrl) c.reference = assocRefUrl;
-    ops.push({ type: 'create-item', ref: 'assoc', labels: { en: a.label }, descriptions: a.description ? { en: a.description } : {}, claims });
-    return { summary: `socio-legal directory: create association${j ? ' and journal' : ''} and link president`, ops };
+    const terms = changedTerms(a);
+    ops.push({ type: 'create-item', ref: 'assoc', labels: terms.labels, descriptions: terms.descriptions, claims });
+    const extras = [j ? 'journal' : null, personValue ? 'president' : null].filter(Boolean);
+    return { summary: `socio-legal directory: create association${extras.length ? ` with ${extras.join(' and ')}` : ''}`, ops };
   }
 
   if (draft.mode === 'change-president') {
@@ -127,8 +130,44 @@ export function buildChangeSet(draft, cfg) {
   }
 
   // update-field
+  const terms = changedTerms(a);
+  const stmts = changedStatements(a);
   const changed = [];
-  if (a.website) { ops.push({ type: 'add-statement', target: { qid: a.qid }, property: 'P856', value: url(a.website), reference: assocRefUrl, replace: true }); changed.push('website'); }
-  if (a.email) { ops.push({ type: 'add-statement', target: { qid: a.qid }, property: 'P968', value: mailto(a.email), reference: assocRefUrl, replace: true }); changed.push('e-mail'); }
-  return { summary: `socio-legal directory: update ${changed.join(' and ')}`, ops };
+  const langs = (m) => Object.keys(m).sort().join(', ');
+  if (Object.keys(terms.labels).length || Object.keys(terms.descriptions).length) {
+    ops.push({ type: 'set-terms', target: { qid: a.qid }, labels: terms.labels, descriptions: terms.descriptions });
+    if (Object.keys(terms.labels).length) changed.push(`names (${langs(terms.labels)})`);
+    if (Object.keys(terms.descriptions).length) changed.push(`descriptions (${langs(terms.descriptions)})`);
+  }
+  if (stmts.website) { ops.push({ type: 'add-statement', target: { qid: a.qid }, property: 'P856', value: url(stmts.website), reference: assocRefUrl, replace: true }); changed.push('website'); }
+  if (stmts.email) { ops.push({ type: 'add-statement', target: { qid: a.qid }, property: 'P968', value: mailto(stmts.email), reference: assocRefUrl, replace: true }); changed.push('e-mail'); }
+  return { summary: `socio-legal directory: update ${changed.join(', ')}`, ops };
+}
+
+/**
+ * Plain-language lines describing what a draft would write (for the review step).
+ * @param {import('./draft.js').DirectoryDraft} draft
+ * @returns {string[]}
+ */
+export function describeChanges(draft) {
+  const a = draft.association;
+  const terms = changedTerms(a);
+  const stmts = changedStatements(a);
+  const lines = [];
+  for (const [lang, text] of Object.entries(terms.labels)) {
+    const old = a.original?.labels?.[lang];
+    lines.push(old ? `name (${lang}): “${old}” → “${text}”` : `name (${lang}): “${text}” (new)`);
+  }
+  for (const [lang, text] of Object.entries(terms.descriptions)) {
+    const old = a.original?.descriptions?.[lang];
+    lines.push(old ? `description (${lang}): “${old}” → “${text}”` : `description (${lang}): “${text}” (new)`);
+  }
+  if (stmts.website) lines.push(`website: ${a.original?.website ? `${a.original.website} → ` : ''}${stmts.website}`);
+  if (stmts.email) lines.push(`e-mail: ${a.original?.email ? `${a.original.email} → ` : ''}${stmts.email}`);
+  if (draft.mode === 'create-association') {
+    if (a.countryLabel || a.countryQid) lines.push(`country: ${a.countryLabel || a.countryQid}`);
+    if (a.seatLabel || a.seatQid) lines.push(`seat: ${a.seatLabel || a.seatQid}`);
+    if (a.referenceUrl) lines.push(`reference: ${a.referenceUrl}`);
+  }
+  return lines;
 }

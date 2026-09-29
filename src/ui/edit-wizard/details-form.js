@@ -1,0 +1,89 @@
+import { html } from '../../render.js';
+import { looksPersonal } from '../../core/email-guard.js';
+import { cleanTerms, changedStatements } from '../../core/draft.js';
+import { COMMON_LANGUAGES, languageName } from '../../core/languages.js';
+
+const label = (code) => `${languageName(code)} (${code})`;
+
+/**
+ * Shared "details" step body for Add association and Edit details.
+ * @param {{
+ *   draft: import('../../core/draft.js').DirectoryDraft,
+ *   langs: string[],              // language rows to show, in order
+ *   suggestions: string[],        // official languages not shown yet (one-click chips)
+ *   labelLanguages?: string,      // comma list the directory query shows names for
+ *   langError?: string,
+ * }} p
+ */
+export function renderDetailsForm({ draft, langs, suggestions, labelLanguages = '', langError = '' }) {
+  const a = draft.association;
+  const addable = COMMON_LANGUAGES.filter((c) => !langs.includes(c));
+  const visible = labelLanguages.split(',').map((s) => s.trim()).filter(Boolean);
+  const named = Object.keys({ ...cleanTerms(a.original?.labels), ...cleanTerms(a.labels) });
+  const invisible = visible.length > 0 && named.length > 0 && !named.some((l) => visible.includes(l));
+  const emailChanged = !!changedStatements(a).email;
+  const needsConfirm = a.email && looksPersonal(a.email) && (draft.mode === 'create-association' || emailChanged);
+  const refRequired = draft.mode === 'create-association' || !!(changedStatements(a).website || emailChanged);
+
+  return html`
+    <div class="details">
+      ${langs.map((c) => html`
+        <fieldset class="lang" data-lang="${c}">
+          <legend>${label(c)}</legend>
+          <label>Name
+            <input type="text" name="label-${c}" data-field="label" data-lang="${c}" lang="${c}"
+                   value="${a.labels[c] || ''}" autocomplete="off"></label>
+          <label>Description
+            <input type="text" name="description-${c}" data-field="description" data-lang="${c}" lang="${c}"
+                   value="${a.descriptions[c] || ''}" autocomplete="off"></label>
+        </fieldset>`)}
+      ${suggestions.length
+        ? html`<p class="details__chips">Official language(s):
+            ${suggestions.map((c) => html`<button type="button" data-role="add-lang" data-lang="${c}">+ ${label(c)}</button>`)}</p>`
+        : ''}
+      <div class="details__addlang">
+        <select data-role="lang-select" aria-label="Add a language">
+          <option value="">Add language…</option>
+          ${addable.map((c) => html`<option value="${c}">${label(c)}</option>`)}
+        </select>
+        <input type="text" name="lang-code" data-role="lang-code" placeholder="or a code, e.g. pt-br" autocomplete="off">
+        <button type="button" data-role="add-lang-go">Add</button>
+      </div>
+      ${langError ? html`<p class="wizard__errors">${langError}</p>` : ''}
+      ${invisible
+        ? html`<p class="details__warn">The directory shows names in ${visible.join(', ')}. With only the languages above,
+            this association will appear as its Wikidata ID in the directory until a name in one of those languages is added.</p>`
+        : ''}
+      <label>Website
+        <input type="url" name="website" data-field="website" value="${a.website || ''}" autocomplete="off"></label>
+      <label>E-mail (shared role address)
+        <input type="email" name="email" data-field="email" value="${a.email || ''}" autocomplete="off"></label>
+      ${needsConfirm
+        ? html`<label class="details__confirm"><input type="checkbox" name="emailConfirmedShared" data-field="emailConfirmedShared"
+              ${a.emailConfirmedShared ? 'checked' : ''}> This is a shared role address, not a personal one</label>`
+        : ''}
+      <label>Reference URL ${refRequired ? '(required)' : '(needed when website or e-mail change)'}
+        <input type="url" name="referenceUrl" data-field="referenceUrl" value="${a.referenceUrl || ''}" autocomplete="off"></label>
+    </div>`;
+}
+
+/**
+ * Write one form control's value into the draft.
+ * @param {import('../../core/draft.js').DirectoryDraft} draft
+ * @param {HTMLInputElement} el
+ * @returns {boolean} whether the element belonged to the details form
+ */
+export function applyFieldInput(draft, el) {
+  const field = el.dataset?.field;
+  if (!field) return false;
+  const a = draft.association;
+  if (field === 'label') a.labels[el.dataset.lang] = el.value;
+  else if (field === 'description') a.descriptions[el.dataset.lang] = el.value;
+  else if (field === 'emailConfirmedShared') a.emailConfirmedShared = el.checked;
+  else if (field === 'website' || field === 'referenceUrl') a[field] = el.value.trim() || null;
+  else if (field === 'email') {
+    a.email = el.value.trim() || null;
+    a.emailConfirmedShared = false; // the confirmation belongs to the address it was given for
+  } else return false;
+  return true;
+}

@@ -10,6 +10,7 @@ import { rankCandidates } from '../../core/dedupe.js';
  *   onPick: (candidate: import('../../ports/index.js').EntityCandidate) => void,
  *   onCreate?: (name: string) => void,
  *   allowCreate?: boolean,
+ *   alwaysOfferCreate?: boolean,  // also offer "create new" while matches are showing (duplicate check)
  * }} opts
  */
 export function createTypeahead(el, opts) {
@@ -35,7 +36,7 @@ export function createTypeahead(el, opts) {
             </ul>
             ${state.query && ranked.length === 0 && !opts.allowCreate
               ? html`<p class="typeahead__none">This item is not on Wikidata — it must be added there first.</p>` : ''}
-            ${state.query && ranked.length === 0 && opts.allowCreate && !state.showCreate
+            ${state.query && (ranked.length === 0 || opts.alwaysOfferCreate) && opts.allowCreate && !state.showCreate
               ? html`<button type="button" data-role="none-of-these">None of these — create new</button>` : ''}
             ${state.showCreate
               ? html`<div data-role="create-form" class="typeahead__create">

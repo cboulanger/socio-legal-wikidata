@@ -1,15 +1,28 @@
 import { looksPersonal } from './email-guard.js';
+import { isValidLangCode } from './languages.js';
+
+export const MAX_TERM_LENGTH = 250; // Wikidata's limit for labels and descriptions
 
 /**
+ * @typedef {Object} AssociationOriginal  // values as loaded from Wikidata (empty when creating)
+ * @property {Object<string,string>} labels
+ * @property {Object<string,string>} descriptions
+ * @property {string|null} website
+ * @property {string|null} email
+ *
  * @typedef {Object} DraftAssociation
  * @property {string|null} qid
- * @property {string} label
- * @property {string} description
+ * @property {string} identifyName        // the name typed in the "identify" step (create)
+ * @property {Object<string,string>} labels        // language code -> name
+ * @property {Object<string,string>} descriptions  // language code -> description
+ * @property {AssociationOriginal} original
  * @property {string|null} classQid
  * @property {string|null} fieldQid
  * @property {string|null} countryQid
+ * @property {string|null} countryLabel   // display only
  * @property {string|null} operatingAreaQid
  * @property {string|null} seatQid
+ * @property {string|null} seatLabel      // display only
  * @property {string|null} parentQid
  * @property {string|null} website
  * @property {string|null} email
@@ -47,8 +60,10 @@ export function emptyDraft(mode) {
   return {
     mode,
     association: {
-      qid: null, label: '', description: '', classQid: null, fieldQid: null,
-      countryQid: null, operatingAreaQid: null, seatQid: null, parentQid: null,
+      qid: null, identifyName: '', labels: {}, descriptions: {},
+      original: { labels: {}, descriptions: {}, website: null, email: null },
+      classQid: null, fieldQid: null,
+      countryQid: null, countryLabel: null, operatingAreaQid: null, seatQid: null, seatLabel: null, parentQid: null,
       website: null, email: null, emailConfirmedShared: false, inception: null, referenceUrl: null,
     },
     president: {
@@ -61,24 +76,114 @@ export function emptyDraft(mode) {
   };
 }
 
+const bareEmail = (v) => (v || '').replace(/^mailto:/i, '').trim();
+
+/** Non-blank entries of a language->text map, trimmed. */
+export function cleanTerms(map) {
+  const out = {};
+  for (const [lang, text] of Object.entries(map || {})) {
+    const t = (text || '').trim();
+    if (t) out[lang] = t;
+  }
+  return out;
+}
+
+/** Entries of `current` that are non-blank and differ from `original`. Blank means "no change". */
+function changedEntries(current, original) {
+  const out = {};
+  for (const [lang, text] of Object.entries(cleanTerms(current))) {
+    if (text !== (original?.[lang] || '').trim()) out[lang] = text;
+  }
+  return out;
+}
+
+/**
+ * The label/description entries that will be written (edit: only what changed; create: everything filled).
+ * @param {DraftAssociation} a
+ * @returns {{labels: Object<string,string>, descriptions: Object<string,string>}}
+ */
+export function changedTerms(a) {
+  return {
+    labels: changedEntries(a.labels, a.original?.labels),
+    descriptions: changedEntries(a.descriptions, a.original?.descriptions),
+  };
+}
+
+/**
+ * Website / e-mail values that differ from what is on Wikidata. Blank means "no change".
+ * @param {DraftAssociation} a
+ * @returns {{website: string|null, email: string|null}}
+ */
+export function changedStatements(a) {
+  const website = (a.website || '').trim();
+  const email = bareEmail(a.email);
+  return {
+    website: website && website !== (a.original?.website || '').trim() ? website : null,
+    email: email && email !== bareEmail(a.original?.email) ? email : null,
+  };
+}
+
+/** Whether an association draft would write anything beyond terms. */
+export function hasTermChanges(a) {
+  const t = changedTerms(a);
+  return Object.keys(t.labels).length + Object.keys(t.descriptions).length > 0;
+}
+
+/** Errors about the language codes and lengths of the term maps (shared by step and draft validation). */
+export function validateTerms(a) {
+  const e = [];
+  for (const [kind, map] of [['name', a.labels], ['description', a.descriptions]]) {
+    for (const [lang, text] of Object.entries(cleanTerms(map))) {
+      if (!isValidLangCode(lang)) e.push(`“${lang}” is not a valid language code`);
+      if (text.length > MAX_TERM_LENGTH) e.push(`the ${kind} in “${lang}” is longer than ${MAX_TERM_LENGTH} characters`);
+    }
+  }
+  return e;
+}
+
+/**
+ * Read what the editor needs from a `wbgetentities` entity.
+ * @param {any} entity
+ * @returns {{labels: Object<string,string>, descriptions: Object<string,string>, website: string|null, email: string|null, countryQid: string|null}}
+ */
+export function originalFromEntity(entity) {
+  const terms = (obj) => Object.fromEntries(Object.entries(obj || {}).map(([lang, v]) => [lang, v.value]));
+  const first = (prop) => {
+    const claim = (entity?.claims?.[prop] || []).find((c) => c.rank !== 'deprecated' && c.mainsnak?.datavalue);
+    return claim ? claim.mainsnak.datavalue.value : null;
+  };
+  const country = first('P17');
+  const email = first('P968');
+  return {
+    labels: terms(entity?.labels),
+    descriptions: terms(entity?.descriptions),
+    website: first('P856'),
+    email: email ? bareEmail(email) : null,
+    countryQid: country && typeof country === 'object' ? country.id : null,
+  };
+}
+
 /** @param {DirectoryDraft} d @returns {string[]} */
 export function validateDraftForChangeset(d) {
   const e = [];
   const a = d.association;
   const p = d.president;
+  const changed = changedStatements(a);
+  const changedStatement = !!(changed.website || changed.email);
 
-  if (a.email && looksPersonal(a.email) && !a.emailConfirmedShared) {
+  if (a.email && looksPersonal(a.email) && !a.emailConfirmedShared && (d.mode !== 'update-field' || changed.email)) {
     e.push('association.email looks personal; confirm it is a shared role address');
   }
 
   if (d.mode === 'create-association') {
-    if (!a.label) e.push('association.label is required');
+    if (Object.keys(cleanTerms(a.labels)).length === 0) e.push('association.labels: at least one name is required');
     if (!a.classQid) e.push('association.classQid is required');
     if (!a.fieldQid) e.push('association.fieldQid is required');
     if (!a.referenceUrl) e.push('association.referenceUrl is required');
-    if (!p.qid && !p.label) e.push('president identity is required');
-    if (!p.qid && !p.universityQid) e.push('president.universityQid is required for a new person');
-    if (!p.qid && !p.referenceUrl) e.push('president.referenceUrl is required for a new person');
+    // a president is optional for now; if one is given, a new person needs the usual evidence
+    if (p.label && !p.qid && !p.universityQid) e.push('president.universityQid is required for a new person');
+    if (p.label && !p.qid && !p.referenceUrl) e.push('president.referenceUrl is required for a new person');
+    e.push(...validateTerms(a));
   }
 
   if (d.mode === 'change-president') {
@@ -90,8 +195,9 @@ export function validateDraftForChangeset(d) {
 
   if (d.mode === 'update-field') {
     if (!a.qid) e.push('association.qid is required');
-    if (!a.email && !a.website) e.push('nothing to update');
-    if (!a.referenceUrl) e.push('association.referenceUrl is required');
+    if (!hasTermChanges(a) && !changedStatement) e.push('nothing to update');
+    if (changedStatement && !a.referenceUrl) e.push('association.referenceUrl is required');
+    e.push(...validateTerms(a));
   }
 
   if (d.journal && !d.journal.qid && !d.journal.label) e.push('journal.label is required to create a journal');

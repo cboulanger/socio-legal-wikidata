@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { emptyDraft } from '../../../src/core/draft.js';
-import { buildChangeSet } from '../../../src/core/changeset.js';
+import { buildChangeSet, describeChanges } from '../../../src/core/changeset.js';
 
 const cfg = { humanQid: 'Q5', researcherQid: 'Q1650915', academicJournalQid: 'Q737498' };
 
@@ -50,8 +50,8 @@ test('change-president with a NEW person: create-item first, refs wired', () => 
 test('create-association with a new journal links journal P123 to the association ref', () => {
   const d = emptyDraft('create-association');
   Object.assign(d.association, {
-    label: 'European Society for Empirical Legal Studies',
-    description: 'European society for empirical legal studies',
+    labels: { en: 'European Society for Empirical Legal Studies', de: 'Europäische Gesellschaft für empirische Rechtsforschung' },
+    descriptions: { en: 'European society for empirical legal studies' },
     classQid: 'Q955824', fieldQid: 'Q2734663', countryQid: 'Q55',
     website: 'https://esels.eu', email: 'contact@esels.eu',
     inception: '2021', referenceUrl: 'https://esels.eu/about',
@@ -62,6 +62,8 @@ test('create-association with a new journal links journal P123 to the associatio
 
   const cs = buildChangeSet(d, cfg);
   const assoc = cs.ops.find((o) => o.type === 'create-item' && o.ref === 'assoc');
+  assert.deepEqual(assoc.labels, { en: 'European Society for Empirical Legal Studies', de: 'Europäische Gesellschaft für empirische Rechtsforschung' });
+  assert.deepEqual(assoc.descriptions, { en: 'European society for empirical legal studies' });
   assert.ok(assoc.claims.some((c) => c.property === 'P31' && c.value.qid === 'Q955824'));
   assert.ok(assoc.claims.some((c) => c.property === 'P101' && c.value.qid === 'Q2734663'));
   assert.ok(assoc.claims.some((c) => c.property === 'P17' && c.value.qid === 'Q55'));
@@ -87,7 +89,7 @@ test('update-field emits one referenced add-statement per provided field', () =>
 test('P968 (email) is always stored as a mailto: URI, in both create and update-field modes', () => {
   const created = emptyDraft('create-association');
   Object.assign(created.association, {
-    label: 'X', classQid: 'Q955824', fieldQid: 'Q2734663', email: 'office@body.org',
+    labels: { en: 'X' }, classQid: 'Q955824', fieldQid: 'Q2734663', email: 'office@body.org',
     referenceUrl: 'https://body.org',
   });
   created.president.qid = 'Q400';
@@ -112,13 +114,13 @@ test('P968 (email) is always stored as a mailto: URI, in both create and update-
 });
 
 test('buildChangeSet throws on an invalid draft', () => {
-  assert.throws(() => buildChangeSet(emptyDraft('create-association'), cfg), /association\.label is required/);
+  assert.throws(() => buildChangeSet(emptyDraft('create-association'), cfg), /at least one name is required/);
 });
 
 test('linking an EXISTING journal emits add-statements, not a create-item', () => {
   const d = emptyDraft('create-association');
   Object.assign(d.association, {
-    label: 'Law and Society Association',
+    labels: { en: 'Law and Society Association' },
     classQid: 'Q955824', fieldQid: 'Q2734663', referenceUrl: 'https://example.org/about',
   });
   d.president.qid = 'Q400';
@@ -135,4 +137,55 @@ test('linking an EXISTING journal emits add-statements, not a create-item', () =
   const p236 = cs.ops.find((o) => o.type === 'add-statement' && o.property === 'P236' && o.target.qid === 'Q6502970');
   assert.ok(p236);
   assert.equal(p236.value.value, '0023-9216');
+});
+
+test('create-association without a president creates only the association (no empty person)', () => {
+  const d = emptyDraft('create-association');
+  Object.assign(d.association, {
+    labels: { pt: 'Rede de Pesquisa Empírica em Direito' }, classQid: 'Q955824', fieldQid: 'Q2734663',
+    countryQid: 'Q155', referenceUrl: 'https://reed.example/sobre',
+  });
+  const cs = buildChangeSet(d, cfg);
+  assert.equal(cs.ops.length, 1);
+  assert.equal(cs.ops[0].type, 'create-item');
+  assert.deepEqual(cs.ops[0].labels, { pt: 'Rede de Pesquisa Empírica em Direito' });
+  assert.equal(cs.ops[0].claims.some((c) => c.property === 'P488'), false);
+  assert.match(cs.summary, /create association/);
+});
+
+test('update-field writes only the changed terms, in one set-terms op', () => {
+  const d = emptyDraft('update-field');
+  Object.assign(d.association, {
+    qid: 'Q100',
+    original: { labels: { pt: 'Rede', en: 'Network' }, descriptions: { pt: 'rede' }, website: null, email: null },
+    labels: { pt: 'Rede', en: 'Network', de: 'Netzwerk', fr: '   ' },   // de is new, fr is blank
+    descriptions: { pt: 'rede', en: 'a network' },                        // en is new
+  });
+  const cs = buildChangeSet(d, cfg);
+  assert.equal(cs.ops.length, 1);
+  assert.deepEqual(cs.ops[0], { type: 'set-terms', target: { qid: 'Q100' }, labels: { de: 'Netzwerk' }, descriptions: { en: 'a network' } });
+  assert.match(cs.summary, /names \(de\)/);
+  assert.match(cs.summary, /descriptions \(en\)/);
+});
+
+test('update-field: an unchanged website is not re-sent; a changed e-mail replaces', () => {
+  const d = emptyDraft('update-field');
+  Object.assign(d.association, {
+    qid: 'Q100',
+    original: { labels: {}, descriptions: {}, website: 'https://old.example', email: 'a@old.example' },
+    website: 'https://old.example', email: 'b@new.example', referenceUrl: 'https://new.example/news',
+  });
+  const cs = buildChangeSet(d, cfg);
+  assert.deepEqual(cs.ops.map((o) => o.property), ['P968']);
+  assert.equal(cs.ops[0].replace, true);
+});
+
+test('describeChanges lists new and changed names per language', () => {
+  const d = emptyDraft('update-field');
+  Object.assign(d.association, {
+    qid: 'Q100',
+    original: { labels: { en: 'Old' }, descriptions: {}, website: null, email: null },
+    labels: { en: 'New', de: 'Neu' },
+  });
+  assert.deepEqual(describeChanges(d), ['name (en): “Old” → “New”', 'name (de): “Neu” (new)']);
 });
