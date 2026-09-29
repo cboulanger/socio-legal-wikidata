@@ -5,6 +5,9 @@
       "qid": "Q141260161",
       "label": "Africa Law and Society Network",
       "description": "socio-legal research network for Africa",
+      "names": [
+        "Africa Law and Society Network"
+      ],
       "countryCode": null,
       "countryLabel": null,
       "operatingAreaQid": null,
@@ -35,6 +38,9 @@
       "qid": "Q141260162",
       "label": "Asian Law and Society Association",
       "description": "regional scholarly association for law and society in Asia",
+      "names": [
+        "Asian Law and Society Association"
+      ],
       "countryCode": "JP",
       "countryLabel": "Japan",
       "operatingAreaQid": null,
@@ -65,6 +71,9 @@
       "qid": "Q141260163",
       "label": "Asociación Latinoamericana y del Caribe de Derecho y Sociedad",
       "description": "regional association for law and society in Latin America and the Caribbean",
+      "names": [
+        "Asociación Latinoamericana y del Caribe de Derecho y Sociedad"
+      ],
       "countryCode": null,
       "countryLabel": null,
       "operatingAreaQid": null,
@@ -95,6 +104,10 @@
       "qid": "Q52636089",
       "label": "Associação Brasileira de Pesquisadores em Sociologia do Direito",
       "description": "Academic publisher based in Brazil",
+      "names": [
+        "Associação Brasileira de Pesquisadores em Sociologia do Direito",
+        "Brazilian Association for the Study of the Sociology of Law"
+      ],
       "countryCode": "BR",
       "countryLabel": "Brazil",
       "operatingAreaQid": null,
@@ -130,6 +143,9 @@
       "qid": "Q42417723",
       "label": "Association for the Study of Law, Culture and the Humanities",
       "description": "scholarly association",
+      "names": [
+        "Association for the Study of Law, Culture and the Humanities"
+      ],
       "countryCode": "US",
       "countryLabel": "United States",
       "operatingAreaQid": null,
@@ -160,6 +176,9 @@
       "qid": "Q141260164",
       "label": "Association of Indonesian Socio-Legal Scholars",
       "description": "national association of socio-legal scholars in Indonesia",
+      "names": [
+        "Association of Indonesian Socio-Legal Scholars"
+      ],
       "countryCode": "ID",
       "countryLabel": "Indonesia",
       "operatingAreaQid": null,
@@ -195,6 +214,9 @@
       "qid": "Q141260165",
       "label": "Austrian Sociological Association – Section on Law and Society",
       "description": "law and society section of the Austrian Sociological Association",
+      "names": [
+        "Austrian Sociological Association – Section on Law and Society"
+      ],
       "countryCode": "AT",
       "countryLabel": "Austria",
       "operatingAreaQid": null,
@@ -225,6 +247,9 @@
       "qid": "Q141260166",
       "label": "Berliner Arbeitskreis Rechtswirklichkeit",
       "description": "German network for interdisciplinary legal research",
+      "names": [
+        "Berliner Arbeitskreis Rechtswirklichkeit"
+      ],
       "countryCode": "DE",
       "countryLabel": "Germany",
       "operatingAreaQid": null,
@@ -255,6 +280,11 @@
       "qid": "Q88087154",
       "label": "Canadian Law and Society Association",
       "description": "national association for law and society in Canada",
+      "names": [
+        "CLSA",
+        "Canadian Law and Society Association",
+        "acds-clsa.com"
+      ],
       "countryCode": "CA",
       "countryLabel": "Canada",
       "operatingAreaQid": null,
@@ -285,6 +315,9 @@
       "qid": "Q141260087",
       "label": "Commission on Legal Pluralism",
       "description": "international commission on legal pluralism",
+      "names": [
+        "Commission on Legal Pluralism"
+      ],
       "countryCode": null,
       "countryLabel": null,
       "operatingAreaQid": null,
@@ -315,6 +348,9 @@
       "qid": "Q141260168",
       "label": "Dutch-Flemish Law and Society Association",
       "description": "Dutch-Flemish law and society association",
+      "names": [
+        "Dutch-Flemish Law and Society Association"
+      ],
       "countryCode": null,
       "countryLabel": "Netherlands",
       "operatingAreaQid": null,
@@ -345,6 +381,9 @@
       "qid": "Q141260169",
       "label": "European Society for Empirical Legal Studies",
       "description": "European society for empirical legal studies",
+      "names": [
+        "European Society for Empirical Legal Studies"
+      ],
       "countryCode": null,
       "countryLabel": "Netherlands",
       "operatingAreaQid": null,
@@ -380,6 +419,13 @@
       "qid": "Q141260088",
       "label": "German Association for Law and Society",
       "description": "",
+      "names": [
+        "German Association for Law & Society",
+        "German Association for Law and Society",
+        "Vereinigung für Recht & Gesellschaft",
+        "Vereinigung für Recht und Gesellschaft",
+        "Vereinigung für Rechtssoziologie"
+      ],
       "countryCode": "DE",
       "countryLabel": "Germany",
       "operatingAreaQid": null,
@@ -410,6 +456,10 @@
       "qid": "Q141260089",
       "label": "German Sociological Association – Sociology of Law Section",
       "description": "sociology of law section of the German Sociological Association",
+      "names": [
+        "German Sociological Association – Sociology of Law Section",
+        "Sektion Rechtssoziologie der Deutschen Gesellschaft für Soziologie (DGS)"
+      ],
       "countryCode": "DE",
       "countryLabel": "Germany",
       "operatingAreaQid": null,
@@ -440,6 +490,14 @@
       "qid": "Q1268131",
       "label": "International Association for Philosophy of Law and Social Philosophy",
       "description": "",
+      "names": [
+        "IVR",
+        "International Association for Philosophy of Law and Social Philosophy",
+        "Internationale Vereinigung für Rechts- und Sozialphilosophie",
+        "Oikeus- ja yhteiskuntafilosofian maailmanjärjestö",
+        "Sociedad Internacional de Filosofía Jurídica y Social",
+        "國際法哲學與社會哲學學會"
+      ],
       "countryCode": null,
       "countryLabel": null,
       "operatingAreaQid": null,
@@ -470,6 +528,9 @@
       "qid": "Q141260170",
       "label": "Israeli Law and Society Association",
       "description": "Israeli law and society association",
+      "names": [
+        "Israeli Law and Society Association"
+      ],
       "countryCode": "IL",
       "countryLabel": "Israel",
       "operatingAreaQid": null,
@@ -500,6 +561,9 @@
       "qid": "Q141260090",
       "label": "Italian Association for the Study of Law and Society",
       "description": "Italian association for the study of law and society",
+      "names": [
+        "Italian Association for the Study of Law and Society"
+      ],
       "countryCode": "IT",
       "countryLabel": "Italy",
       "operatingAreaQid": null,
@@ -530,6 +594,9 @@
       "qid": "Q141260091",
       "label": "Juris Diversitas",
       "description": "international association for comparative law and legal diversity",
+      "names": [
+        "Juris Diversitas"
+      ],
       "countryCode": null,
       "countryLabel": null,
       "operatingAreaQid": null,
@@ -560,6 +627,9 @@
       "qid": "Q141260092",
       "label": "Korean Law and Society Association",
       "description": "Korean law and society association",
+      "names": [
+        "Korean Law and Society Association"
+      ],
       "countryCode": "KR",
       "countryLabel": "South Korea",
       "operatingAreaQid": null,
@@ -595,6 +665,9 @@
       "qid": "Q141260093",
       "label": "Law & Social Sciences Network",
       "description": "South Asian law and social sciences research network",
+      "names": [
+        "Law & Social Sciences Network"
+      ],
       "countryCode": null,
       "countryLabel": null,
       "operatingAreaQid": null,
@@ -625,6 +698,12 @@
       "qid": "Q6503159",
       "label": "Law and Society Association",
       "description": "group of scholars",
+      "names": [
+        "Law & Society Association",
+        "Law and Society Association",
+        "lawandsociety.org",
+        "رابطة القانون والمجتمع"
+      ],
       "countryCode": "US",
       "countryLabel": "United States",
       "operatingAreaQid": null,
@@ -655,6 +734,9 @@
       "qid": "Q141260171",
       "label": "Law and Society Association of Australia and New Zealand",
       "description": "law and society association of Australia and New Zealand",
+      "names": [
+        "Law and Society Association of Australia and New Zealand"
+      ],
       "countryCode": null,
       "countryLabel": null,
       "operatingAreaQid": null,
@@ -685,6 +767,9 @@
       "qid": "Q141260172",
       "label": "Netherlands Academy for Empirical Legal Studies",
       "description": "Dutch interuniversity academy for empirical legal studies",
+      "names": [
+        "Netherlands Academy for Empirical Legal Studies"
+      ],
       "countryCode": null,
       "countryLabel": "Netherlands",
       "operatingAreaQid": null,
@@ -715,6 +800,9 @@
       "qid": "Q141260173",
       "label": "Red Derecho y Sociedad",
       "description": "Spanish law and society network",
+      "names": [
+        "Red Derecho y Sociedad"
+      ],
       "countryCode": "ES",
       "countryLabel": "Spain",
       "operatingAreaQid": null,
@@ -745,6 +833,9 @@
       "qid": "Q141260094",
       "label": "Red Sociojurídica",
       "description": "Colombian network of legal and socio-legal research groups",
+      "names": [
+        "Red Sociojurídica"
+      ],
       "countryCode": "CO",
       "countryLabel": "Colombia",
       "operatingAreaQid": null,
@@ -775,6 +866,10 @@
       "qid": "Q52608574",
       "label": "Rede de Pesquisa Empírica em Direito",
       "description": "Academic publisher based in Brazil",
+      "names": [
+        "Brazilian Network for Empirical Legal Studies",
+        "Rede de Pesquisa Empírica em Direito"
+      ],
       "countryCode": "BR",
       "countryLabel": "Brazil",
       "operatingAreaQid": null,
@@ -810,6 +905,14 @@
       "qid": "Q2145564",
       "label": "Research Committee on Sociology of Law",
       "description": "",
+      "names": [
+        "Comite de recherche en sociologie du droit (RC12) de l'ISA",
+        "Comité De Recherche En Sociologie Du Droit (RC12) De L'ISA",
+        "Comité de recherche en sociologie du droit",
+        "Comité de recherche en sociologie du droit (RC12) de l'ISA",
+        "Comité de recherche en sociologie du droit (rc12) de l'isa",
+        "Research Committee on Sociology of Law"
+      ],
       "countryCode": "ES",
       "countryLabel": "Spain",
       "operatingAreaQid": null,
@@ -840,6 +943,9 @@
       "qid": "Q141260174",
       "label": "Research Committee on Sociology of Law of the Swiss Sociological Association",
       "description": "sociology of law committee of the Swiss Sociological Association",
+      "names": [
+        "Research Committee on Sociology of Law of the Swiss Sociological Association"
+      ],
       "countryCode": "CH",
       "countryLabel": "Switzerland",
       "operatingAreaQid": null,
@@ -870,6 +976,9 @@
       "qid": "Q141260175",
       "label": "Research Committee on the Sociology of Law, Crime and Deviance, Indian Sociological Society",
       "description": "sociology of law/crime/deviance committee of the Indian Sociological Society",
+      "names": [
+        "Research Committee on the Sociology of Law, Crime and Deviance, Indian Sociological Society"
+      ],
       "countryCode": "IN",
       "countryLabel": "India",
       "operatingAreaQid": null,
@@ -900,6 +1009,9 @@
       "qid": "Q141260176",
       "label": "Sociedad Argentina de Sociología Jurídica",
       "description": "Argentine society for the sociology of law",
+      "names": [
+        "Sociedad Argentina de Sociología Jurídica"
+      ],
       "countryCode": "AR",
       "countryLabel": "Argentina",
       "operatingAreaQid": null,
@@ -935,6 +1047,9 @@
       "qid": "Q141260177",
       "label": "Society for Empirical Legal Studies",
       "description": "US society for empirical legal studies",
+      "names": [
+        "Society for Empirical Legal Studies"
+      ],
       "countryCode": "US",
       "countryLabel": "United States",
       "operatingAreaQid": null,
@@ -965,6 +1080,10 @@
       "qid": "Q138781707",
       "label": "Socio-Legal Studies Association",
       "description": "UK learned society for socio-legal studies",
+      "names": [
+        "SLSA",
+        "Socio-Legal Studies Association"
+      ],
       "countryCode": "GB",
       "countryLabel": "United Kingdom",
       "operatingAreaQid": null,
@@ -995,6 +1114,9 @@
       "qid": "Q141260178",
       "label": "Sociology of Law and Justice Section of the Portuguese Sociological Association",
       "description": "sociology of law and justice section of the Portuguese Sociological Association",
+      "names": [
+        "Sociology of Law and Justice Section of the Portuguese Sociological Association"
+      ],
       "countryCode": "PT",
       "countryLabel": "Portugal",
       "operatingAreaQid": null,
@@ -1025,6 +1147,9 @@
       "qid": "Q141260095",
       "label": "Sociology of Law and Justice Thematic Network of the French Sociological Association",
       "description": "sociology of law and justice network (RT13) of the French Sociological Association",
+      "names": [
+        "Sociology of Law and Justice Thematic Network of the French Sociological Association"
+      ],
       "countryCode": "FR",
       "countryLabel": "France",
       "operatingAreaQid": null,
@@ -1055,6 +1180,9 @@
       "qid": "Q141260179",
       "label": "Sociology of Law Section of the Italian Sociological Association",
       "description": "sociology of law section of the Italian Sociological Association",
+      "names": [
+        "Sociology of Law Section of the Italian Sociological Association"
+      ],
       "countryCode": "IT",
       "countryLabel": "Italy",
       "operatingAreaQid": null,
@@ -1085,6 +1213,9 @@
       "qid": "Q141260096",
       "label": "Sociology of Law Section of the Polish Sociological Association",
       "description": "sociology of law section of the Polish Sociological Association",
+      "names": [
+        "Sociology of Law Section of the Polish Sociological Association"
+      ],
       "countryCode": "PL",
       "countryLabel": "Poland",
       "operatingAreaQid": null,
@@ -1115,6 +1246,9 @@
       "qid": "Q141260180",
       "label": "Swiss Network for Law and Society",
       "description": "Swiss network for law and society",
+      "names": [
+        "Swiss Network for Law and Society"
+      ],
       "countryCode": "CH",
       "countryLabel": "Switzerland",
       "operatingAreaQid": null,
@@ -1145,6 +1279,10 @@
       "qid": "Q111548489",
       "label": "The Japanese Association Of Sociology Of Law",
       "description": "",
+      "names": [
+        "The Japanese Association Of Sociology Of Law",
+        "日本法社会学会"
+      ],
       "countryCode": "JP",
       "countryLabel": "Japan",
       "operatingAreaQid": null,

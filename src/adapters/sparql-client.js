@@ -75,6 +75,37 @@ export function buildDirectoryQuery(cfg) {
     .replace('%LANGS%', cfg.labelLanguages);
 }
 
+// Every name an association is known by (labels and aliases in any language, plus official names
+// P1448), so the search box also finds native titles. Kept out of the main query: joining
+// many-valued names there would multiply its rows.
+const NAMES_QUERY_TEMPLATE = `SELECT ?assoc ?name
+WHERE {
+  VALUES ?class { %CLASSES% }
+  ?assoc wdt:P31 ?class .
+  ?assoc wdt:P101 wd:%FIELD% .
+  { ?assoc rdfs:label ?name } UNION { ?assoc skos:altLabel ?name } UNION { ?assoc wdt:P1448 ?name }
+}`;
+
+/** @param {{inScopeClassQid: string, inScopeClassQids?: string[], inScopeFieldQid: string}} cfg */
+export function buildNamesQuery(cfg) {
+  const classes = cfg.inScopeClassQids?.length ? cfg.inScopeClassQids : [cfg.inScopeClassQid];
+  return NAMES_QUERY_TEMPLATE
+    .replace('%CLASSES%', classes.map((q) => `wd:${q}`).join(' '))
+    .replace('%FIELD%', cfg.inScopeFieldQid);
+}
+
+/** @param {any} sparqlJson @returns {Map<string, string[]>} distinct names per QID */
+export function mapNameBindings(sparqlJson) {
+  const byQid = new Map();
+  for (const row of sparqlJson?.results?.bindings || []) {
+    if (!row.assoc || !row.name) continue;
+    const id = row.assoc.value.replace('http://www.wikidata.org/entity/', '');
+    if (!byQid.has(id)) byQid.set(id, new Set());
+    byQid.get(id).add(row.name.value);
+  }
+  return new Map([...byQid].map(([id, set]) => [id, [...set].sort()]));
+}
+
 const val = (b) => (b ? b.value : undefined);
 const qid = (b) => (b ? b.value.replace('http://www.wikidata.org/entity/', '') : null);
 
@@ -131,7 +162,13 @@ export function mapBindings(sparqlJson) {
  */
 export async function queryDirectory({ fetch, endpoint, cfg }) {
   const url = `${endpoint}?query=${encodeURIComponent(buildDirectoryQuery(cfg))}`;
-  const res = await fetch(url, { headers: { Accept: 'application/sparql-results+json' } });
+  const get = (u) => fetch(u, { headers: { Accept: 'application/sparql-results+json' } });
+  const namesUrl = `${endpoint}?query=${encodeURIComponent(buildNamesQuery(cfg))}`;
+  const [res, namesRes] = await Promise.all([get(url), get(namesUrl).catch(() => null)]);
   if (!res.ok) throw new Error(`SPARQL query failed: ${res.status}`);
-  return mapBindings(await res.json());
+  const list = mapBindings(await res.json());
+  // the names are a search nicety: if they cannot be fetched, the directory still loads
+  const names = namesRes?.ok ? mapNameBindings(await namesRes.json().catch(() => null)) : new Map();
+  for (const a of list) a.names = names.get(a.qid) || [];
+  return list;
 }

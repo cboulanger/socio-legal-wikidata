@@ -10,7 +10,7 @@ export function filterAssociations(list, { countryCode, text } = {}) {
   const needle = (text || '').trim().toLowerCase();
   return list.filter((a) => {
     if (countryCode && a.countryCode !== countryCode) return false;
-    if (needle && !a.label.toLowerCase().includes(needle)) return false;
+    if (needle && ![a.label, ...(a.names || [])].some((n) => n.toLowerCase().includes(needle))) return false;
     return true;
   });
 }

@@ -16,6 +16,7 @@
  * @property {string} qid
  * @property {string} label
  * @property {string} description
+ * @property {string[]} names               // labels, aliases and official names (P1448) in every language, for search
  * @property {string|null} countryCode      // ISO 3166-1 alpha-2, uppercase
  * @property {string|null} countryLabel
  * @property {string|null} operatingAreaQid // P2541
@@ -46,6 +47,7 @@ export function emptyAssociation(qid = '') {
     qid,
     label: '',
     description: '',
+    names: [],
     countryCode: null,
     countryLabel: null,
     operatingAreaQid: null,

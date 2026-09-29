@@ -25,3 +25,8 @@ test('partitionByLocation splits mapped vs no-fixed-location', () => {
   assert.deepEqual(mapped.map(a => a.qid), ['Q1', 'Q2']);
   assert.deepEqual(unlocated.map(a => a.qid), ['Q3']);
 });
+
+test('filterAssociations also matches native names and aliases', () => {
+  const sect = { ...emptyAssociation('Q4'), label: 'Law and Society Section', names: ['Sektion Rechtssoziologie'] };
+  assert.deepEqual(filterAssociations([de, sect], { text: 'rechtssoz' }).map(a => a.qid), ['Q4']);
+});
