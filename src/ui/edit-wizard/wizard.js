@@ -97,10 +97,12 @@ export function createWizard(host, opts) {
       const needsField = !!config.inScopeFieldQid && !o.fieldQids.includes(config.inScopeFieldQid);
       a.original = {
         labels: { ...o.labels }, descriptions: { ...o.descriptions }, aliases: o.aliases, abbreviations: o.abbreviations, formerNames: o.formerNames,
-        website: o.website, email: o.email, parentQid: o.parentQid, needsClass, needsField,
+        website: o.website, email: o.email, parentQid: o.parentQid, operatingAreaQid: o.operatingAreaQid, needsClass, needsField,
       };
       a.parentQid = o.parentQid;
       a.parentLabel = o.parentQid ? await labelOf(o.parentQid) : null;
+      a.operatingAreaQid = o.operatingAreaQid;
+      a.operatingAreaLabel = o.operatingAreaQid ? await labelOf(o.operatingAreaQid) : null;
       // someone who searched for this association to add it most likely wants it in the directory
       a.addToDirectory = arrivedFromSearch && (needsClass || needsField);
       a.labels = { ...o.labels };
@@ -242,6 +244,7 @@ export function createWizard(host, opts) {
   /** Search pickers are self-contained widgets mounted into placeholders after each render. */
   function mountPickers() {
     mountParentPicker();
+    mountAreaPicker();
     const search = (text) => ports.search.searchEntities(text, 'item');
     const a = draft.association;
     const identify = host.querySelector('[data-role="ta-identify"]');
@@ -287,6 +290,17 @@ export function createWizard(host, opts) {
       label: 'Part of (organization, e.g. the society a section belongs to)',
       searchEntities: (text) => ports.search.searchEntities(text, 'item'),
       onPick: (c) => { draft.association.parentQid = c.qid; draft.association.parentLabel = c.label; persist(); render(); },
+    });
+  }
+
+  /** Hook for the "operating area" picker in the details step. */
+  function mountAreaPicker() {
+    const area = host.querySelector('[data-role="ta-area"]');
+    if (!area) return;
+    createTypeahead(area, {
+      label: 'Operating area (e.g. Asia; leave empty for a national body)',
+      searchEntities: (text) => ports.search.searchEntities(text, 'item'),
+      onPick: (c) => { draft.association.operatingAreaQid = c.qid; draft.association.operatingAreaLabel = c.label; persist(); render(); },
     });
   }
 
@@ -342,6 +356,7 @@ export function createWizard(host, opts) {
     else if (role('clear-name')) { a.identifyName = ''; persist(); render(); }
     else if (role('clear-country')) { a.countryQid = null; a.countryLabel = null; official = []; persist(); render(); }
     else if (role('clear-parent')) { a.parentQid = null; a.parentLabel = null; persist(); render(); }
+    else if (role('clear-area')) { a.operatingAreaQid = null; a.operatingAreaLabel = null; persist(); render(); }
     else if (role('clear-seat')) { a.seatQid = null; a.seatLabel = null; persist(); render(); }
     else if (role('add-lang')) { addLanguage(role('add-lang').dataset.lang); }
     else if (role('add-former')) {

@@ -1,4 +1,4 @@
-import { validateDraftForChangeset, changedTerms, changedStatements, scopeStatements, changedParent, activeFormerNames, aliasesToSet, changedAbbreviations } from './draft.js';
+import { validateDraftForChangeset, changedTerms, changedStatements, scopeStatements, changedParent, changedOperatingArea, activeFormerNames, aliasesToSet, changedAbbreviations } from './draft.js';
 
 /**
  * @typedef {{kind:'item', qid:string}|{kind:'item', ref:string}
@@ -178,6 +178,8 @@ export function buildChangeSet(draft, cfg) {
   if (stmts.email) { ops.push({ type: 'add-statement', target: { qid: a.qid }, property: 'P968', value: mailto(stmts.email), reference: assocRefUrl, replace: true }); changed.push('e-mail'); }
   const parent = changedParent(a);
   if (parent) { ops.push({ type: 'add-statement', target: { qid: a.qid }, property: 'P361', value: item(parent), reference: assocRefUrl, replace: true }); changed.push('part of'); }
+  const area = changedOperatingArea(a);
+  if (area) { ops.push({ type: 'add-statement', target: { qid: a.qid }, property: 'P2541', value: item(area), reference: assocRefUrl, replace: true }); changed.push('operating area'); }
   const scope = scopeStatements(a);
   if (scope.class) ops.push({ type: 'add-statement', target: { qid: a.qid }, property: 'P31', value: item(scope.class), reference: assocRefUrl });
   if (scope.field) ops.push({ type: 'add-statement', target: { qid: a.qid }, property: 'P101', value: item(scope.field), reference: assocRefUrl });
@@ -214,6 +216,9 @@ export function describeChanges(draft) {
   }
   if (changedParent(a) && draft.mode !== 'create-association') {
     lines.push(`part of: ${a.original?.parentQid ? `${a.original.parentQid} → ` : ''}${a.parentLabel || a.parentQid}`);
+  }
+  if (changedOperatingArea(a) && draft.mode !== 'create-association') {
+    lines.push(`operating area: ${a.original?.operatingAreaQid ? `${a.original.operatingAreaQid} → ` : ''}${a.operatingAreaLabel || a.operatingAreaQid}`);
   }
   const scope = scopeStatements(a);
   if (scope.class) lines.push(`add to directory: instance of ${scope.class}`);

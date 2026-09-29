@@ -17,6 +17,7 @@ export const MAX_TERM_LENGTH = 250; // Wikidata's limit for labels and descripti
  * @property {string|null} website
  * @property {string|null} email
  * @property {string|null} [parentQid]    // "part of" (P361) as loaded
+ * @property {string|null} [operatingAreaQid] // "operating area" (P2541) as loaded
  * @property {Object<string,string[]>} [aliases]     // existing aliases per language
  * @property {FormerName[]} [formerNames]              // existing official-name (P1448) statements
  * @property {boolean} [needsClass]   // the item lacks an in-scope instance-of (P31), so it is not in the directory
@@ -36,6 +37,7 @@ export const MAX_TERM_LENGTH = 250; // Wikidata's limit for labels and descripti
  * @property {string|null} countryQid
  * @property {string|null} countryLabel   // display only
  * @property {string|null} operatingAreaQid
+ * @property {string|null} [operatingAreaLabel] // display only
  * @property {string|null} seatQid
  * @property {string|null} seatLabel      // display only
  * @property {string|null} parentQid      // the organization this association is part of (P361)
@@ -250,6 +252,15 @@ export function changedParent(a) {
   return a.parentQid && a.parentQid !== (a.original?.parentQid || null) ? a.parentQid : null;
 }
 
+/**
+ * The operating area (P2541) to write: only when picked and different from what is on Wikidata.
+ * @param {DraftAssociation} a
+ * @returns {string|null}
+ */
+export function changedOperatingArea(a) {
+  return a.operatingAreaQid && a.operatingAreaQid !== (a.original?.operatingAreaQid || null) ? a.operatingAreaQid : null;
+}
+
 /** Whether an association draft would write anything beyond terms. */
 export function hasTermChanges(a) {
   const t = changedTerms(a);
@@ -271,7 +282,7 @@ export function validateTerms(a) {
 /**
  * Read what the editor needs from a `wbgetentities` entity.
  * @param {any} entity
- * @returns {{labels: Object<string,string>, descriptions: Object<string,string>, aliases: Object<string,string[]>, abbreviations: Object<string,string[]>, formerNames: FormerName[], website: string|null, email: string|null, parentQid: string|null, countryQid: string|null, classQids: string[], fieldQids: string[]}}
+ * @returns {{labels: Object<string,string>, descriptions: Object<string,string>, aliases: Object<string,string[]>, abbreviations: Object<string,string[]>, formerNames: FormerName[], website: string|null, email: string|null, parentQid: string|null, operatingAreaQid: string|null, countryQid: string|null, classQids: string[], fieldQids: string[]}}
  */
 export function originalFromEntity(entity) {
   const terms = (obj) => Object.fromEntries(Object.entries(obj || {}).map(([lang, v]) => [lang, v.value]));
@@ -310,6 +321,7 @@ export function originalFromEntity(entity) {
     website: first('P856'),
     email: email ? bareEmail(email) : null,
     parentQid: ids('P361')[0] || null,
+    operatingAreaQid: ids('P2541')[0] || null,
     countryQid: country && typeof country === 'object' ? country.id : null,
     classQids: ids('P31'),
     fieldQids: ids('P101'),

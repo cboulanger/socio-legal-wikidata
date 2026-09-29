@@ -1,6 +1,6 @@
 import { html } from '../../render.js';
 import { looksPersonal } from '../../core/email-guard.js';
-import { cleanTerms, changedStatements, hasScopeChanges, hasFormerNames, hasAbbreviations, changedParent } from '../../core/draft.js';
+import { cleanTerms, changedStatements, hasScopeChanges, hasFormerNames, hasAbbreviations, changedParent, changedOperatingArea } from '../../core/draft.js';
 import { COMMON_LANGUAGES, languageName } from '../../core/languages.js';
 
 const label = (code) => `${languageName(code)} (${code})`;
@@ -18,7 +18,7 @@ function derived(draft, labelLanguages) {
     visible,
     invisible: visible.length > 0 && named.length > 0 && !named.some((l) => visible.includes(l)),
     needsConfirm: !!(a.email && looksPersonal(a.email) && (draft.mode === 'create-association' || changed.email)),
-    refRequired: draft.mode === 'create-association' || !!(changed.website || changed.email || hasScopeChanges(a) || hasFormerNames(a) || hasAbbreviations(a) || !!changedParent(a)),
+    refRequired: draft.mode === 'create-association' || !!(changed.website || changed.email || hasScopeChanges(a) || hasFormerNames(a) || hasAbbreviations(a) || !!changedParent(a) || !!changedOperatingArea(a)),
   };
 }
 
@@ -102,7 +102,17 @@ function parentSection(a) {
     </div>`;
 }
 
-const refLabel = (d) => (d.refRequired ? '(required)' : '(needed when website or e-mail change)');
+/** "Operating area" (P2541): the region an international / regional body works in, picked by typing. */
+function operatingAreaSection(a) {
+  return html`<div class="details__area" data-role="area-field">
+      ${a.operatingAreaQid
+        ? html`<p class="wizard__chosen">Operating area (region or countries it covers): <strong>${a.operatingAreaLabel || a.operatingAreaQid}</strong>
+            <button type="button" data-role="clear-area">change</button></p>`
+        : html`<div data-role="ta-area"></div>`}
+    </div>`;
+}
+
+const refLabel =(d) => (d.refRequired ? '(required)' : '(needed when website or e-mail change)');
 
 /**
  * Shared "details" step body for Add association and Edit details.
@@ -151,6 +161,7 @@ export function renderDetailsForm({ draft, langs, suggestions, labelLanguages = 
       <div data-role="visibility-warn">${warnMarkup(d)}</div>
       ${formerSection(draft)}
       ${parentSection(a)}
+      ${operatingAreaSection(a)}
       <label>Website
         <input type="text" inputmode="url" name="website" data-field="website" value="${a.website || ''}" autocomplete="off"></label>
       <label>E-mail (shared role address)
