@@ -20,18 +20,19 @@
       "website": "https://africalawandsociety.org",
       "email": "africa-irc@uct.ac.za",
       "inception": "2016",
+      "abbreviation": null,
       "president": null,
       "leadUniQid": null,
       "leadUniLabel": null,
       "leadCoord": null,
       "journal": null,
       "lastEdit": {
-        "revid": 2539557822,
+        "revid": 2550924142,
         "user": "Panyasan",
         "anon": false,
         "userHidden": false,
-        "timestamp": "2026-09-02T23:04:32Z",
-        "comment": "/* wbeditentity-create-item:0| */ Import via socio-legal-wikidata project (see https://github.com/cboulanger/socio-legal-wikidata)"
+        "timestamp": "2026-09-29T16:32:54Z",
+        "comment": "/* wbremoveclaims-remove:1| */ [[Property:P101]]: [[Q2734663]], #quickstatements; #temporary_batch_1790699525268"
       }
     },
     {
@@ -53,18 +54,19 @@
       "website": "https://www.alsa.network",
       "email": "alsaexecoffice@gmail.com",
       "inception": "2015",
+      "abbreviation": null,
       "president": null,
       "leadUniQid": null,
       "leadUniLabel": null,
       "leadCoord": null,
       "journal": null,
       "lastEdit": {
-        "revid": 2539557829,
+        "revid": 2550924162,
         "user": "Panyasan",
         "anon": false,
         "userHidden": false,
-        "timestamp": "2026-09-02T23:04:33Z",
-        "comment": "/* wbeditentity-create-item:0| */ Import via socio-legal-wikidata project (see https://github.com/cboulanger/socio-legal-wikidata)"
+        "timestamp": "2026-09-29T16:32:56Z",
+        "comment": "/* wbremoveclaims-remove:1| */ [[Property:P101]]: [[Q2734663]], #quickstatements; #temporary_batch_1790699525268"
       }
     },
     {
@@ -86,18 +88,19 @@
       "website": "https://www.alades.org",
       "email": "contactoalades@gmail.com",
       "inception": "2024",
+      "abbreviation": null,
       "president": null,
       "leadUniQid": null,
       "leadUniLabel": null,
       "leadCoord": null,
       "journal": null,
       "lastEdit": {
-        "revid": 2539557837,
+        "revid": 2550924180,
         "user": "Panyasan",
         "anon": false,
         "userHidden": false,
-        "timestamp": "2026-09-02T23:04:35Z",
-        "comment": "/* wbeditentity-create-item:0| */ Import via socio-legal-wikidata project (see https://github.com/cboulanger/socio-legal-wikidata)"
+        "timestamp": "2026-09-29T16:32:58Z",
+        "comment": "/* wbremoveclaims-remove:1| */ [[Property:P101]]: [[Q2734663]], #quickstatements; #temporary_batch_1790699525268"
       }
     },
     {
@@ -120,6 +123,7 @@
       "website": "https://www.abrasd.com.br",
       "email": null,
       "inception": "2010",
+      "abbreviation": null,
       "president": null,
       "leadUniQid": null,
       "leadUniLabel": null,
@@ -131,12 +135,12 @@
         "issn": "2359-5582"
       },
       "lastEdit": {
-        "revid": 2542591714,
-        "user": "MS Sakib",
+        "revid": 2550923959,
+        "user": "Panyasan",
         "anon": false,
         "userHidden": false,
-        "timestamp": "2026-09-09T07:25:20Z",
-        "comment": "/* wbsetdescription-add:1|as */ ব্ৰাজিল-ভিত্তিক শৈক্ষিক প্ৰকাশক"
+        "timestamp": "2026-09-29T16:32:29Z",
+        "comment": "/* wbremoveclaims-remove:1| */ [[Property:P101]]: [[Q2734663]], #quickstatements; #temporary_batch_1790699525268"
       }
     },
     {
@@ -158,18 +162,19 @@
       "website": "https://lawculturehumanities.com",
       "email": "lch@lawculturehumanities.com",
       "inception": null,
+      "abbreviation": null,
       "president": null,
       "leadUniQid": null,
       "leadUniLabel": null,
       "leadCoord": null,
       "journal": null,
       "lastEdit": {
-        "revid": 2539557958,
+        "revid": 2550923936,
         "user": "Panyasan",
         "anon": false,
         "userHidden": false,
-        "timestamp": "2026-09-02T23:05:02Z",
-        "comment": "/* wbsetclaim-create:1||1 */ [[Property:P968]]: mailto:lch@lawculturehumanities.com, Import via socio-legal-wikidata project (see https://github.com/cboulanger/socio-legal-wikidata)"
+        "timestamp": "2026-09-29T16:32:26Z",
+        "comment": "/* wbremoveclaims-remove:1| */ [[Property:P101]]: [[Q2734663]], #quickstatements; #temporary_batch_1790699525268"
       }
     },
     {
@@ -191,6 +196,7 @@
       "website": "https://asslesi.id",
       "email": "sosiolegal.indonesia@gmail.com",
       "inception": "2011",
+      "abbreviation": null,
       "president": null,
       "leadUniQid": null,
       "leadUniLabel": null,
@@ -202,12 +208,12 @@
         "issn": null
       },
       "lastEdit": {
-        "revid": 2539557843,
+        "revid": 2550924202,
         "user": "Panyasan",
         "anon": false,
         "userHidden": false,
-        "timestamp": "2026-09-02T23:04:36Z",
-        "comment": "/* wbeditentity-create-item:0| */ Import via socio-legal-wikidata project (see https://github.com/cboulanger/socio-legal-wikidata)"
+        "timestamp": "2026-09-29T16:33:00Z",
+        "comment": "/* wbremoveclaims-remove:1| */ [[Property:P101]]: [[Q2734663]], #quickstatements; #temporary_batch_1790699525268"
       }
     },
     {
@@ -229,18 +235,19 @@
       "website": "https://oegs.ac.at/recht-und-gesellschaft/",
       "email": "rechtundgesellschaft@oegs.ac.at",
       "inception": null,
+      "abbreviation": null,
       "president": null,
       "leadUniQid": null,
       "leadUniLabel": null,
       "leadCoord": null,
       "journal": null,
       "lastEdit": {
-        "revid": 2539557849,
+        "revid": 2550924222,
         "user": "Panyasan",
         "anon": false,
         "userHidden": false,
-        "timestamp": "2026-09-02T23:04:37Z",
-        "comment": "/* wbeditentity-create-item:0| */ Import via socio-legal-wikidata project (see https://github.com/cboulanger/socio-legal-wikidata)"
+        "timestamp": "2026-09-29T16:33:02Z",
+        "comment": "/* wbremoveclaims-remove:1| */ [[Property:P101]]: [[Q2734663]], #quickstatements; #temporary_batch_1790699525268"
       }
     },
     {
@@ -262,18 +269,19 @@
       "website": "https://barblog.hypotheses.org",
       "email": "info@rechtswirklichkeit.de",
       "inception": "2001",
+      "abbreviation": null,
       "president": null,
       "leadUniQid": null,
       "leadUniLabel": null,
       "leadCoord": null,
       "journal": null,
       "lastEdit": {
-        "revid": 2539557855,
+        "revid": 2550924240,
         "user": "Panyasan",
         "anon": false,
         "userHidden": false,
-        "timestamp": "2026-09-02T23:04:38Z",
-        "comment": "/* wbeditentity-create-item:0| */ Import via socio-legal-wikidata project (see https://github.com/cboulanger/socio-legal-wikidata)"
+        "timestamp": "2026-09-29T16:33:04Z",
+        "comment": "/* wbremoveclaims-remove:1| */ [[Property:P101]]: [[Q2734663]], #quickstatements; #temporary_batch_1790699525268"
       }
     },
     {
@@ -297,18 +305,19 @@
       "website": "https://www.acds-clsa.com/",
       "email": null,
       "inception": "1985",
+      "abbreviation": "CLSA",
       "president": null,
       "leadUniQid": null,
       "leadUniLabel": null,
       "leadCoord": null,
       "journal": null,
       "lastEdit": {
-        "revid": 2539557093,
+        "revid": 2550923968,
         "user": "Panyasan",
         "anon": false,
         "userHidden": false,
-        "timestamp": "2026-09-02T23:00:56Z",
-        "comment": "/* wbmergeitems-from:0||Q141260086 */ Merge accidental duplicate created by socio-legal-wikidata import script"
+        "timestamp": "2026-09-29T16:32:31Z",
+        "comment": "/* wbremoveclaims-remove:1| */ [[Property:P101]]: [[Q2734663]], #quickstatements; #temporary_batch_1790699525268"
       }
     },
     {
@@ -330,18 +339,19 @@
       "website": "https://commission-on-legal-pluralism.com",
       "email": null,
       "inception": "1978",
+      "abbreviation": null,
       "president": null,
       "leadUniQid": null,
       "leadUniLabel": null,
       "leadCoord": null,
       "journal": null,
       "lastEdit": {
-        "revid": 2539556117,
+        "revid": 2550924006,
         "user": "Panyasan",
         "anon": false,
         "userHidden": false,
-        "timestamp": "2026-09-02T22:56:50Z",
-        "comment": "/* wbeditentity-create-item:0| */ Import via socio-legal-wikidata project (see https://github.com/cboulanger/socio-legal-wikidata)"
+        "timestamp": "2026-09-29T16:32:37Z",
+        "comment": "/* wbremoveclaims-remove:1| */ [[Property:P101]]: [[Q2734663]], #quickstatements; #temporary_batch_1790699525268"
       }
     },
     {
@@ -363,18 +373,19 @@
       "website": "https://www.rechtensamenleving.nl",
       "email": "vsr.email@gmail.com",
       "inception": "1980",
+      "abbreviation": null,
       "president": null,
       "leadUniQid": null,
       "leadUniLabel": null,
       "leadCoord": null,
       "journal": null,
       "lastEdit": {
-        "revid": 2539557865,
+        "revid": 2550924252,
         "user": "Panyasan",
         "anon": false,
         "userHidden": false,
-        "timestamp": "2026-09-02T23:04:41Z",
-        "comment": "/* wbeditentity-create-item:0| */ Import via socio-legal-wikidata project (see https://github.com/cboulanger/socio-legal-wikidata)"
+        "timestamp": "2026-09-29T16:33:05Z",
+        "comment": "/* wbremoveclaims-remove:1| */ [[Property:P101]]: [[Q2734663]], #quickstatements; #temporary_batch_1790699525268"
       }
     },
     {
@@ -396,6 +407,7 @@
       "website": "https://esels.eu",
       "email": "contact@esels.eu",
       "inception": "2021",
+      "abbreviation": null,
       "president": null,
       "leadUniQid": null,
       "leadUniLabel": null,
@@ -407,12 +419,12 @@
         "issn": null
       },
       "lastEdit": {
-        "revid": 2539557870,
+        "revid": 2550924268,
         "user": "Panyasan",
         "anon": false,
         "userHidden": false,
-        "timestamp": "2026-09-02T23:04:42Z",
-        "comment": "/* wbeditentity-create-item:0| */ Import via socio-legal-wikidata project (see https://github.com/cboulanger/socio-legal-wikidata)"
+        "timestamp": "2026-09-29T16:33:07Z",
+        "comment": "/* wbremoveclaims-remove:1| */ [[Property:P101]]: [[Q2734663]], #quickstatements; #temporary_batch_1790699525268"
       }
     },
     {
@@ -438,18 +450,19 @@
       "website": "https://rechtssoziologie.info",
       "email": null,
       "inception": null,
+      "abbreviation": null,
       "president": null,
       "leadUniQid": null,
       "leadUniLabel": null,
       "leadCoord": null,
       "journal": null,
       "lastEdit": {
-        "revid": 2550882621,
+        "revid": 2550924015,
         "user": "Panyasan",
         "anon": false,
         "userHidden": false,
-        "timestamp": "2026-09-29T13:58:08Z",
-        "comment": "/* wbsetclaim-create:1||1 */ [[Property:P101]]: [[Q2734663]], socio-legal directory: update former names (1), directory membership"
+        "timestamp": "2026-09-29T16:32:38Z",
+        "comment": "/* wbremoveclaims-remove:1| */ [[Property:P101]]: [[Q2734663]], #quickstatements; #temporary_batch_1790699525268"
       }
     },
     {
@@ -472,18 +485,19 @@
       "website": "https://soziologie.de/sektionen/rechtssoziologie",
       "email": null,
       "inception": null,
+      "abbreviation": null,
       "president": null,
       "leadUniQid": null,
       "leadUniLabel": null,
       "leadCoord": null,
       "journal": null,
       "lastEdit": {
-        "revid": 2550864341,
+        "revid": 2550924029,
         "user": "Panyasan",
         "anon": false,
         "userHidden": false,
-        "timestamp": "2026-09-29T12:50:46Z",
-        "comment": "/* wbeditentity-update-languages-short:0||de */ socio-legal directory: update names (de)"
+        "timestamp": "2026-09-29T16:32:40Z",
+        "comment": "/* wbremoveclaims-remove:1| */ [[Property:P101]]: [[Q2734663]], #quickstatements; #temporary_batch_1790699525268"
       }
     },
     {
@@ -510,18 +524,19 @@
       "website": "http://www.ivronline.org",
       "email": "ivrint.web@gmail.com",
       "inception": "1909",
+      "abbreviation": null,
       "president": null,
       "leadUniQid": null,
       "leadUniLabel": null,
       "leadCoord": null,
       "journal": null,
       "lastEdit": {
-        "revid": 2539557961,
+        "revid": 2550923898,
         "user": "Panyasan",
         "anon": false,
         "userHidden": false,
-        "timestamp": "2026-09-02T23:05:04Z",
-        "comment": "/* wbsetclaim-create:1||1 */ [[Property:P968]]: mailto:ivrint.web@gmail.com, Import via socio-legal-wikidata project (see https://github.com/cboulanger/socio-legal-wikidata)"
+        "timestamp": "2026-09-29T16:32:20Z",
+        "comment": "/* wbremoveclaims-remove:1| */ [[Property:P101]]: [[Q2734663]], #quickstatements; #temporary_batch_1790699525268"
       }
     },
     {
@@ -543,18 +558,19 @@
       "website": "https://lp.pac.ac.il/he/law-and-society-conference",
       "email": "isrlawsoc@gmail.com",
       "inception": null,
+      "abbreviation": null,
       "president": null,
       "leadUniQid": null,
       "leadUniLabel": null,
       "leadCoord": null,
       "journal": null,
       "lastEdit": {
-        "revid": 2539557875,
+        "revid": 2550924284,
         "user": "Panyasan",
         "anon": false,
         "userHidden": false,
-        "timestamp": "2026-09-02T23:04:43Z",
-        "comment": "/* wbeditentity-create-item:0| */ Import via socio-legal-wikidata project (see https://github.com/cboulanger/socio-legal-wikidata)"
+        "timestamp": "2026-09-29T16:33:09Z",
+        "comment": "/* wbremoveclaims-remove:1| */ [[Property:P101]]: [[Q2734663]], #quickstatements; #temporary_batch_1790699525268"
       }
     },
     {
@@ -576,18 +592,19 @@
       "website": "https://dirittoesocieta.org",
       "email": null,
       "inception": null,
+      "abbreviation": null,
       "president": null,
       "leadUniQid": null,
       "leadUniLabel": null,
       "leadCoord": null,
       "journal": null,
       "lastEdit": {
-        "revid": 2539556151,
+        "revid": 2550924037,
         "user": "Panyasan",
         "anon": false,
         "userHidden": false,
-        "timestamp": "2026-09-02T22:56:57Z",
-        "comment": "/* wbeditentity-create-item:0| */ Import via socio-legal-wikidata project (see https://github.com/cboulanger/socio-legal-wikidata)"
+        "timestamp": "2026-09-29T16:32:42Z",
+        "comment": "/* wbremoveclaims-remove:1| */ [[Property:P101]]: [[Q2734663]], #quickstatements; #temporary_batch_1790699525268"
       }
     },
     {
@@ -609,18 +626,19 @@
       "website": "http://jurisdiversitas.blogspot.com",
       "email": null,
       "inception": null,
+      "abbreviation": null,
       "president": null,
       "leadUniQid": null,
       "leadUniLabel": null,
       "leadCoord": null,
       "journal": null,
       "lastEdit": {
-        "revid": 2539556159,
+        "revid": 2550924049,
         "user": "Panyasan",
         "anon": false,
         "userHidden": false,
-        "timestamp": "2026-09-02T22:56:59Z",
-        "comment": "/* wbeditentity-create-item:0| */ Import via socio-legal-wikidata project (see https://github.com/cboulanger/socio-legal-wikidata)"
+        "timestamp": "2026-09-29T16:32:44Z",
+        "comment": "/* wbremoveclaims-remove:1| */ [[Property:P101]]: [[Q2734663]], #quickstatements; #temporary_batch_1790699525268"
       }
     },
     {
@@ -642,6 +660,7 @@
       "website": "https://klsa.jams.or.kr",
       "email": null,
       "inception": null,
+      "abbreviation": null,
       "president": null,
       "leadUniQid": null,
       "leadUniLabel": null,
@@ -653,12 +672,12 @@
         "issn": "1227-0954"
       },
       "lastEdit": {
-        "revid": 2539556165,
+        "revid": 2550924058,
         "user": "Panyasan",
         "anon": false,
         "userHidden": false,
-        "timestamp": "2026-09-02T22:57:00Z",
-        "comment": "/* wbeditentity-create-item:0| */ Import via socio-legal-wikidata project (see https://github.com/cboulanger/socio-legal-wikidata)"
+        "timestamp": "2026-09-29T16:32:45Z",
+        "comment": "/* wbremoveclaims-remove:1| */ [[Property:P101]]: [[Q2734663]], #quickstatements; #temporary_batch_1790699525268"
       }
     },
     {
@@ -680,18 +699,19 @@
       "website": "http://lassnet.blogspot.com",
       "email": null,
       "inception": "2008",
+      "abbreviation": null,
       "president": null,
       "leadUniQid": null,
       "leadUniLabel": null,
       "leadCoord": null,
       "journal": null,
       "lastEdit": {
-        "revid": 2539556171,
+        "revid": 2550924075,
         "user": "Panyasan",
         "anon": false,
         "userHidden": false,
-        "timestamp": "2026-09-02T22:57:01Z",
-        "comment": "/* wbeditentity-create-item:0| */ Import via socio-legal-wikidata project (see https://github.com/cboulanger/socio-legal-wikidata)"
+        "timestamp": "2026-09-29T16:32:47Z",
+        "comment": "/* wbremoveclaims-remove:1| */ [[Property:P101]]: [[Q2734663]], #quickstatements; #temporary_batch_1790699525268"
       }
     },
     {
@@ -716,18 +736,19 @@
       "website": "http://www.lawandsociety.org/",
       "email": "lsa@lawandsociety.org",
       "inception": "1964",
+      "abbreviation": null,
       "president": null,
       "leadUniQid": null,
       "leadUniLabel": null,
       "leadCoord": null,
       "journal": null,
       "lastEdit": {
-        "revid": 2540386034,
-        "user": "KrBot",
+        "revid": 2550923929,
+        "user": "Panyasan",
         "anon": false,
         "userHidden": false,
-        "timestamp": "2026-09-05T06:22:23Z",
-        "comment": "/* wbremoveclaims-remove:1| */ [[Property:P571]]: 1964, дублирующееся значение / duplicate value"
+        "timestamp": "2026-09-29T16:32:24Z",
+        "comment": "/* wbremoveclaims-remove:1| */ [[Property:P101]]: [[Q2734663]], #quickstatements; #temporary_batch_1790699525268"
       }
     },
     {
@@ -749,18 +770,19 @@
       "website": "https://www.lsaanz.org",
       "email": "lsaanzcomms@gmail.com",
       "inception": "2006",
+      "abbreviation": null,
       "president": null,
       "leadUniQid": null,
       "leadUniLabel": null,
       "leadCoord": null,
       "journal": null,
       "lastEdit": {
-        "revid": 2539557881,
+        "revid": 2550924303,
         "user": "Panyasan",
         "anon": false,
         "userHidden": false,
-        "timestamp": "2026-09-02T23:04:44Z",
-        "comment": "/* wbeditentity-create-item:0| */ Import via socio-legal-wikidata project (see https://github.com/cboulanger/socio-legal-wikidata)"
+        "timestamp": "2026-09-29T16:33:11Z",
+        "comment": "/* wbremoveclaims-remove:1| */ [[Property:P101]]: [[Q2734663]], #quickstatements; #temporary_batch_1790699525268"
       }
     },
     {
@@ -782,18 +804,19 @@
       "website": "https://elsacademy.nl",
       "email": "contact@elsacademy.nl",
       "inception": null,
+      "abbreviation": null,
       "president": null,
       "leadUniQid": null,
       "leadUniLabel": null,
       "leadCoord": null,
       "journal": null,
       "lastEdit": {
-        "revid": 2539557884,
+        "revid": 2550924317,
         "user": "Panyasan",
         "anon": false,
         "userHidden": false,
-        "timestamp": "2026-09-02T23:04:46Z",
-        "comment": "/* wbeditentity-create-item:0| */ Import via socio-legal-wikidata project (see https://github.com/cboulanger/socio-legal-wikidata)"
+        "timestamp": "2026-09-29T16:33:13Z",
+        "comment": "/* wbremoveclaims-remove:1| */ [[Property:P101]]: [[Q2734663]], #quickstatements; #temporary_batch_1790699525268"
       }
     },
     {
@@ -815,18 +838,19 @@
       "website": "http://derechoysociedad.unizar.es/red-derecho-y-sociedad",
       "email": "sociojur@unizar.es",
       "inception": null,
+      "abbreviation": null,
       "president": null,
       "leadUniQid": null,
       "leadUniLabel": null,
       "leadCoord": null,
       "journal": null,
       "lastEdit": {
-        "revid": 2539557892,
+        "revid": 2550924332,
         "user": "Panyasan",
         "anon": false,
         "userHidden": false,
-        "timestamp": "2026-09-02T23:04:47Z",
-        "comment": "/* wbeditentity-create-item:0| */ Import via socio-legal-wikidata project (see https://github.com/cboulanger/socio-legal-wikidata)"
+        "timestamp": "2026-09-29T16:33:15Z",
+        "comment": "/* wbremoveclaims-remove:1| */ [[Property:P101]]: [[Q2734663]], #quickstatements; #temporary_batch_1790699525268"
       }
     },
     {
@@ -848,18 +872,19 @@
       "website": "https://www.redjuridicaysociojuridica.com",
       "email": null,
       "inception": null,
+      "abbreviation": null,
       "president": null,
       "leadUniQid": null,
       "leadUniLabel": null,
       "leadCoord": null,
       "journal": null,
       "lastEdit": {
-        "revid": 2539556195,
+        "revid": 2550924093,
         "user": "Panyasan",
         "anon": false,
         "userHidden": false,
-        "timestamp": "2026-09-02T22:57:05Z",
-        "comment": "/* wbeditentity-create-item:0| */ Import via socio-legal-wikidata project (see https://github.com/cboulanger/socio-legal-wikidata)"
+        "timestamp": "2026-09-29T16:32:49Z",
+        "comment": "/* wbremoveclaims-remove:1| */ [[Property:P101]]: [[Q2734663]], #quickstatements; #temporary_batch_1790699525268"
       }
     },
     {
@@ -882,6 +907,7 @@
       "website": "https://reedpesquisa.org",
       "email": "reed.pesquisa@gmail.com",
       "inception": "2011",
+      "abbreviation": null,
       "president": null,
       "leadUniQid": null,
       "leadUniLabel": null,
@@ -893,12 +919,12 @@
         "issn": "2319-0817"
       },
       "lastEdit": {
-        "revid": 2544397166,
-        "user": "MS Sakib",
+        "revid": 2550923948,
+        "user": "Panyasan",
         "anon": false,
         "userHidden": false,
-        "timestamp": "2026-09-12T06:08:08Z",
-        "comment": "/* wbsetdescription-add:1|as */ ব্ৰাজিল-ভিত্তিক শৈক্ষিক প্ৰকাশক"
+        "timestamp": "2026-09-29T16:32:28Z",
+        "comment": "/* wbremoveclaims-remove:1| */ [[Property:P101]]: [[Q2734663]], #quickstatements; #temporary_batch_1790699525268"
       }
     },
     {
@@ -925,18 +951,19 @@
       "website": "http://rcsl.iscte.pt/",
       "email": "m.kortabarria@iisj.es",
       "inception": "1962",
+      "abbreviation": null,
       "president": null,
       "leadUniQid": null,
       "leadUniLabel": null,
       "leadCoord": null,
       "journal": null,
       "lastEdit": {
-        "revid": 2540384175,
-        "user": "KrBot",
+        "revid": 2550923915,
+        "user": "Panyasan",
         "anon": false,
         "userHidden": false,
-        "timestamp": "2026-09-05T06:15:10Z",
-        "comment": "/* wbremoveclaims-remove:1| */ [[Property:P571]]: 1962, дублирующееся значение / duplicate value"
+        "timestamp": "2026-09-29T16:32:22Z",
+        "comment": "/* wbremoveclaims-remove:1| */ [[Property:P101]]: [[Q2734663]], #quickstatements; #temporary_batch_1790699525268"
       }
     },
     {
@@ -958,18 +985,19 @@
       "website": "https://www.sgs-sss.ch",
       "email": "law@sgs-sss.ch",
       "inception": null,
+      "abbreviation": null,
       "president": null,
       "leadUniQid": null,
       "leadUniLabel": null,
       "leadCoord": null,
       "journal": null,
       "lastEdit": {
-        "revid": 2540179679,
-        "user": "Helgoland71",
+        "revid": 2550924355,
+        "user": "Panyasan",
         "anon": false,
         "userHidden": false,
-        "timestamp": "2026-09-04T17:45:47Z",
-        "comment": "/* wbsetclaim-create:2||1 */ [[Property:P625]]: 47°22'6.884\"N, 8°33'5.018\"E"
+        "timestamp": "2026-09-29T16:33:18Z",
+        "comment": "/* wbremoveclaims-remove:1| */ [[Property:P101]]: [[Q2734663]], #quickstatements; #temporary_batch_1790699525268"
       }
     },
     {
@@ -991,18 +1019,19 @@
       "website": "http://www.insoso.org/committees/research-committees",
       "email": "iss23crime20@gmail.com",
       "inception": null,
+      "abbreviation": null,
       "president": null,
       "leadUniQid": null,
       "leadUniLabel": null,
       "leadCoord": null,
       "journal": null,
       "lastEdit": {
-        "revid": 2539557904,
+        "revid": 2550924372,
         "user": "Panyasan",
         "anon": false,
         "userHidden": false,
-        "timestamp": "2026-09-02T23:04:49Z",
-        "comment": "/* wbeditentity-create-item:0| */ Import via socio-legal-wikidata project (see https://github.com/cboulanger/socio-legal-wikidata)"
+        "timestamp": "2026-09-29T16:33:20Z",
+        "comment": "/* wbremoveclaims-remove:1| */ [[Property:P101]]: [[Q2734663]], #quickstatements; #temporary_batch_1790699525268"
       }
     },
     {
@@ -1024,6 +1053,7 @@
       "website": "https://www.sasju.org",
       "email": "contactosasju@gmail.com",
       "inception": "2005",
+      "abbreviation": null,
       "president": null,
       "leadUniQid": null,
       "leadUniLabel": null,
@@ -1035,12 +1065,12 @@
         "issn": null
       },
       "lastEdit": {
-        "revid": 2539557909,
+        "revid": 2550924384,
         "user": "Panyasan",
         "anon": false,
         "userHidden": false,
-        "timestamp": "2026-09-02T23:04:50Z",
-        "comment": "/* wbeditentity-create-item:0| */ Import via socio-legal-wikidata project (see https://github.com/cboulanger/socio-legal-wikidata)"
+        "timestamp": "2026-09-29T16:33:22Z",
+        "comment": "/* wbremoveclaims-remove:1| */ [[Property:P101]]: [[Q2734663]], #quickstatements; #temporary_batch_1790699525268"
       }
     },
     {
@@ -1062,18 +1092,19 @@
       "website": "https://community.lawschool.cornell.edu/sels/",
       "email": "sels@cornell.edu",
       "inception": "2006",
+      "abbreviation": null,
       "president": null,
       "leadUniQid": null,
       "leadUniLabel": null,
       "leadCoord": null,
       "journal": null,
       "lastEdit": {
-        "revid": 2539557915,
+        "revid": 2550924397,
         "user": "Panyasan",
         "anon": false,
         "userHidden": false,
-        "timestamp": "2026-09-02T23:04:51Z",
-        "comment": "/* wbeditentity-create-item:0| */ Import via socio-legal-wikidata project (see https://github.com/cboulanger/socio-legal-wikidata)"
+        "timestamp": "2026-09-29T16:33:23Z",
+        "comment": "/* wbremoveclaims-remove:1| */ [[Property:P101]]: [[Q2734663]], #quickstatements; #temporary_batch_1790699525268"
       }
     },
     {
@@ -1096,18 +1127,19 @@
       "website": "https://www.slsa.ac.uk/",
       "email": "admin@slsa.ac.uk",
       "inception": "1990",
+      "abbreviation": null,
       "president": null,
       "leadUniQid": null,
       "leadUniLabel": null,
       "leadCoord": null,
       "journal": null,
       "lastEdit": {
-        "revid": 2539557926,
+        "revid": 2550923992,
         "user": "Panyasan",
         "anon": false,
         "userHidden": false,
-        "timestamp": "2026-09-02T23:04:55Z",
-        "comment": "/* wbsetclaim-create:1||1 */ [[Property:P571]]: 1990, Import via socio-legal-wikidata project (see https://github.com/cboulanger/socio-legal-wikidata)"
+        "timestamp": "2026-09-29T16:32:35Z",
+        "comment": "/* wbremoveclaims-remove:1| */ [[Property:P101]]: [[Q2734663]], #quickstatements; #temporary_batch_1790699525268"
       }
     },
     {
@@ -1129,18 +1161,19 @@
       "website": "https://aps.pt/pt/seccao-tematica-sociologia-do-direito-e-da-justica/",
       "email": "direito@aps.pt",
       "inception": "2014",
+      "abbreviation": null,
       "president": null,
       "leadUniQid": null,
       "leadUniLabel": null,
       "leadCoord": null,
       "journal": null,
       "lastEdit": {
-        "revid": 2539557929,
+        "revid": 2550924412,
         "user": "Panyasan",
         "anon": false,
         "userHidden": false,
-        "timestamp": "2026-09-02T23:04:56Z",
-        "comment": "/* wbeditentity-create-item:0| */ Import via socio-legal-wikidata project (see https://github.com/cboulanger/socio-legal-wikidata)"
+        "timestamp": "2026-09-29T16:33:25Z",
+        "comment": "/* wbremoveclaims-remove:1| */ [[Property:P101]]: [[Q2734663]], #quickstatements; #temporary_batch_1790699525268"
       }
     },
     {
@@ -1162,18 +1195,19 @@
       "website": "https://droitscisoc.hypotheses.org",
       "email": null,
       "inception": null,
+      "abbreviation": null,
       "president": null,
       "leadUniQid": null,
       "leadUniLabel": null,
       "leadCoord": null,
       "journal": null,
       "lastEdit": {
-        "revid": 2539556212,
+        "revid": 2550924108,
         "user": "Panyasan",
         "anon": false,
         "userHidden": false,
-        "timestamp": "2026-09-02T22:57:13Z",
-        "comment": "/* wbeditentity-create-item:0| */ Import via socio-legal-wikidata project (see https://github.com/cboulanger/socio-legal-wikidata)"
+        "timestamp": "2026-09-29T16:32:51Z",
+        "comment": "/* wbremoveclaims-remove:1| */ [[Property:P101]]: [[Q2734663]], #quickstatements; #temporary_batch_1790699525268"
       }
     },
     {
@@ -1195,18 +1229,19 @@
       "website": "https://www.ais-sociologia.it/en/sociologia-del-diritto/",
       "email": "diritto@ais-sociologia.it",
       "inception": null,
+      "abbreviation": null,
       "president": null,
       "leadUniQid": null,
       "leadUniLabel": null,
       "leadCoord": null,
       "journal": null,
       "lastEdit": {
-        "revid": 2539557935,
+        "revid": 2550924424,
         "user": "Panyasan",
         "anon": false,
         "userHidden": false,
-        "timestamp": "2026-09-02T23:04:57Z",
-        "comment": "/* wbeditentity-create-item:0| */ Import via socio-legal-wikidata project (see https://github.com/cboulanger/socio-legal-wikidata)"
+        "timestamp": "2026-09-29T16:33:27Z",
+        "comment": "/* wbremoveclaims-remove:1| */ [[Property:P101]]: [[Q2734663]], #quickstatements; #temporary_batch_1790699525268"
       }
     },
     {
@@ -1228,18 +1263,19 @@
       "website": "https://pts.org.pl/sekcja/sekcja-socjologii-prawa/",
       "email": null,
       "inception": null,
+      "abbreviation": null,
       "president": null,
       "leadUniQid": null,
       "leadUniLabel": null,
       "leadCoord": null,
       "journal": null,
       "lastEdit": {
-        "revid": 2539556216,
+        "revid": 2550924122,
         "user": "Panyasan",
         "anon": false,
         "userHidden": false,
-        "timestamp": "2026-09-02T22:57:15Z",
-        "comment": "/* wbeditentity-create-item:0| */ Import via socio-legal-wikidata project (see https://github.com/cboulanger/socio-legal-wikidata)"
+        "timestamp": "2026-09-29T16:32:52Z",
+        "comment": "/* wbremoveclaims-remove:1| */ [[Property:P101]]: [[Q2734663]], #quickstatements; #temporary_batch_1790699525268"
       }
     },
     {
@@ -1261,18 +1297,19 @@
       "website": "https://www.lawandsociety.ch",
       "email": "info@lawandsociety.ch",
       "inception": "2022",
+      "abbreviation": null,
       "president": null,
       "leadUniQid": null,
       "leadUniLabel": null,
       "leadCoord": null,
       "journal": null,
       "lastEdit": {
-        "revid": 2539557943,
+        "revid": 2550924432,
         "user": "Panyasan",
         "anon": false,
         "userHidden": false,
-        "timestamp": "2026-09-02T23:04:59Z",
-        "comment": "/* wbeditentity-create-item:0| */ Import via socio-legal-wikidata project (see https://github.com/cboulanger/socio-legal-wikidata)"
+        "timestamp": "2026-09-29T16:33:29Z",
+        "comment": "/* wbremoveclaims-remove:1| */ [[Property:P101]]: [[Q2734663]], #quickstatements; #temporary_batch_1790699525268"
       }
     },
     {
@@ -1295,6 +1332,7 @@
       "website": "http://jasl.info",
       "email": null,
       "inception": "1947",
+      "abbreviation": null,
       "president": null,
       "leadUniQid": null,
       "leadUniLabel": null,
@@ -1306,12 +1344,12 @@
         "issn": "2424-1423"
       },
       "lastEdit": {
-        "revid": 2540394889,
-        "user": "KrBot",
+        "revid": 2550923981,
+        "user": "Panyasan",
         "anon": false,
         "userHidden": false,
-        "timestamp": "2026-09-05T06:56:16Z",
-        "comment": "/* wbremoveclaims-remove:1| */ [[Property:P31]]: [[Q955824]], дублирующееся значение / duplicate value"
+        "timestamp": "2026-09-29T16:32:33Z",
+        "comment": "/* wbremoveclaims-remove:1| */ [[Property:P101]]: [[Q2734663]], #quickstatements; #temporary_batch_1790699525268"
       }
     }
   ]
