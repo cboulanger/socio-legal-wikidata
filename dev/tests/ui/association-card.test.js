@@ -25,15 +25,16 @@ test('renders the label, seat, website, email, president and university', () => 
   assert.match(out, /Europa-Universität Viadrina/);
 });
 
-test('shows neither the "Notify me of changes" link nor an Edit button in read-only mode', () => {
-  const out = renderAssociationCard(a, { editMode: false }).value;
-  assert.doesNotMatch(out, /Notify me of changes/);
+test('shows neither the "watch" link nor an Edit button in read-only mode', () => {
+  const out = renderAssociationCard(a, { editMode: false, lastEdit }).value;
+  assert.doesNotMatch(out, />watch</);
   assert.doesNotMatch(out, /data-action="edit"/);
 });
 
-test('shows the "Notify me of changes" link and an Edit button when editMode is true', () => {
-  const out = renderAssociationCard(a, { editMode: true }).value;
-  assert.match(out, /Notify me of changes/);
+test('shows a "watch" link after "history" in the footer and an Edit button when editMode is true', () => {
+  const out = renderAssociationCard(a, { editMode: true, lastEdit }).value;
+  assert.match(out, />history<\/a>\s*·\s*<a class="card__notify"[^>]*>watch<\/a>/);
+  assert.doesNotMatch(out, /Notify me of changes/);
   assert.match(out, /data-action="edit"/);
 });
 

@@ -48,7 +48,6 @@ test('in edit mode the badge and Edit button show; clicking Edit mounts the wiza
   const host = w.document.getElementById('detail-host');
   w.document.querySelector('button.row[data-qid="Q1"]').click();
   assert.match(host.innerHTML, /data-action="edit"/);
-  assert.match(host.innerHTML, /Notify me of changes/);
   host.querySelector('[data-action="edit"]').click();
   assert.equal(wizardMounted, true);
 });

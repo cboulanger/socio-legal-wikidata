@@ -35,24 +35,24 @@ export function renderAssociationCard(a, { editMode = false, lastEdit = null } =
         ${a.journal
           ? html`<a href="${safeHref(a.journal.url || '#')}" rel="noopener" target="_blank">${a.journal.label}</a>`
           : '—'}</p>
-      ${lastEdit ? renderLastEdit(a.qid, lastEdit) : ''}
+      ${lastEdit ? renderLastEdit(a.qid, lastEdit, editMode) : ''}
       ${editMode
-        ? html`<p class="card__actions">
-            <a class="card__notify" href="${watchlistUrl(a.qid)}" rel="noopener" target="_blank"
-               data-feed="${historyFeedUrl(a.qid)}">Notify me of changes</a>
-          </p>
-          <p class="card__actions"><button type="button" data-action="edit" data-qid="${a.qid}">Edit</button></p>`
+        ? html`<p class="card__actions"><button type="button" data-action="edit" data-qid="${a.qid}">Edit</button></p>`
         : ''}
     </article>`;
 }
 
-/** "Last edited by <user> on <date> · history", each part linking to its Wikidata page. */
-function renderLastEdit(qid, edit) {
+/** "Last edited by <user> on <date> · history · watch", each part linking to its Wikidata page. */
+function renderLastEdit(qid, edit, editMode) {
   const who = edit.userHidden || !edit.user
     ? '(username hidden)'
     : html`<a href="${safeHref(userUrl(edit))}" rel="noopener" target="_blank">${edit.user}</a>`;
   return html`<p class="card__row card__lastedit">Last edited by ${who} on
     <a href="${safeHref(revisionUrl(qid, edit.revid))}" rel="noopener" target="_blank"
        title="${edit.comment}">${edit.timestamp.slice(0, 10)}</a>
-    · <a href="${safeHref(historyUrl(qid))}" rel="noopener" target="_blank">history</a></p>`;
+    · <a href="${safeHref(historyUrl(qid))}" rel="noopener" target="_blank">history</a>
+    ${editMode
+      ? html`· <a class="card__notify" href="${watchlistUrl(qid)}" rel="noopener" target="_blank"
+           data-feed="${historyFeedUrl(qid)}">watch</a>`
+      : ''}</p>`;
 }

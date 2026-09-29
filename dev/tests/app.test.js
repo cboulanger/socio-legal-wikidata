@@ -40,7 +40,6 @@ test('createApp renders the panel rows and shows a card on row click', async () 
   assert.match(detail.innerHTML, /class="card"/);
   assert.match(detail.innerHTML, /German Association/);
   assert.doesNotMatch(detail.innerHTML, /data-action="edit"/); // read-only
-  assert.doesNotMatch(detail.innerHTML, /Notify me of changes/); // edit mode only
 });
 
 test('the close button dismisses the selected association card', async () => {
