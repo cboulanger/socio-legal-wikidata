@@ -6,6 +6,7 @@
 /** Convert a changeset Value to a Wikibase REST "value" object. */
 function restValue(v, resolveRef) {
   if (v.kind === 'item') return { type: 'value', content: v.qid || resolveRef(v.ref) };
+  if (v.kind === 'monolingual') return { type: 'value', content: { text: v.text, language: v.language } };
   if (v.kind === 'time') return { type: 'value', content: { time: `+${v.value}T00:00:00Z`, precision: v.precision, calendarmodel: 'http://www.wikidata.org/entity/Q1985727' } };
   // string, url, external-id
   return { type: 'value', content: v.value };
@@ -124,6 +125,7 @@ export function createWikibaseApi({ fetch, config, getToken }) {
       for (const op of cs.ops) {
         if (op.type === 'create-item') {
           const item = { labels: op.labels, descriptions: op.descriptions, statements: {} };
+          if (op.aliases && Object.keys(op.aliases).length) item.aliases = op.aliases;
           for (const c of op.claims) {
             (item.statements[c.property] ||= []).push(restStatement(c, resolveRef));
           }
@@ -141,6 +143,8 @@ export function createWikibaseApi({ fetch, config, getToken }) {
           const patch = [
             ...Object.entries(op.labels || {}).map(([lang, value]) => ({ op: 'add', path: `/labels/${lang}`, value })),
             ...Object.entries(op.descriptions || {}).map(([lang, value]) => ({ op: 'add', path: `/descriptions/${lang}`, value })),
+            // the full alias list for the language (the caller merged in the existing ones)
+            ...Object.entries(op.aliases || {}).map(([lang, value]) => ({ op: 'add', path: `/aliases/${lang}`, value })),
           ];
           const res = await fetch(`${rest}/entities/items/${op.target.qid}`, {
             method: 'PATCH', headers: authHeaders,

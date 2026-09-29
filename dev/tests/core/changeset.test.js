@@ -209,3 +209,69 @@ test('update-field with "add to directory" adds only the missing type/field stat
   cs = buildChangeSet(d, cfg);
   assert.deepEqual(cs.ops.map((o) => o.property), ['P101']);
 });
+
+const monoOf = (o) => ({ text: o.value.text, language: o.value.language });
+
+test('update-field records a former name as a dated P1448 statement, plus an alias in the same edit as the terms', () => {
+  const d = emptyDraft('update-field');
+  Object.assign(d.association, {
+    qid: 'Q100', referenceUrl: 'https://x.example/history',
+    original: { labels: { pt: 'Velho Nome' }, descriptions: {}, aliases: { pt: ['Existente'] }, formerNames: [], website: null, email: null },
+    labels: { pt: 'Novo Nome' },
+    formerNames: [{ text: 'Velho Nome', lang: 'pt', start: '1995', end: '2010', alias: true }],
+  });
+  const cs = buildChangeSet(d, cfg);
+  assert.deepEqual(cs.ops[0], {
+    type: 'set-terms', target: { qid: 'Q100' }, labels: { pt: 'Novo Nome' }, descriptions: {},
+    aliases: { pt: ['Existente', 'Velho Nome'] },
+  });
+  const stmt = cs.ops[1];
+  assert.equal(stmt.type, 'add-statement');
+  assert.equal(stmt.property, 'P1448');
+  assert.equal(stmt.replace, undefined);                                    // added next to any other names, never replacing
+  assert.deepEqual(stmt.target, { qid: 'Q100' });
+  assert.deepEqual(monoOf(stmt), { text: 'Velho Nome', language: 'pt' });
+  assert.equal(stmt.value.kind, 'monolingual');
+  assert.deepEqual(stmt.qualifiers, [
+    { property: 'P580', value: { kind: 'time', value: '1995-01-01', precision: 9 } },
+    { property: 'P582', value: { kind: 'time', value: '2010-01-01', precision: 9 } },
+  ]);
+  assert.deepEqual(stmt.reference, { P854: 'https://x.example/history' });
+  assert.match(cs.summary, /names \(pt\)/);
+  assert.match(cs.summary, /former names \(1\)/);
+  assert.ok(describeChanges(d).includes('former name (pt): “Velho Nome” (1995–2010), also an alias'));
+});
+
+test('a former name with only an end year gets only the end qualifier, and short years are zero-padded', () => {
+  const d = emptyDraft('update-field');
+  Object.assign(d.association, {
+    qid: 'Q100', referenceUrl: 'https://x.example',
+    formerNames: [{ text: 'Sodalitas', lang: 'la', start: '', end: '999', alias: false }],
+  });
+  const cs = buildChangeSet(d, cfg);
+  assert.deepEqual(cs.ops.map((o) => o.type), ['add-statement']);           // no terms changed, no alias asked for
+  assert.deepEqual(cs.ops[0].qualifiers, [{ property: 'P582', value: { kind: 'time', value: '0999-01-01', precision: 9 } }]);
+});
+
+test('create-association can carry former names and aliases on the new item', () => {
+  const d = emptyDraft('create-association');
+  Object.assign(d.association, {
+    labels: { pt: 'Rede de Pesquisa Empírica em Direito' }, classQid: 'Q955824', fieldQid: 'Q2734663',
+    countryQid: 'Q155', referenceUrl: 'https://reed.example/sobre',
+    formerNames: [{ text: 'Rede de Estudos Empíricos', lang: 'pt', start: '2012', end: '2016', alias: true }],
+  });
+  const create = buildChangeSet(d, cfg).ops[0];
+  assert.deepEqual(create.aliases, { pt: ['Rede de Estudos Empíricos'] });
+  const p1448 = create.claims.find((c) => c.property === 'P1448');
+  assert.deepEqual(monoOf(p1448), { text: 'Rede de Estudos Empíricos', language: 'pt' });
+  assert.equal(p1448.qualifiers.length, 2);
+  assert.deepEqual(p1448.reference, { P854: 'https://reed.example/sobre' });
+});
+
+test('a create without former names has no aliases key and no P1448 claim', () => {
+  const d = emptyDraft('create-association');
+  Object.assign(d.association, { labels: { pt: 'Rede' }, classQid: 'Q1', fieldQid: 'Q2', referenceUrl: 'https://x' });
+  const create = buildChangeSet(d, cfg).ops[0];
+  assert.equal('aliases' in create, false);
+  assert.equal(create.claims.some((c) => c.property === 'P1448'), false);
+});

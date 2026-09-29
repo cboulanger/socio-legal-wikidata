@@ -1,16 +1,17 @@
-import { validateDraftForChangeset, changedTerms, changedStatements, scopeStatements } from './draft.js';
+import { validateDraftForChangeset, changedTerms, changedStatements, scopeStatements, activeFormerNames, aliasesToSet } from './draft.js';
 
 /**
  * @typedef {{kind:'item', qid:string}|{kind:'item', ref:string}
  *   |{kind:'string', value:string}|{kind:'url', value:string}
  *   |{kind:'external-id', value:string}
+ *   |{kind:'monolingual', text:string, language:string}
  *   |{kind:'time', value:string, precision:number}} Value
  * @typedef {{property:string, value:Value}} Qualifier
  * @typedef {{P854:string}} Reference
  * @typedef {{property:string, value:Value, qualifiers?:Qualifier[], reference?:Reference}} Claim
  *
- * @typedef {{type:'create-item', ref:string, labels:Object<string,string>, descriptions:Object<string,string>, claims:Claim[]}
- *   |{type:'set-terms', target:{qid:string}, labels:Object<string,string>, descriptions:Object<string,string>}
+ * @typedef {{type:'create-item', ref:string, labels:Object<string,string>, descriptions:Object<string,string>, aliases?:Object<string,string[]>, claims:Claim[]}
+ *   |{type:'set-terms', target:{qid:string}, labels:Object<string,string>, descriptions:Object<string,string>, aliases?:Object<string,string[]>}
  *   |{type:'add-statement', target:{qid:string}|{ref:string}, property:string, value:Value, qualifiers?:Qualifier[], reference?:Reference, replace?:boolean}
  *   |{type:'end-statement', statementId:string, endDate:string}} Op
  *
@@ -26,7 +27,20 @@ const url = (value) => ({ kind: 'url', value });
 const mailto = (value) => ({ kind: 'url', value: value.startsWith('mailto:') ? value : `mailto:${value}` });
 const extId = (value) => ({ kind: 'external-id', value });
 const year = (value) => ({ kind: 'time', value: `${value}-01-01`, precision: 9 });
+const mono = (text, language) => ({ kind: 'monolingual', text, language });
+// former-name years are 1-4 digit years; Wikidata wants a four-digit year in the date
+const yearOnly = (y) => ({ kind: 'time', value: `${String(y).padStart(4, '0')}-01-01`, precision: 9 });
 const day = (value) => ({ kind: 'time', value, precision: 11 });
+
+/** "Official name" (P1448) statements for the former-name rows, dated with start/end time qualifiers. */
+function formerNameClaims(a, reference) {
+  return activeFormerNames(a).map((r) => {
+    const qualifiers = [];
+    if (r.start) qualifiers.push({ property: 'P580', value: yearOnly(r.start) });
+    if (r.end) qualifiers.push({ property: 'P582', value: yearOnly(r.end) });
+    return { property: 'P1448', value: mono(r.text, r.lang), qualifiers: qualifiers.length ? qualifiers : undefined, reference };
+  });
+}
 
 /**
  * @param {import('./draft.js').DirectoryDraft} draft
@@ -108,8 +122,13 @@ export function buildChangeSet(draft, cfg) {
       });
     }
     for (const c of claims) if (assocRefUrl) c.reference = assocRefUrl;
+    claims.push(...formerNameClaims(a, assocRefUrl));
     const terms = changedTerms(a);
-    ops.push({ type: 'create-item', ref: 'assoc', labels: terms.labels, descriptions: terms.descriptions, claims });
+    const createAliases = aliasesToSet(a);
+    ops.push({
+      type: 'create-item', ref: 'assoc', labels: terms.labels, descriptions: terms.descriptions,
+      ...(Object.keys(createAliases).length ? { aliases: createAliases } : {}), claims,
+    });
     const extras = [j ? 'journal' : null, personValue ? 'president' : null].filter(Boolean);
     return { summary: `socio-legal directory: create association${extras.length ? ` with ${extras.join(' and ')}` : ''}`, ops };
   }
@@ -134,11 +153,18 @@ export function buildChangeSet(draft, cfg) {
   const stmts = changedStatements(a);
   const changed = [];
   const langs = (m) => Object.keys(m).sort().join(', ');
-  if (Object.keys(terms.labels).length || Object.keys(terms.descriptions).length) {
-    ops.push({ type: 'set-terms', target: { qid: a.qid }, labels: terms.labels, descriptions: terms.descriptions });
+  const aliases = aliasesToSet(a);
+  if (Object.keys(terms.labels).length || Object.keys(terms.descriptions).length || Object.keys(aliases).length) {
+    ops.push({
+      type: 'set-terms', target: { qid: a.qid }, labels: terms.labels, descriptions: terms.descriptions,
+      ...(Object.keys(aliases).length ? { aliases } : {}),
+    });
     if (Object.keys(terms.labels).length) changed.push(`names (${langs(terms.labels)})`);
     if (Object.keys(terms.descriptions).length) changed.push(`descriptions (${langs(terms.descriptions)})`);
   }
+  const formerClaims = formerNameClaims(a, assocRefUrl);
+  for (const c of formerClaims) ops.push({ type: 'add-statement', target: { qid: a.qid }, ...c });
+  if (formerClaims.length) changed.push(`former names (${formerClaims.length})`);
   if (stmts.website) { ops.push({ type: 'add-statement', target: { qid: a.qid }, property: 'P856', value: url(stmts.website), reference: assocRefUrl, replace: true }); changed.push('website'); }
   if (stmts.email) { ops.push({ type: 'add-statement', target: { qid: a.qid }, property: 'P968', value: mailto(stmts.email), reference: assocRefUrl, replace: true }); changed.push('e-mail'); }
   const scope = scopeStatements(a);
@@ -168,6 +194,10 @@ export function describeChanges(draft) {
   }
   if (stmts.website) lines.push(`website: ${a.original?.website ? `${a.original.website} → ` : ''}${stmts.website}`);
   if (stmts.email) lines.push(`e-mail: ${a.original?.email ? `${a.original.email} → ` : ''}${stmts.email}`);
+  for (const r of activeFormerNames(a)) {
+    const years = r.start || r.end ? ` (${r.start || '?'}–${r.end || 'now'})` : '';
+    lines.push(`former name (${r.lang}): “${r.text}”${years}${r.alias ? ', also an alias' : ''}`);
+  }
   const scope = scopeStatements(a);
   if (scope.class) lines.push(`add to directory: instance of ${scope.class}`);
   if (scope.field) lines.push(`add to directory: field of work ${scope.field}`);

@@ -132,3 +132,11 @@ body { font-family: var(--font); color: var(--text); background: var(--bg); }
 .details__scope label { display: flex; gap: var(--space-2); align-items: flex-start; margin: 0; }
 .details__scopehint { margin: var(--space-1) 0 0; font-size: 0.8rem; color: var(--text-muted); }
 .typeahead__badge { font-size: 0.75rem; font-style: normal; color: var(--text-muted); margin-left: var(--space-1); }
+.former { border: 1px solid var(--border); border-radius: var(--radius); margin: var(--space-3) 0; padding: var(--space-1) var(--space-3) var(--space-2); }
+.former legend { font-size: 0.8rem; color: var(--text-muted); padding: 0 var(--space-1); }
+.former__existing { margin: var(--space-1) 0; padding-left: var(--space-4, 1.25rem); font-size: 0.85rem; }
+.former__row { display: grid; grid-template-columns: 1fr 5rem 5rem 5rem; gap: var(--space-2); align-items: end; border-top: 1px solid var(--border); padding-top: var(--space-2); margin-top: var(--space-2); }
+.former__row > label:first-child { grid-column: 1 / -1; }
+.former__alias { grid-column: 1 / 4; display: flex !important; gap: var(--space-2); align-items: center; }
+.details__hint { font-size: 0.85rem; margin: var(--space-2) 0; }
+.details__hint button { margin-left: var(--space-1); }

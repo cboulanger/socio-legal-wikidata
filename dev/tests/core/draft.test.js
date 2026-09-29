@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { emptyDraft, validateDraftForChangeset, changedTerms, changedStatements, originalFromEntity, cleanTerms, scopeStatements, hasScopeChanges } from '../../../src/core/draft.js';
+import { emptyDraft, validateDraftForChangeset, changedTerms, changedStatements, originalFromEntity, cleanTerms, scopeStatements, hasScopeChanges, activeFormerNames, validateFormerNames, aliasesToSet } from '../../../src/core/draft.js';
 
 test('emptyDraft has a mode and nested association/president/journal', () => {
   const d = emptyDraft('create-association');
@@ -95,9 +95,12 @@ test('originalFromEntity reads terms, website, e-mail (without mailto:) and coun
   assert.deepEqual(originalFromEntity(entity), {
     labels: { pt: 'Rede', en: 'Network' }, descriptions: { en: 'a network' },
     website: 'https://reed.example', email: 'reed@example.org', countryQid: 'Q155',
-    classQids: ['Q43229'], fieldQids: ['Q2734663'],
+    classQids: ['Q43229'], fieldQids: ['Q2734663'], aliases: {}, formerNames: [],
   });
-  assert.deepEqual(originalFromEntity({}), { labels: {}, descriptions: {}, website: null, email: null, countryQid: null, classQids: [], fieldQids: [] });
+  assert.deepEqual(originalFromEntity({}), {
+    labels: {}, descriptions: {}, website: null, email: null, countryQid: null, classQids: [], fieldQids: [],
+    aliases: {}, formerNames: [],
+  });
 });
 
 test('cleanTerms trims and drops blanks', () => {
@@ -122,6 +125,71 @@ test('update-field: adding to the directory counts as a change and needs a refer
   Object.assign(d.association, { qid: 'Q1', classQid: 'Q955824', fieldQid: 'Q2734663', addToDirectory: true });
   d.association.original.needsClass = true;
   d.association.original.needsField = true;
+  assert.deepEqual(validateDraftForChangeset(d), ['association.referenceUrl is required']);
+  d.association.referenceUrl = 'https://x.example';
+  assert.deepEqual(validateDraftForChangeset(d), []);
+});
+
+test('originalFromEntity reads former names (P1448 with start/end years) and aliases', () => {
+  const time = (y) => [{ datavalue: { value: { time: `+${y}-00-00T00:00:00Z`, precision: 9 } } }];
+  const o = originalFromEntity({
+    aliases: { de: [{ language: 'de', value: 'DGRS' }, { language: 'de', value: 'Gesellschaft' }] },
+    claims: {
+      P1448: [
+        { rank: 'normal', mainsnak: { datavalue: { value: { text: 'Old Name', language: 'en' } } }, qualifiers: { P580: time('1995'), P582: time('2010') } },
+        { rank: 'normal', mainsnak: { datavalue: { value: { text: 'Undated', language: 'de' } } } },
+        { rank: 'deprecated', mainsnak: { datavalue: { value: { text: 'Wrong', language: 'en' } } } },
+      ],
+    },
+  });
+  assert.deepEqual(o.formerNames, [
+    { text: 'Old Name', lang: 'en', start: '1995', end: '2010' },
+    { text: 'Undated', lang: 'de', start: '', end: '' },
+  ]);
+  assert.deepEqual(o.aliases, { de: ['DGRS', 'Gesellschaft'] });
+});
+
+const withFormer = (rows, original = {}) => {
+  const a = emptyDraft('update-field').association;
+  Object.assign(a, { qid: 'Q1', formerNames: rows, labels: { pt: 'Novo Nome' } });
+  Object.assign(a.original, original);
+  return a;
+};
+
+test('activeFormerNames ignores blank rows and rows already recorded on the item', () => {
+  const a = withFormer(
+    [{ text: ' Old ', lang: 'PT', start: '1995', end: '2010' }, { text: '', lang: 'pt', start: '', end: '' }, { text: 'Known', lang: 'pt', start: '', end: '2000' }],
+    { formerNames: [{ text: 'Known', lang: 'pt', start: '', end: '2000' }] },
+  );
+  assert.deepEqual(activeFormerNames(a), [{ text: 'Old', lang: 'pt', start: '1995', end: '2010', alias: false }]);
+});
+
+test('validateFormerNames checks the name, language, years and their order', () => {
+  assert.deepEqual(validateFormerNames(withFormer([{ text: 'Old', lang: 'pt', start: '1995', end: '2010' }])), []);
+  assert.deepEqual(validateFormerNames(withFormer([{ text: 'Old', lang: 'pt', start: '', end: '' }])), []);   // years are optional
+  assert.ok(validateFormerNames(withFormer([{ text: '', lang: 'pt', start: '1990', end: '' }])).includes('a former name needs its name'));
+  assert.ok(validateFormerNames(withFormer([{ text: 'Old', lang: 'Portuguese', start: '', end: '' }])).some((e) => /valid language code/.test(e)));
+  assert.ok(validateFormerNames(withFormer([{ text: 'Old', lang: 'pt', start: '19x5', end: '' }])).some((e) => /not a year/.test(e)));
+  assert.ok(validateFormerNames(withFormer([{ text: 'Old', lang: 'pt', start: '2010', end: '1995' }])).some((e) => /end year is before the start year/.test(e)));
+});
+
+test('aliasesToSet returns the full new list, skipping the current name and existing aliases', () => {
+  const a = withFormer(
+    [
+      { text: 'Velho Nome', lang: 'pt', start: '', end: '2010', alias: true },
+      { text: 'Velho Nome', lang: 'pt', start: '', end: '', alias: true },   // duplicate
+      { text: 'Novo Nome', lang: 'pt', start: '2010', end: '', alias: true }, // it is the current name
+      { text: 'Old', lang: 'en', start: '', end: '', alias: false },          // not ticked
+      { text: 'Known', lang: 'de', start: '', end: '', alias: true },         // already an alias
+    ],
+    { aliases: { pt: ['Existente'], de: ['Known'] } },
+  );
+  assert.deepEqual(aliasesToSet(a), { pt: ['Existente', 'Velho Nome'] });
+});
+
+test('update-field: a former name is a change that needs a reference URL', () => {
+  const d = emptyDraft('update-field');
+  Object.assign(d.association, { qid: 'Q1', formerNames: [{ text: 'Old', lang: 'pt', start: '', end: '2010', alias: true }] });
   assert.deepEqual(validateDraftForChangeset(d), ['association.referenceUrl is required']);
   d.association.referenceUrl = 'https://x.example';
   assert.deepEqual(validateDraftForChangeset(d), []);

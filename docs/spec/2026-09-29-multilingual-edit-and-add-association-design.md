@@ -282,3 +282,22 @@ The card shows "Last edited by <user> on <date> · history". The user links to t
   the snapshot. If that lookup fails, the previous snapshot's values are kept. Any edit to an association
   now changes the snapshot, so the daily bot commits more often than before.
 - **Card:** shows the snapshot value immediately and replaces it with the live one when it arrives.
+
+## 14. Former names
+
+A label and a description hold only the *current* value per language, so a previous name cannot live there
+(and "… (until 2010)" does not belong in a description). Wikidata records history as dated statements:
+
+- Each former name is an **official name (P1448)** statement (monolingual text: name + language) with
+  **start time (P580)** and/or **end time (P582)** qualifiers (year precision) and the reference URL. Years are
+  optional. The statement is always *added*; other names are never replaced.
+- Optionally (ticked by default) the former name is also added as an **alias** in that language so search finds
+  it. The alias list is sent as the full new list together with the label edit, in the same revision.
+- **Rename shortcut:** when a name that already exists is changed, the form offers "Record “old name” as a
+  former name", which adds a prefilled row (the user then adds the years).
+- Former names already on the item are listed read-only; a new row identical to one of them is ignored.
+- Works in Edit details and in Add association (statements and aliases go into the create request).
+- Validation: name, valid language code, four-digit-or-shorter years, end not before start; a reference URL is
+  required as for any statement.
+- Not covered: a merger/split/successor (two items linked with "replaces" P1365 / "replaced by" P1366), and
+  editing or deleting an existing former-name statement.

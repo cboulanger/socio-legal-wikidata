@@ -82,3 +82,21 @@ test('details step (edit): adding to the directory counts as a change and needs 
   d.association.referenceUrl = 'https://x';
   assert.deepEqual(validateStep('details', d), []);
 });
+
+test('details step: a former name is a change; it needs a reference and valid years', () => {
+  const d = emptyDraft('update-field');
+  Object.assign(d.association, { qid: 'Q1', formerNames: [{ text: 'Old', lang: 'pt', start: '2010', end: '1995', alias: false }] });
+  const errs = validateStep('details', d);
+  assert.ok(errs.includes('a reference URL is required'));
+  assert.ok(errs.some((e) => /end year is before the start year/.test(e)));
+  assert.ok(!errs.includes('change at least one field'));
+  d.association.formerNames[0] = { text: 'Old', lang: 'pt', start: '1995', end: '2010', alias: false };
+  d.association.referenceUrl = 'https://x';
+  assert.deepEqual(validateStep('details', d), []);
+});
+
+test('an untouched blank former-name row is ignored', () => {
+  const d = emptyDraft('update-field');
+  Object.assign(d.association, { qid: 'Q1', formerNames: [{ text: '', lang: 'en', start: '', end: '', alias: true }] });
+  assert.deepEqual(validateStep('details', d), ['change at least one field']);
+});

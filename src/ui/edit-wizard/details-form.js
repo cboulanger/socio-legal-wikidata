@@ -1,6 +1,6 @@
 import { html } from '../../render.js';
 import { looksPersonal } from '../../core/email-guard.js';
-import { cleanTerms, changedStatements, hasScopeChanges } from '../../core/draft.js';
+import { cleanTerms, changedStatements, hasScopeChanges, hasFormerNames } from '../../core/draft.js';
 import { COMMON_LANGUAGES, languageName } from '../../core/languages.js';
 
 const label = (code) => `${languageName(code)} (${code})`;
@@ -18,7 +18,7 @@ function derived(draft, labelLanguages) {
     visible,
     invisible: visible.length > 0 && named.length > 0 && !named.some((l) => visible.includes(l)),
     needsConfirm: !!(a.email && looksPersonal(a.email) && (draft.mode === 'create-association' || changed.email)),
-    refRequired: draft.mode === 'create-association' || !!(changed.website || changed.email || hasScopeChanges(a)),
+    refRequired: draft.mode === 'create-association' || !!(changed.website || changed.email || hasScopeChanges(a) || hasFormerNames(a)),
   };
 }
 
@@ -42,6 +42,55 @@ const scopeNotice = (draft) => {
       <p class="details__scopehint">Adds ${parts.join(' and ')} to the Wikidata item (existing statements are kept). A reference URL is required.</p>
     </div>`;
 };
+
+const norm = (s) => (s || '').trim();
+
+/** "1995–2010", "from 1995", "until 2010" or '' */
+const yearsText = (e) => (e.start && e.end ? `${e.start}–${e.end}` : e.start ? `from ${e.start}` : e.end ? `until ${e.end}` : '');
+
+/**
+ * One-click shortcuts for names that were just changed: the old name is offered as a former name.
+ * Only buttons, so it can be refreshed on every keystroke without touching any input.
+ */
+function renameHints(draft) {
+  const a = draft.association;
+  const buttons = [];
+  for (const [lang, old] of Object.entries(a.original?.labels || {})) {
+    const now = norm(a.labels[lang]);
+    if (!norm(old) || !now || now === norm(old)) continue;
+    const recorded = [...(a.formerNames || []), ...(a.original?.formerNames || [])]
+      .some((r) => norm(r.text) === norm(old) && norm(r.lang).toLowerCase() === lang);
+    if (!recorded) buttons.push(html`<button type="button" data-role="rename-hint" data-lang="${lang}">Record “${old}” (${lang}) as a former name</button>`);
+  }
+  return buttons.length ? html`<p class="details__hint">You changed a name. ${buttons}</p>` : '';
+}
+
+/** The "Former names" section: what is on Wikidata already (read-only) plus rows to add. */
+function formerSection(draft) {
+  const a = draft.association;
+  const existing = a.original?.formerNames || [];
+  const row = (r, i) => html`
+    <div class="former__row" data-index="${i}">
+      <label>Name <input type="text" name="former-text-${i}" data-field="former" data-index="${i}" data-prop="text" lang="${r.lang || ''}" value="${r.text || ''}" autocomplete="off"></label>
+      <label>Language <input type="text" name="former-lang-${i}" data-field="former" data-index="${i}" data-prop="lang" value="${r.lang || ''}" autocomplete="off"></label>
+      <label>From (year) <input type="text" inputmode="numeric" name="former-start-${i}" data-field="former" data-index="${i}" data-prop="start" value="${r.start || ''}" autocomplete="off"></label>
+      <label>Until (year) <input type="text" inputmode="numeric" name="former-end-${i}" data-field="former" data-index="${i}" data-prop="end" value="${r.end || ''}" autocomplete="off"></label>
+      <label class="former__alias"><input type="checkbox" name="former-alias-${i}" data-field="former" data-index="${i}" data-prop="alias" ${r.alias ? 'checked' : ''}> also an alias (so search finds it)</label>
+      <button type="button" data-role="remove-former" data-index="${i}" aria-label="Remove this former name">×</button>
+    </div>`;
+  return html`
+    <fieldset class="former" data-role="former-names">
+      <legend>Former names</legend>
+      <p class="details__scopehint">Earlier names of the association, with the years they were in use. Each one is recorded on Wikidata
+        as a dated “official name” statement. A reference URL is required.</p>
+      ${existing.length
+        ? html`<ul class="former__existing">${existing.map((e) => html`<li>${e.text} (${e.lang})${yearsText(e) ? html` · ${yearsText(e)}` : ''}</li>`)}</ul>`
+        : ''}
+      <div data-role="rename-hints">${renameHints(draft)}</div>
+      ${(a.formerNames || []).map(row)}
+      <button type="button" data-role="add-former">+ Add a former name</button>
+    </fieldset>`;
+}
 
 const refLabel = (d) => (d.refRequired ? '(required)' : '(needed when website or e-mail change)');
 
@@ -87,6 +136,7 @@ export function renderDetailsForm({ draft, langs, suggestions, labelLanguages = 
       </div>
       ${langError ? html`<p class="wizard__errors">${langError}</p>` : ''}
       <div data-role="visibility-warn">${warnMarkup(d)}</div>
+      ${formerSection(draft)}
       <label>Website
         <input type="text" inputmode="url" name="website" data-field="website" value="${a.website || ''}" autocomplete="off"></label>
       <label>E-mail (shared role address)
@@ -108,6 +158,8 @@ export function refreshDetailsDerived(root, draft, labelLanguages = '') {
   const d = derived(draft, labelLanguages);
   const warn = root.querySelector('[data-role="visibility-warn"]');
   if (warn) warn.innerHTML = String(warnMarkup(d));
+  const hints = root.querySelector('[data-role="rename-hints"]');
+  if (hints) hints.innerHTML = String(renameHints(draft));
   const ref = root.querySelector('[data-role="ref-label"]');
   if (ref) ref.textContent = refLabel(d);
   const box = root.querySelector('[data-role="email-confirm"]');
@@ -134,6 +186,12 @@ export function applyFieldInput(draft, el) {
   else if (field === 'description') a.descriptions[el.dataset.lang] = el.value;
   else if (field === 'emailConfirmedShared') a.emailConfirmedShared = el.checked;
   else if (field === 'addToDirectory') a.addToDirectory = el.checked;
+  else if (field === 'former') {
+    const row = (a.formerNames || [])[Number(el.dataset.index)];
+    if (!row) return false;
+    if (el.dataset.prop === 'alias') row.alias = el.checked;
+    else row[el.dataset.prop] = el.value;
+  }
   else if (field === 'website' || field === 'referenceUrl') a[field] = el.value.trim() || null;
   else if (field === 'email') {
     a.email = el.value.trim() || null;

@@ -1,5 +1,5 @@
 import { looksPersonal } from '../../core/email-guard.js';
-import { cleanTerms, changedStatements, hasTermChanges, hasScopeChanges, validateTerms } from '../../core/draft.js';
+import { cleanTerms, changedStatements, hasTermChanges, hasScopeChanges, hasFormerNames, validateTerms, validateFormerNames } from '../../core/draft.js';
 
 /** @type {Object<import('../../core/draft.js').DirectoryDraft['mode'], string[]>} */
 export const STEP_ORDER = {
@@ -29,7 +29,7 @@ export function validateStep(step, d) {
 
   if (step === 'details') {
     const changed = changedStatements(a);
-    const statementChanged = !!(changed.website || changed.email || hasScopeChanges(a));
+    const statementChanged = !!(changed.website || changed.email || hasScopeChanges(a) || hasFormerNames(a));
     if (d.mode === 'create-association') {
       if (!a.classQid) e.push('pick the association type');
       if (!a.fieldQid) e.push('the field of work is required');
@@ -43,7 +43,7 @@ export function validateStep(step, d) {
     if (a.email && looksPersonal(a.email) && !a.emailConfirmedShared && (d.mode === 'create-association' || changed.email)) {
       e.push('this e-mail looks personal — confirm it is a shared role address, or replace it');
     }
-    e.push(...validateTerms(a));
+    e.push(...validateTerms(a), ...validateFormerNames(a));
   }
 
   if (step === 'people') {

@@ -343,3 +343,96 @@ test('only the missing statement is offered: an item with the type but not the f
   await settle();
   assert.deepEqual(applied[0].ops.map((o) => o.property), ['P101']);
 });
+
+const timeQ = (y) => [{ datavalue: { value: { time: `+${y}-00-00T00:00:00Z`, precision: 9 } } }];
+const namedEntity = (extra = {}) => ({
+  labels: { pt: { language: 'pt', value: 'Rede Antiga' } }, descriptions: {},
+  claims: { P17: [{ rank: 'normal', mainsnak: { datavalue: { value: { id: 'Q155' } } } }] }, ...extra,
+});
+const openEdit = async (over = {}) => {
+  const env = setup({ getEntity: async () => namedEntity(over.entity || {}), ...over.search });
+  createWizard(env.host, { window: env.win, config: cfg, ports: env.ports, seed: { mode: 'update-field', association: { qid: 'Q1' } } });
+  await settle();
+  return env;
+};
+
+test('renaming an existing name offers to record the old one as a former name, then writes both', async () => {
+  const { win, host, applied, type, click } = await openEdit();
+  assert.equal(host.querySelector('[data-role="rename-hint"]'), null);          // nothing renamed yet
+  type(host.querySelector('input[name="label-pt"]'), 'Rede Nova');
+  const hint = host.querySelector('[data-role="rename-hint"]');
+  assert.ok(hint);
+  assert.match(hint.textContent, /Record “Rede Antiga” \(pt\) as a former name/);
+
+  click('[data-role="rename-hint"]');                                            // one click adds a prefilled row
+  assert.equal(host.querySelector('input[name="former-text-0"]').value, 'Rede Antiga');
+  assert.equal(host.querySelector('input[name="former-lang-0"]').value, 'pt');
+  assert.equal(host.querySelector('input[name="former-alias-0"]').checked, true);
+  assert.equal(host.querySelector('[data-role="rename-hint"]'), null);           // recorded, so the hint is gone
+
+  assert.ok(host.querySelector('[data-role="next"]').disabled);                  // a former name needs a reference URL
+  type(host.querySelector('input[name="former-start-0"]'), '1995');
+  type(host.querySelector('input[name="former-end-0"]'), '2010');
+  type(host.querySelector('input[name="referenceUrl"]'), 'https://reed.example/historia');
+  assert.equal(host.querySelector('[data-role="next"]').disabled, false);
+  click('[data-role="next"]');
+  assert.match(host.innerHTML, /former name \(pt\): “Rede Antiga” \(1995–2010\), also an alias/);
+  click('[data-role="submit"]');
+  await settle();
+
+  const ops = applied[0].ops;
+  assert.deepEqual(ops[0].labels, { pt: 'Rede Nova' });
+  assert.deepEqual(ops[0].aliases, { pt: ['Rede Antiga'] });
+  const stmt = ops.find((o) => o.property === 'P1448');
+  assert.deepEqual([stmt.value.text, stmt.value.language], ['Rede Antiga', 'pt']);
+  assert.deepEqual(stmt.qualifiers.map((q) => [q.property, q.value.value]), [['P580', '1995-01-01'], ['P582', '2010-01-01']]);
+  assert.match(host.innerHTML, /Success/);
+});
+
+test('former names already on the item are listed, and an identical new row is not written twice', async () => {
+  const { host, applied, type, click } = await openEdit({ entity: { claims: {
+    P17: [{ rank: 'normal', mainsnak: { datavalue: { value: { id: 'Q155' } } } }],
+    P1448: [{ rank: 'normal', mainsnak: { datavalue: { value: { text: 'Rede Velha', language: 'pt' } } }, qualifiers: { P580: timeQ('1990'), P582: timeQ('1999') } }],
+  } } });
+  assert.match(host.querySelector('.former__existing').textContent, /Rede Velha \(pt\) · 1990–1999/);
+  click('[data-role="add-former"]');
+  type(host.querySelector('input[name="former-text-0"]'), 'Rede Velha');
+  type(host.querySelector('input[name="former-start-0"]'), '1990');
+  type(host.querySelector('input[name="former-end-0"]'), '1999');
+  assert.match(host.querySelector('[data-role="errors"]').textContent, /change at least one field/);   // it is already there
+  type(host.querySelector('input[name="former-text-0"]'), 'Rede Ainda Mais Velha');
+  type(host.querySelector('input[name="referenceUrl"]'), 'https://x.example');
+  click('[data-role="next"]');
+  click('[data-role="submit"]');
+  await settle();
+  assert.deepEqual(applied[0].ops.filter((o) => o.property === 'P1448').map((o) => o.value.text), ['Rede Ainda Mais Velha']);
+});
+
+test('adding a former name row uses the national language, can be removed, and reports bad years', async () => {
+  const { host, type, click } = await openEdit();
+  click('[data-role="add-former"]');
+  assert.equal(host.querySelector('input[name="former-lang-0"]').value, 'pt');   // national language first
+  type(host.querySelector('input[name="former-text-0"]'), 'Antiga');
+  type(host.querySelector('input[name="former-end-0"]'), '20x0');
+  assert.match(host.querySelector('[data-role="errors"]').textContent, /“20x0” is not a year/);
+  click('[data-role="remove-former"]');
+  assert.equal(host.querySelector('input[name="former-text-0"]'), null);
+  assert.match(host.querySelector('[data-role="errors"]').textContent, /change at least one field/);
+});
+
+test('typing in a former-name field keeps the input (focus, caret) and the hint follows the name', async () => {
+  const { win, host, type, click } = await openEdit();
+  click('[data-role="add-former"]');
+  const el = host.querySelector('input[name="former-text-0"]');
+  el.focus();
+  el.value = 'Abc';
+  el.setSelectionRange(3, 3);
+  el.dispatchEvent(new win.Event('input', { bubbles: true }));
+  assert.equal(host.querySelector('input[name="former-text-0"]'), el);
+  assert.equal(win.document.activeElement, el);
+  assert.equal(el.selectionStart, 3);
+  type(host.querySelector('input[name="label-pt"]'), 'Rede Nova');
+  assert.ok(host.querySelector('[data-role="rename-hint"]'));
+  type(host.querySelector('input[name="label-pt"]'), 'Rede Antiga');            // changed back: no rename any more
+  assert.equal(host.querySelector('[data-role="rename-hint"]'), null);
+});

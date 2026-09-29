@@ -56,6 +56,10 @@ export function createWizard(host, opts) {
       if (saved.mode !== opts.seed.mode) return null;
       if (opts.seed.association?.qid && saved.association?.qid !== opts.seed.association.qid) return null;
       if (!saved.association?.labels) return null; // a draft from before multilingual support
+      saved.association.formerNames ||= [];
+      saved.association.original ||= {};
+      saved.association.original.aliases ||= {};
+      saved.association.original.formerNames ||= [];
       return saved;
     } catch { return null; }
   }
@@ -89,7 +93,10 @@ export function createWizard(host, opts) {
       const classes = new Set([config.inScopeClassQid, ...(config.inScopeClassQids || [])].filter(Boolean));
       const needsClass = !!config.inScopeClassQid && !o.classQids.some((q) => classes.has(q));
       const needsField = !!config.inScopeFieldQid && !o.fieldQids.includes(config.inScopeFieldQid);
-      a.original = { labels: { ...o.labels }, descriptions: { ...o.descriptions }, website: o.website, email: o.email, needsClass, needsField };
+      a.original = {
+        labels: { ...o.labels }, descriptions: { ...o.descriptions }, aliases: o.aliases, formerNames: o.formerNames,
+        website: o.website, email: o.email, needsClass, needsField,
+      };
       // someone who searched for this association to add it most likely wants it in the directory
       a.addToDirectory = arrivedFromSearch && (needsClass || needsField);
       a.labels = { ...o.labels };
@@ -311,6 +318,16 @@ export function createWizard(host, opts) {
     else if (role('clear-country')) { a.countryQid = null; a.countryLabel = null; official = []; persist(); render(); }
     else if (role('clear-seat')) { a.seatQid = null; a.seatLabel = null; persist(); render(); }
     else if (role('add-lang')) { addLanguage(role('add-lang').dataset.lang); }
+    else if (role('add-former')) {
+      (a.formerNames ||= []).push({ text: '', lang: langs[0] || 'en', start: '', end: '', alias: true });
+      persist(); render();
+    }
+    else if (role('remove-former')) { (a.formerNames || []).splice(Number(role('remove-former').dataset.index), 1); persist(); render(); }
+    else if (role('rename-hint')) {
+      const lang = role('rename-hint').dataset.lang;
+      (a.formerNames ||= []).push({ text: (a.original.labels[lang] || '').trim(), lang, start: '', end: '', alias: true });
+      persist(); render();
+    }
     else if (role('add-lang-go')) {
       const custom = host.querySelector('[data-role="lang-code"]')?.value;
       const picked = host.querySelector('[data-role="lang-select"]')?.value;

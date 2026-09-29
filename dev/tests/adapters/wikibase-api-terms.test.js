@@ -107,3 +107,46 @@ test('searchCountries restricts to instances of country and returns labelled can
   const api = createWikibaseApi({ fetch, config, getToken: async () => 'T' });
   assert.deepEqual(await api.searchCountries('bra'), [{ qid: 'Q155', label: 'Brazil', description: 'country in South America' }]);
 });
+
+test('set-terms also patches the full alias list per language, in the same request', async () => {
+  const calls = [];
+  const fetch = async (url, init) => { calls.push({ url, init }); return ok({}); };
+  const api = createWikibaseApi({ fetch, config, getToken: async () => 'T' });
+  await api.applyChangeSet({ summary: 's', ops: [{ type: 'set-terms', target: { qid: 'Q1' }, labels: { pt: 'Novo' }, descriptions: {}, aliases: { pt: ['Existente', 'Velho'] } }] });
+  assert.equal(calls.length, 1);
+  assert.deepEqual(JSON.parse(calls[0].init.body).patch, [
+    { op: 'add', path: '/labels/pt', value: 'Novo' },
+    { op: 'add', path: '/aliases/pt', value: ['Existente', 'Velho'] },
+  ]);
+});
+
+test('a former name is sent as a monolingual value with start/end time qualifiers and a reference', async () => {
+  const calls = [];
+  const fetch = async (url, init) => { calls.push({ url, init }); return ok({ id: 'Q1$NEW' }); };
+  const api = createWikibaseApi({ fetch, config, getToken: async () => 'T' });
+  await api.applyChangeSet({ summary: 's', ops: [{
+    type: 'add-statement', target: { qid: 'Q1' }, property: 'P1448',
+    value: { kind: 'monolingual', text: 'Velho Nome', language: 'pt' },
+    qualifiers: [
+      { property: 'P580', value: { kind: 'time', value: '1995-01-01', precision: 9 } },
+      { property: 'P582', value: { kind: 'time', value: '2010-01-01', precision: 9 } },
+    ],
+    reference: { P854: 'https://x.example' },
+  }] });
+  assert.equal(calls[0].url, `${REST}/entities/items/Q1/statements`);      // a plain POST: no replace lookup
+  const st = JSON.parse(calls[0].init.body).statement;
+  assert.deepEqual(st.property, { id: 'P1448' });
+  assert.deepEqual(st.value, { type: 'value', content: { text: 'Velho Nome', language: 'pt' } });
+  assert.deepEqual(st.qualifiers.map((q) => [q.property.id, q.value.content.time, q.value.content.precision]), [
+    ['P580', '+1995-01-01T00:00:00Z', 9], ['P582', '+2010-01-01T00:00:00Z', 9],
+  ]);
+  assert.equal(st.references[0].parts[0].value.content, 'https://x.example');
+});
+
+test('create-item sends aliases along with the labels', async () => {
+  let body;
+  const fetch = async (url, init) => { body = JSON.parse(init.body); return ok({ id: 'Q9' }); };
+  const api = createWikibaseApi({ fetch, config, getToken: async () => 'T' });
+  await api.applyChangeSet({ summary: 's', ops: [{ type: 'create-item', ref: 'assoc', labels: { pt: 'Rede' }, descriptions: {}, aliases: { pt: ['Velha'] }, claims: [] }] });
+  assert.deepEqual(body.item.aliases, { pt: ['Velha'] });
+});

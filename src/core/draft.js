@@ -4,11 +4,20 @@ import { isValidLangCode } from './languages.js';
 export const MAX_TERM_LENGTH = 250; // Wikidata's limit for labels and descriptions
 
 /**
+ * @typedef {Object} FormerName  // a name the association used before (an "official name" statement)
+ * @property {string} text
+ * @property {string} lang        // Wikimedia language code
+ * @property {string} start       // year, '' if unknown
+ * @property {string} end         // year, '' if unknown or still current
+ * @property {boolean} [alias]    // also add it as an alias so search finds it (new rows only)
+ *
  * @typedef {Object} AssociationOriginal  // values as loaded from Wikidata (empty when creating)
  * @property {Object<string,string>} labels
  * @property {Object<string,string>} descriptions
  * @property {string|null} website
  * @property {string|null} email
+ * @property {Object<string,string[]>} [aliases]     // existing aliases per language
+ * @property {FormerName[]} [formerNames]              // existing official-name (P1448) statements
  * @property {boolean} [needsClass]   // the item lacks an in-scope instance-of (P31), so it is not in the directory
  * @property {boolean} [needsField]   // the item lacks the in-scope field of work (P101)
  *
@@ -18,6 +27,7 @@ export const MAX_TERM_LENGTH = 250; // Wikidata's limit for labels and descripti
  * @property {Object<string,string>} labels        // language code -> name
  * @property {Object<string,string>} descriptions  // language code -> description
  * @property {AssociationOriginal} original
+ * @property {FormerName[]} formerNames   // rows being added in the form
  * @property {boolean} addToDirectory     // edit: also add the missing in-scope type / field-of-work statements
  * @property {string|null} classQid
  * @property {string|null} fieldQid
@@ -64,7 +74,8 @@ export function emptyDraft(mode) {
     mode,
     association: {
       qid: null, identifyName: '', labels: {}, descriptions: {},
-      original: { labels: {}, descriptions: {}, website: null, email: null, needsClass: false, needsField: false },
+      original: { labels: {}, descriptions: {}, aliases: {}, formerNames: [], website: null, email: null, needsClass: false, needsField: false },
+      formerNames: [],
       addToDirectory: false,
       classQid: null, fieldQid: null,
       countryQid: null, countryLabel: null, operatingAreaQid: null, seatQid: null, seatLabel: null, parentQid: null,
@@ -127,6 +138,64 @@ export function changedStatements(a) {
   };
 }
 
+const YEAR = /^\d{1,4}$/;
+
+/**
+ * The former-name rows that will actually be written: blank rows are ignored and rows that are
+ * already on the item (same name, language and years) are dropped.
+ * @param {DraftAssociation} a
+ * @returns {Required<FormerName>[]}
+ */
+export function activeFormerNames(a) {
+  const existing = a.original?.formerNames || [];
+  return (a.formerNames || [])
+    .map((r) => ({
+      text: (r.text || '').trim(), lang: (r.lang || '').trim().toLowerCase(),
+      start: (r.start || '').trim(), end: (r.end || '').trim(), alias: !!r.alias,
+    }))
+    .filter((r) => r.text || r.start || r.end)
+    .filter((r) => !existing.some((e) => e.text === r.text && e.lang === r.lang && (e.start || '') === r.start && (e.end || '') === r.end));
+}
+
+/** Whether the draft adds any former name (a statement, so it needs a reference URL). */
+export const hasFormerNames = (a) => activeFormerNames(a).length > 0;
+
+/** @param {DraftAssociation} a @returns {string[]} */
+export function validateFormerNames(a) {
+  const e = [];
+  for (const r of activeFormerNames(a)) {
+    if (!r.text) e.push('a former name needs its name');
+    else if (r.text.length > MAX_TERM_LENGTH) e.push(`the former name “${r.text.slice(0, 20)}…” is longer than ${MAX_TERM_LENGTH} characters`);
+    if (!isValidLangCode(r.lang)) e.push(`former name “${r.text}”: “${r.lang}” is not a valid language code`);
+    for (const [label, y] of [['from', r.start], ['until', r.end]]) {
+      if (y && !YEAR.test(y)) e.push(`former name “${r.text}”: “${y}” is not a year (${label})`);
+    }
+    if (YEAR.test(r.start) && YEAR.test(r.end) && Number(r.start) > Number(r.end)) {
+      e.push(`former name “${r.text}”: the end year is before the start year`);
+    }
+  }
+  return e;
+}
+
+/**
+ * Aliases to add so search finds the former names: per language, the ticked former names that are
+ * neither the current name nor already an alias. Returns the FULL new alias list per language
+ * (existing + new), because the patch replaces the whole list.
+ * @param {DraftAssociation} a
+ * @returns {Object<string,string[]>}
+ */
+export function aliasesToSet(a) {
+  const out = {};
+  const labels = cleanTerms(a.labels);
+  for (const r of activeFormerNames(a)) {
+    if (!r.alias || !r.text || !isValidLangCode(r.lang)) continue;
+    const current = out[r.lang] || a.original?.aliases?.[r.lang] || [];
+    if (r.text === labels[r.lang] || current.includes(r.text)) continue; // pointless (it is the current name) or already an alias
+    out[r.lang] = [...current, r.text];
+  }
+  return out;
+}
+
 /**
  * In-scope statements to add so an existing item shows up in the directory (edit mode, opt-in).
  * @param {DraftAssociation} a
@@ -167,7 +236,7 @@ export function validateTerms(a) {
 /**
  * Read what the editor needs from a `wbgetentities` entity.
  * @param {any} entity
- * @returns {{labels: Object<string,string>, descriptions: Object<string,string>, website: string|null, email: string|null, countryQid: string|null, classQids: string[], fieldQids: string[]}}
+ * @returns {{labels: Object<string,string>, descriptions: Object<string,string>, aliases: Object<string,string[]>, formerNames: FormerName[], website: string|null, email: string|null, countryQid: string|null, classQids: string[], fieldQids: string[]}}
  */
 export function originalFromEntity(entity) {
   const terms = (obj) => Object.fromEntries(Object.entries(obj || {}).map(([lang, v]) => [lang, v.value]));
@@ -179,11 +248,24 @@ export function originalFromEntity(entity) {
     .filter((c) => c.rank !== 'deprecated')
     .map((c) => c.mainsnak?.datavalue?.value?.id)
     .filter(Boolean);
+  const yearOf = (qualifiers) => {
+    const m = /^[+-]?0*(\d+)-/.exec(qualifiers?.[0]?.datavalue?.value?.time || '');
+    return m ? m[1] : '';
+  };
+  const formerNames = (entity?.claims?.P1448 || [])
+    .filter((c) => c.rank !== 'deprecated' && c.mainsnak?.datavalue?.value?.text)
+    .map((c) => ({
+      text: c.mainsnak.datavalue.value.text, lang: c.mainsnak.datavalue.value.language || '',
+      start: yearOf(c.qualifiers?.P580), end: yearOf(c.qualifiers?.P582),
+    }));
+  const aliases = Object.fromEntries(Object.entries(entity?.aliases || {}).map(([lang, list]) => [lang, list.map((x) => x.value)]));
   const country = first('P17');
   const email = first('P968');
   return {
     labels: terms(entity?.labels),
     descriptions: terms(entity?.descriptions),
+    aliases,
+    formerNames,
     website: first('P856'),
     email: email ? bareEmail(email) : null,
     countryQid: country && typeof country === 'object' ? country.id : null,
@@ -213,7 +295,7 @@ export function validateDraftForChangeset(d) {
     // a president is optional for now; if one is given, a new person needs the usual evidence
     if (p.label && !p.qid && !p.universityQid) e.push('president.universityQid is required for a new person');
     if (p.label && !p.qid && !p.referenceUrl) e.push('president.referenceUrl is required for a new person');
-    e.push(...validateTerms(a));
+    e.push(...validateTerms(a), ...validateFormerNames(a));
   }
 
   if (d.mode === 'change-president') {
@@ -225,9 +307,10 @@ export function validateDraftForChangeset(d) {
 
   if (d.mode === 'update-field') {
     if (!a.qid) e.push('association.qid is required');
-    if (!hasTermChanges(a) && !changedStatement && !scopeChange) e.push('nothing to update');
-    if ((changedStatement || scopeChange) && !a.referenceUrl) e.push('association.referenceUrl is required');
-    e.push(...validateTerms(a));
+    const former = hasFormerNames(a);
+    if (!hasTermChanges(a) && !changedStatement && !scopeChange && !former) e.push('nothing to update');
+    if ((changedStatement || scopeChange || former) && !a.referenceUrl) e.push('association.referenceUrl is required');
+    e.push(...validateTerms(a), ...validateFormerNames(a));
   }
 
   if (d.journal && !d.journal.qid && !d.journal.label) e.push('journal.label is required to create a journal');
