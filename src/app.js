@@ -51,9 +51,13 @@ export async function createApp(deps) {
   const toggle = doc.querySelector('[data-role="leadership-toggle"]');
 
   const mapView = await createMapView(mapHost, {
-    tileUrl: config.tileUrl,
-    tileAttribution: config.tileAttribution,
     countriesGeojson: deps.countriesGeojson,
+    // the panel is a left sidebar on wide screens and a bottom sheet on narrow ones
+    getInsets: () => {
+      const r = panelHost.getBoundingClientRect();
+      if (!r.width || !r.height) return {};
+      return r.top > 0 ? { bottom: mapHost.clientHeight - r.top } : { left: r.right };
+    },
     onSelect: (qid) => select(qid),
     onSelectCountry: (iso) => { win.location.hash = `#/country/${iso}`; },
   });

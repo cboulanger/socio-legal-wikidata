@@ -28,8 +28,8 @@ see "Deploy (detail)" below.
 
 ## Change common things without touching code
 
-Edit `config.json`: in-scope Wikidata QIDs, label languages, map tile
-source, cache lifetime.
+Edit `config.json`: in-scope Wikidata QIDs, label languages,
+cache lifetime.
 
 ## Deploy (detail)
 
@@ -48,7 +48,7 @@ source, cache lifetime.
 
 ## Manual QA checklist (requires a browser)
 
-- [ ] Map + tiles load; panel lists associations.
+- [ ] Equal Earth map loads; panel lists associations.
 - [ ] No sign-in or edit affordance anywhere in the DOM.
 - [ ] Row click → card shows; map pans.
 - [ ] Search box filters rows.
