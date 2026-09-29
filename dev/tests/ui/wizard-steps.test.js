@@ -22,7 +22,7 @@ test('details step enforces reference and the personal-e-mail confirmation', () 
   const d = emptyDraft('create-association');
   d.association.labels = { pt: 'X' };
   d.association.classQid = 'Q955824';
-  d.association.fieldQid = 'Q2734663';
+  d.association.fieldQid = 'Q847034';
   assert.ok(validateStep('details', d).includes('a reference URL is required'));
   d.association.referenceUrl = 'https://x';
   d.association.email = 'jane.doe@uni.edu';
@@ -76,7 +76,7 @@ test('an already-stored personal-looking e-mail does not block an unrelated edit
 
 test('details step (edit): adding to the directory counts as a change and needs a reference', () => {
   const d = emptyDraft('update-field');
-  Object.assign(d.association, { qid: 'Q1', classQid: 'Q955824', fieldQid: 'Q2734663', addToDirectory: true });
+  Object.assign(d.association, { qid: 'Q1', classQid: 'Q955824', fieldQid: 'Q847034', addToDirectory: true });
   d.association.original.needsClass = true;
   assert.deepEqual(validateStep('details', d), ['a reference URL is required']);
   d.association.referenceUrl = 'https://x';

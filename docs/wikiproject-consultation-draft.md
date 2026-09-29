@@ -37,7 +37,7 @@ on the modelling from people who watch this area:
 Is this split reasonable, or is there a more specific class WikiProject Sociology/Law
 already uses for this kind of body?
 
-**Field of work (`P101`)** — `Q2734663` (sociology of law) on every item, regardless
+**Field of work (`P101`)** — `Q847034` (sociology of law) on every item, regardless
 of whether the body's own name says "law and society", "socio-legal studies",
 "sociology of law", etc. Agree, or should broader/related fields also be tagged?
 

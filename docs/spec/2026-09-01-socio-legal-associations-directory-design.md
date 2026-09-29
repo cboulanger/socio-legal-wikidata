@@ -333,7 +333,7 @@ relevant Wikidata WikiProject before bulk editing.
 | Statement | Property | Value / notes |
 | --- | --- | --- |
 | instance of | P31 | *learned society* Q955824 *(confirm)* or *voluntary association* Q48204; final class TBD with WikiProject |
-| field of work | P101 | *sociology of law / socio‑legal studies* Q2734663 *(confirm)* — the marker that identifies an item as in scope |
+| field of work | P101 | *sociology of law / socio‑legal studies* Q847034 *(confirm)* — the marker that identifies an item as in scope |
 | country | P17 | for national associations, and for the seat country of permanent‑secretariat bodies; omitted for circulating international/regional bodies |
 | **headquarters location** | **P159** | **the fixed seat / secretariat** — a place or the host institution. **Primary source of the map pin.** Set only for bodies whose seat type is *permanent secretariat* |
 | **part of** | **P361** | for a **section / committee** of a larger association: link to the parent item (e.g. the DGS or AIS sociology‑of‑law section → its parent sociological association). Default representation for sections |
@@ -394,7 +394,7 @@ SELECT ?assoc ?assocLabel ?website ?email ?countryLabel
        ?president ?presidentLabel ?leadUni ?leadUniLabel ?leadCoord
        ?journal ?journalLabel ?journalUrl ?issn WHERE {
   ?assoc wdt:P31/wdt:P279* wd:Q955824 .          # in-scope class (confirm)
-  ?assoc wdt:P101 wd:Q2734663 .                  # field of work: sociology of law (confirm)
+  ?assoc wdt:P101 wd:Q847034 .                  # field of work: sociology of law (confirm)
   OPTIONAL { ?assoc wdt:P856 ?website. }
   OPTIONAL { ?assoc wdt:P968 ?email. }
   OPTIONAL { ?assoc wdt:P17 ?country. }
@@ -594,7 +594,7 @@ Two files accompany this spec (in the private `data/` folder, not the public rep
   existing item or blank = create.
 - **`socio-legal-associations.quickstatements.txt`** — a QuickStatements v1 batch that
   performs the initial import, run once at `quickstatements.toolforge.org`. Structure:
-  - **Phase 1 — association items.** `P101=Q2734663` marks the domain; `P31` is
+  - **Phase 1 — association items.** `P101=Q847034` marks the domain; `P31` is
     provisional per body (`Q955824` / `Q48204`); national **sections** additionally
     get `P361 → parent`. Blank‑QID rows create; rows with a QID (e.g. `Q2867822`
     AISLF, `Q6503159` LSA, `Q2145564` RCSL) add statements to existing items. Only

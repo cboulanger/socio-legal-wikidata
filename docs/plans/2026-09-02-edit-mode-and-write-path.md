@@ -528,7 +528,7 @@ test('create-association with a new journal links journal P123 to the associatio
   Object.assign(d.association, {
     label: 'European Society for Empirical Legal Studies',
     description: 'European society for empirical legal studies',
-    classQid: 'Q955824', fieldQid: 'Q2734663', countryQid: 'Q55',
+    classQid: 'Q955824', fieldQid: 'Q847034', countryQid: 'Q55',
     website: 'https://esels.eu', email: 'contact@esels.eu',
     inception: '2021', referenceUrl: 'https://esels.eu/about',
   });
@@ -539,7 +539,7 @@ test('create-association with a new journal links journal P123 to the associatio
   const cs = buildChangeSet(d, cfg);
   const assoc = cs.ops.find((o) => o.type === 'create-item' && o.ref === 'assoc');
   assert.ok(assoc.claims.some((c) => c.property === 'P31' && c.value.qid === 'Q955824'));
-  assert.ok(assoc.claims.some((c) => c.property === 'P101' && c.value.qid === 'Q2734663'));
+  assert.ok(assoc.claims.some((c) => c.property === 'P101' && c.value.qid === 'Q847034'));
   assert.ok(assoc.claims.some((c) => c.property === 'P17' && c.value.qid === 'Q55'));
   assert.ok(assoc.claims.some((c) => c.property === 'P571' && c.value.precision === 9));
   const p488 = assoc.claims.find((c) => c.property === 'P488');
@@ -1706,7 +1706,7 @@ test('details step enforces reference and the personal-e-mail confirmation', () 
   const d = emptyDraft('create-association');
   d.association.label = 'X';
   d.association.classQid = 'Q955824';
-  d.association.fieldQid = 'Q2734663';
+  d.association.fieldQid = 'Q847034';
   assert.ok(validateStep('details', d).includes('a reference URL is required'));
   d.association.referenceUrl = 'https://x';
   d.association.email = 'jane.doe@uni.edu';
@@ -1816,7 +1816,7 @@ function env() {
   const dom = new JSDOM('<!doctype html><div id="w"></div>', { url: 'https://app.example/' });
   return dom.window;
 }
-const cfg = { humanQid: 'Q5', researcherQid: 'Q1650915', academicJournalQid: 'Q737498', inScopeClassQid: 'Q955824', inScopeFieldQid: 'Q2734663' };
+const cfg = { humanQid: 'Q5', researcherQid: 'Q1650915', academicJournalQid: 'Q737498', inScopeClassQid: 'Q955824', inScopeFieldQid: 'Q847034' };
 
 test('a change-president flow produces the expected ChangeSet and calls the write port', async () => {
   const win = env();

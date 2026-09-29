@@ -52,7 +52,7 @@ test('create-association with a new journal links journal P123 to the associatio
   Object.assign(d.association, {
     labels: { en: 'European Society for Empirical Legal Studies', de: 'Europäische Gesellschaft für empirische Rechtsforschung' },
     descriptions: { en: 'European society for empirical legal studies' },
-    classQid: 'Q955824', fieldQid: 'Q2734663', countryQid: 'Q55',
+    classQid: 'Q955824', fieldQid: 'Q847034', countryQid: 'Q55',
     website: 'https://esels.eu', email: 'contact@esels.eu',
     inception: '2021', referenceUrl: 'https://esels.eu/about',
   });
@@ -65,7 +65,7 @@ test('create-association with a new journal links journal P123 to the associatio
   assert.deepEqual(assoc.labels, { en: 'European Society for Empirical Legal Studies', de: 'Europäische Gesellschaft für empirische Rechtsforschung' });
   assert.deepEqual(assoc.descriptions, { en: 'European society for empirical legal studies' });
   assert.ok(assoc.claims.some((c) => c.property === 'P31' && c.value.qid === 'Q955824'));
-  assert.ok(assoc.claims.some((c) => c.property === 'P101' && c.value.qid === 'Q2734663'));
+  assert.ok(assoc.claims.some((c) => c.property === 'P101' && c.value.qid === 'Q847034'));
   assert.ok(assoc.claims.some((c) => c.property === 'P17' && c.value.qid === 'Q55'));
   assert.ok(assoc.claims.some((c) => c.property === 'P571' && c.value.precision === 9));
   const p488 = assoc.claims.find((c) => c.property === 'P488');
@@ -89,7 +89,7 @@ test('update-field emits one referenced add-statement per provided field', () =>
 test('P968 (email) is always stored as a mailto: URI, in both create and update-field modes', () => {
   const created = emptyDraft('create-association');
   Object.assign(created.association, {
-    labels: { en: 'X' }, classQid: 'Q955824', fieldQid: 'Q2734663', email: 'office@body.org',
+    labels: { en: 'X' }, classQid: 'Q955824', fieldQid: 'Q847034', email: 'office@body.org',
     referenceUrl: 'https://body.org',
   });
   created.president.qid = 'Q400';
@@ -121,7 +121,7 @@ test('linking an EXISTING journal emits add-statements, not a create-item', () =
   const d = emptyDraft('create-association');
   Object.assign(d.association, {
     labels: { en: 'Law and Society Association' },
-    classQid: 'Q955824', fieldQid: 'Q2734663', referenceUrl: 'https://example.org/about',
+    classQid: 'Q955824', fieldQid: 'Q847034', referenceUrl: 'https://example.org/about',
   });
   d.president.qid = 'Q400';
   d.journal = { qid: 'Q6502970', label: 'Law & Society Review', url: 'https://example.org/lsr', issn: '0023-9216', referenceUrl: 'https://example.org/lsr' };
@@ -142,7 +142,7 @@ test('linking an EXISTING journal emits add-statements, not a create-item', () =
 test('create-association without a president creates only the association (no empty person)', () => {
   const d = emptyDraft('create-association');
   Object.assign(d.association, {
-    labels: { pt: 'Rede de Pesquisa Empírica em Direito' }, classQid: 'Q955824', fieldQid: 'Q2734663',
+    labels: { pt: 'Rede de Pesquisa Empírica em Direito' }, classQid: 'Q955824', fieldQid: 'Q847034',
     countryQid: 'Q155', referenceUrl: 'https://reed.example/sobre',
   });
   const cs = buildChangeSet(d, cfg);
@@ -193,13 +193,13 @@ test('describeChanges lists new and changed names per language', () => {
 test('update-field with "add to directory" adds only the missing type/field statements, referenced', () => {
   const d = emptyDraft('update-field');
   Object.assign(d.association, {
-    qid: 'Q100', classQid: 'Q955824', fieldQid: 'Q2734663', addToDirectory: true, referenceUrl: 'https://x.example/about',
+    qid: 'Q100', classQid: 'Q955824', fieldQid: 'Q847034', addToDirectory: true, referenceUrl: 'https://x.example/about',
   });
   d.association.original.needsClass = true;
   d.association.original.needsField = true;
   let cs = buildChangeSet(d, cfg);
   assert.deepEqual(cs.ops.map((o) => [o.type, o.property, o.value.qid]), [
-    ['add-statement', 'P31', 'Q955824'], ['add-statement', 'P101', 'Q2734663'],
+    ['add-statement', 'P31', 'Q955824'], ['add-statement', 'P101', 'Q847034'],
   ]);
   assert.ok(cs.ops.every((o) => o.reference.P854 === 'https://x.example/about' && !o.replace)); // added, never replacing other types
   assert.match(cs.summary, /directory membership/);
@@ -256,7 +256,7 @@ test('a former name with only an end year gets only the end qualifier, and short
 test('create-association can carry former names and aliases on the new item', () => {
   const d = emptyDraft('create-association');
   Object.assign(d.association, {
-    labels: { pt: 'Rede de Pesquisa Empírica em Direito' }, classQid: 'Q955824', fieldQid: 'Q2734663',
+    labels: { pt: 'Rede de Pesquisa Empírica em Direito' }, classQid: 'Q955824', fieldQid: 'Q847034',
     countryQid: 'Q155', referenceUrl: 'https://reed.example/sobre',
     formerNames: [{ text: 'Rede de Estudos Empíricos', lang: 'pt', start: '2012', end: '2016', alias: true }],
   });

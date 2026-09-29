@@ -5,7 +5,7 @@ import { createWizard } from '../../../src/ui/edit-wizard/wizard.js';
 
 const cfg = {
   humanQid: 'Q5', researcherQid: 'Q1650915', academicJournalQid: 'Q737498',
-  inScopeClassQid: 'Q955824', inScopeFieldQid: 'Q2734663', labelLanguages: 'en,de,fr,es',
+  inScopeClassQid: 'Q955824', inScopeFieldQid: 'Q847034', labelLanguages: 'en,de,fr,es',
 };
 const settle = async () => { for (let i = 0; i < 6; i++) await new Promise((r) => setTimeout(r, 0)); };
 
@@ -301,10 +301,10 @@ test('an existing item that is not in the directory offers to add it (ticked whe
   type(host.querySelector('input[name="referenceUrl"]'), 'https://society.example/about');
   click('[data-role="next"]');
   assert.match(host.innerHTML, /add to directory: instance of Q955824/);
-  assert.match(host.innerHTML, /add to directory: field of work Q2734663/);
+  assert.match(host.innerHTML, /add to directory: field of work Q847034/);
   click('[data-role="submit"]');
   await settle();
-  assert.deepEqual(applied[0].ops.map((o) => [o.property, o.value.qid]), [['P31', 'Q955824'], ['P101', 'Q2734663']]);
+  assert.deepEqual(applied[0].ops.map((o) => [o.property, o.value.qid]), [['P31', 'Q955824'], ['P101', 'Q847034']]);
   assert.equal(applied[0].ops[0].reference.P854, 'https://society.example/about');
 });
 
@@ -322,7 +322,7 @@ test('the notice can be unticked, and it is not shown for an item that is alread
   box.dispatchEvent(new notInScope.win.Event('input', { bubbles: true }));
   assert.doesNotMatch(notInScope.host.querySelector('[data-role="errors"]').textContent, /a reference URL is required/);
 
-  const inScope = setup({ getEntity: async () => itemEntity({ ...statementIds('P31', 'Q955824'), ...statementIds('P101', 'Q2734663') }) });
+  const inScope = setup({ getEntity: async () => itemEntity({ ...statementIds('P31', 'Q955824'), ...statementIds('P101', 'Q847034') }) });
   createWizard(inScope.host, { window: inScope.win, config: cfg, ports: inScope.ports, seed: { mode: 'update-field', association: { qid: 'Q1' } } });
   await settle();
   assert.equal(inScope.host.querySelector('input[name="addToDirectory"]'), null);

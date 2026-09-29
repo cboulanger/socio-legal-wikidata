@@ -7,7 +7,7 @@ function env() {
   const dom = new JSDOM('<!doctype html><div id="w"></div>', { url: 'https://app.example/' });
   return dom.window;
 }
-const cfg = { humanQid: 'Q5', researcherQid: 'Q1650915', academicJournalQid: 'Q737498', inScopeClassQid: 'Q955824', inScopeFieldQid: 'Q2734663' };
+const cfg = { humanQid: 'Q5', researcherQid: 'Q1650915', academicJournalQid: 'Q737498', inScopeClassQid: 'Q955824', inScopeFieldQid: 'Q847034' };
 
 test('a change-president flow produces the expected ChangeSet and calls the write port', async () => {
   const win = env();

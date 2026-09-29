@@ -89,14 +89,14 @@ test('originalFromEntity reads terms, website, e-mail (without mailto:) and coun
       P968: [{ rank: 'normal', mainsnak: { datavalue: { value: 'mailto:reed@example.org' } } }],
       P17: [{ rank: 'normal', mainsnak: { datavalue: { value: { id: 'Q155' } } } }],
       P31: [{ rank: 'normal', mainsnak: { datavalue: { value: { id: 'Q43229' } } } }, { rank: 'deprecated', mainsnak: { datavalue: { value: { id: 'Q1' } } } }],
-      P101: [{ rank: 'normal', mainsnak: { datavalue: { value: { id: 'Q2734663' } } } }],
+      P101: [{ rank: 'normal', mainsnak: { datavalue: { value: { id: 'Q847034' } } } }],
       P361: [{ rank: 'normal', mainsnak: { datavalue: { value: { id: 'Q1202999' } } } }],
     },
   };
   assert.deepEqual(originalFromEntity(entity), {
     labels: { pt: 'Rede', en: 'Network' }, descriptions: { en: 'a network' },
     website: 'https://reed.example', email: 'reed@example.org', parentQid: 'Q1202999', countryQid: 'Q155',
-    classQids: ['Q43229'], fieldQids: ['Q2734663'], aliases: {}, formerNames: [],
+    classQids: ['Q43229'], fieldQids: ['Q847034'], aliases: {}, formerNames: [],
   });
   assert.deepEqual(originalFromEntity({}), {
     labels: {}, descriptions: {}, website: null, email: null, parentQid: null, countryQid: null, classQids: [], fieldQids: [],
@@ -110,7 +110,7 @@ test('cleanTerms trims and drops blanks', () => {
 
 test('scopeStatements only adds what is missing, and only when ticked', () => {
   const a = emptyDraft('update-field').association;
-  Object.assign(a, { qid: 'Q1', classQid: 'Q955824', fieldQid: 'Q2734663' });
+  Object.assign(a, { qid: 'Q1', classQid: 'Q955824', fieldQid: 'Q847034' });
   a.original.needsClass = true;
   a.original.needsField = false;
   assert.deepEqual(scopeStatements(a), { class: null, field: null });      // not ticked
@@ -123,7 +123,7 @@ test('scopeStatements only adds what is missing, and only when ticked', () => {
 
 test('update-field: adding to the directory counts as a change and needs a reference URL', () => {
   const d = emptyDraft('update-field');
-  Object.assign(d.association, { qid: 'Q1', classQid: 'Q955824', fieldQid: 'Q2734663', addToDirectory: true });
+  Object.assign(d.association, { qid: 'Q1', classQid: 'Q955824', fieldQid: 'Q847034', addToDirectory: true });
   d.association.original.needsClass = true;
   d.association.original.needsField = true;
   assert.deepEqual(validateDraftForChangeset(d), ['association.referenceUrl is required']);

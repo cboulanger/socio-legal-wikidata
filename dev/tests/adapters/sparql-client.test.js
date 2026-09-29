@@ -3,12 +3,12 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { buildDirectoryQuery, mapBindings, queryDirectory } from '../../../src/adapters/sparql-client.js';
 
-const cfg = { inScopeClassQid: 'Q955824', inScopeFieldQid: 'Q2734663', labelLanguages: 'en,de' };
+const cfg = { inScopeClassQid: 'Q955824', inScopeFieldQid: 'Q847034', labelLanguages: 'en,de' };
 
 test('buildDirectoryQuery injects config and keeps the key triples', () => {
   const q = buildDirectoryQuery(cfg);
   assert.match(q, /wd:Q955824/);
-  assert.match(q, /wdt:P101 wd:Q2734663/);
+  assert.match(q, /wdt:P101 wd:Q847034/);
   assert.match(q, /wdt:P159 \?seat/);
   assert.match(q, /wdt:P123 \?assoc/);
   assert.match(q, /bd:serviceParam wikibase:language "en,de"/);
