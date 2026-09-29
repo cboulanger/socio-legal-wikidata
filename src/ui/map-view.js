@@ -1,9 +1,8 @@
-import { resolveSeatPin, resolveLeadershipPin } from '../core/resolve-location.js';
+import { resolveSeatPin } from '../core/resolve-location.js';
 
 /**
  * @typedef {Object} MapPin
  * @property {string} id
- * @property {'seat'|'leadership'} layer
  * @property {[number,number]} coord
  * @property {string} label
  * @property {string} assocQid
@@ -21,22 +20,16 @@ export function isoOfFeature(feature) {
 
 /**
  * @param {import('../core/model.js').Association[]} associations
- * @param {{centroids: Object<string, [number,number]>, showLeadership: boolean}} opts
+ * @param {{centroids: Object<string, [number,number]>}} opts
  * @returns {MapPin[]}
  */
-export function toMapPins(associations, { centroids, showLeadership }) {
+export function toMapPins(associations, { centroids }) {
   /** @type {MapPin[]} */
   const pins = [];
   for (const a of associations) {
     const seat = resolveSeatPin(a, centroids);
     if (seat) {
-      pins.push({ id: `${a.qid}:seat`, layer: 'seat', coord: seat.coord, label: a.label, assocQid: a.qid });
-    }
-    if (showLeadership) {
-      const lead = resolveLeadershipPin(a);
-      if (lead) {
-        pins.push({ id: `${a.qid}:leadership`, layer: 'leadership', coord: lead.coord, label: lead.label, assocQid: a.qid });
-      }
+      pins.push({ id: `${a.qid}:seat`, coord: seat.coord, label: a.label, assocQid: a.qid });
     }
   }
   return pins;
@@ -46,7 +39,6 @@ const DEFAULT_SIZE = [960, 480];
 const MAX_ZOOM = 40;
 const FOCUS_ZOOM = 5;
 const SEAT_RADIUS = 7;
-const LEAD_RADIUS = 5;
 
 /**
  * Equal Earth world map drawn as SVG with d3-geo (equal-area, no tile server).
@@ -67,7 +59,6 @@ export function createMapView(container, { onSelect, onSelectCountry, countriesG
   const sphere = world.append('path').attr('class', 'map-sphere');
   const countries = world.append('g').attr('class', 'map-countries');
   const seatLayer = world.append('g').attr('class', 'map-seats');
-  const leadLayer = world.append('g').attr('class', 'map-leadership');
 
   const projection = d3.geoEqualEarth();
   const path = d3.geoPath(projection);
@@ -84,7 +75,6 @@ export function createMapView(container, { onSelect, onSelectCountry, countriesG
       world.attr('transform', event.transform);
       // keep pins a constant on-screen size while the map scales
       seatLayer.selectAll('circle').attr('r', SEAT_RADIUS / k);
-      leadLayer.selectAll('circle').attr('r', LEAD_RADIUS / k);
     });
   svg.call(zoom);
 
@@ -101,16 +91,14 @@ export function createMapView(container, { onSelect, onSelectCountry, countriesG
 
   function render(pins) {
     lastPins = pins;
-    for (const [layer, sel, radius] of [['seat', seatLayer, SEAT_RADIUS], ['leadership', leadLayer, LEAD_RADIUS]]) {
-      sel.selectAll('circle')
-        .data(pins.filter((p) => p.layer === layer), (p) => p.id)
-        .join((enter) => enter.append('circle').call((c) => c.append('title')))
-        .attr('class', layer === 'seat' ? 'pin pin--seat' : 'pin pin--lead')
-        .attr('r', radius / k)
-        .attr('transform', (p) => `translate(${projection(p.coord)})`)
-        .on('click', (event, p) => onSelect(p.assocQid))
-        .select('title').text((p) => p.label);
-    }
+    seatLayer.selectAll('circle')
+      .data(pins, (p) => p.id)
+      .join((enter) => enter.append('circle').call((c) => c.append('title')))
+      .attr('class', 'pin pin--seat')
+      .attr('r', SEAT_RADIUS / k)
+      .attr('transform', (p) => `translate(${projection(p.coord)})`)
+      .on('click', (event, p) => onSelect(p.assocQid))
+      .select('title').text((p) => p.label);
   }
 
   function layout() {

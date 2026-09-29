@@ -7,7 +7,6 @@ import { createApp } from '../../src/app.js';
 function domFixture() {
   const dom = new JSDOM(`<!doctype html><div id="app">
     <div id="map"></div><aside id="panel-host"></aside><aside id="detail-host" hidden></aside>
-    <label class="map-toggle"><input type="checkbox" data-role="leadership-toggle"></label>
   </div>`, { url: 'https://example.org/' });
   return dom.window;
 }

@@ -7,7 +7,6 @@ import { createApp } from '../../src/app.js';
 function win(url) {
   return new JSDOM(`<!doctype html><div id="app">
     <div id="map"></div><aside id="panel-host"></aside><aside id="detail-host" hidden></aside>
-    <label class="map-toggle"><input type="checkbox" data-role="leadership-toggle"></label>
   </div>`, { url }).window;
 }
 const associations = [{ ...emptyAssociation('Q1'), label: 'Body', countryCode: 'DE', countryLabel: 'Germany',

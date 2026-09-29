@@ -19,13 +19,3 @@ export function resolveSeatPin(a, centroids) {
   if (cc && centroids[cc]) return { coord: centroids[cc], kind: 'country' };
   return null;
 }
-
-/**
- * Secondary "current leadership" marker: the president's university coordinate.
- * @param {Association} a
- * @returns {{coord: LonLat, label: string}|null}
- */
-export function resolveLeadershipPin(a) {
-  if (!Array.isArray(a.leadCoord)) return null;
-  return { coord: a.leadCoord, label: a.leadUniLabel || a.president?.label || '' };
-}

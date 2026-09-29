@@ -53,7 +53,6 @@ cache lifetime.
 - [ ] Row click → card shows; map pans.
 - [ ] Search box filters rows.
 - [ ] Clicking a country polygon (or visiting `#/country/DE`) filters to that country; the `×` clears it.
-- [ ] Leadership toggle adds/removes lighter pins.
 - [ ] Simulate offline (DevTools → Network → Offline, reload): the snapshot loads with a "saved copy from …" banner.
 
 ## Edit mode

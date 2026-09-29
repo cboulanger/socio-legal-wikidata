@@ -48,7 +48,6 @@ export async function createApp(deps) {
     selection: null,
     stale: false,
     asOf: null,
-    showLeadership: !!config.leadershipLayerDefault,
   });
 
   // Who last edited the selected item: the snapshot's value shows at once, a live lookup replaces it.
@@ -59,7 +58,6 @@ export async function createApp(deps) {
   const panelHost = doc.getElementById('panel-host');
   const detailHost = doc.getElementById('detail-host');
   const mapHost = doc.getElementById('map');
-  const toggle = doc.querySelector('[data-role="leadership-toggle"]');
 
   const mapView = await createMapView(mapHost, {
     countriesGeojson: deps.countriesGeojson,
@@ -108,7 +106,7 @@ export async function createApp(deps) {
   function renderMapRegion() {
     const s = store.getState();
     const visible = filterAssociations(s.associations, s.filter);
-    mapView.render(toMapPins(visible, { centroids, showLeadership: s.showLeadership }));
+    mapView.render(toMapPins(visible, { centroids }));
   }
 
   function select(qid) {
@@ -141,10 +139,6 @@ export async function createApp(deps) {
       store.setState((s) => ({ filter: { ...s.filter, text: e.target.value } }));
     }
   });
-  if (toggle) {
-    toggle.checked = store.getState().showLeadership;
-    toggle.addEventListener('change', () => store.setState({ showLeadership: toggle.checked }));
-  }
   win.addEventListener('hashchange', () => applyRoute());
 
   function applyRoute() {
