@@ -21,7 +21,13 @@ const fetchWithUa = (url, init) => fetch(url, { ...init, headers: { ...init?.hea
 if (import.meta.url === `file://${process.argv[1]}`) {
   const cfg = JSON.parse(await readFile('config.json', 'utf8'));
   const associations = await queryDirectory({ fetch: fetchWithUa, endpoint: cfg.sparqlEndpoint, cfg });
-  const snap = buildSnapshot(associations);
-  await writeFile('data/snapshot.json', JSON.stringify(snap, null, 2) + '\n');
-  console.log(`wrote data/snapshot.json (${associations.length} associations, ${snap.generatedAt})`);
+  // Only rewrite when the data changed, so the timestamp alone never causes a commit.
+  const previous = await readFile('data/snapshot.json', 'utf8').then(JSON.parse, () => null);
+  if (previous && JSON.stringify(previous.associations) === JSON.stringify(associations)) {
+    console.log(`data/snapshot.json unchanged (${associations.length} associations)`);
+  } else {
+    const snap = buildSnapshot(associations);
+    await writeFile('data/snapshot.json', JSON.stringify(snap, null, 2) + '\n');
+    console.log(`wrote data/snapshot.json (${associations.length} associations, ${snap.generatedAt})`);
+  }
 }
