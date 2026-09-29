@@ -77,3 +77,12 @@ test('mapBindings keeps the parent organization website for the snapshot', () =>
   }] } });
   assert.equal(a.parentUrl, 'https://society.example/');
 });
+
+test('mapBindings and the query carry the P1813 abbreviation', () => {
+  assert.match(buildDirectoryQuery({ inScopeClassQid: 'Q1', inScopeFieldQid: 'Q2', labelLanguages: 'en' }), /wdt:P1813 \?abbreviation/);
+  const [a] = mapBindings({ results: { bindings: [{
+    assoc: { value: 'http://www.wikidata.org/entity/Q1' }, assocLabel: { value: 'Asian Law and Society Association' },
+    abbreviation: { value: 'ALSA' },
+  }] } });
+  assert.equal(a.abbreviation, 'ALSA');
+});

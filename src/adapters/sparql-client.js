@@ -21,7 +21,7 @@ import { parsePoint } from '../core/parse-wkt.js';
 //    alternation directly to the coordinate, which is fast.
 //  - The journal class check keeps its P31/P279* traversal — isolated, it is fast
 //    (few candidate journals per association) and narrowing it further isn't needed.
-const QUERY_TEMPLATE = `SELECT ?assoc ?assocLabel ?assocDescription ?website ?email ?inception
+const QUERY_TEMPLATE = `SELECT ?assoc ?assocLabel ?assocDescription ?website ?email ?inception ?abbreviation
        ?country ?countryLabel ?countryCode ?operating
        ?seat ?seatLabel ?seatCoord ?parent ?parentLabel ?parentUrl
        ?president ?presidentLabel ?presidentUrl
@@ -33,6 +33,7 @@ WHERE {
   ?assoc wdt:P101 wd:%FIELD% .
   OPTIONAL { ?assoc wdt:P856 ?website. }
   OPTIONAL { ?assoc wdt:P968 ?email. }
+  OPTIONAL { ?assoc wdt:P1813 ?abbreviation. }
   OPTIONAL { ?assoc wdt:P571 ?inceptionDate. BIND(STR(YEAR(?inceptionDate)) AS ?inception) }
   OPTIONAL { ?assoc wdt:P17 ?country. OPTIONAL { ?country wdt:P297 ?countryCode. } }
   OPTIONAL { ?assoc wdt:P2541 ?operating. }
@@ -129,6 +130,7 @@ export function mapBindings(sparqlJson) {
     // internal use and display (association-card.js builds its own mailto: href).
     a.email ??= val(row.email)?.replace(/^mailto:/, '') ?? null;
     a.inception ??= val(row.inception) ?? null;
+    a.abbreviation ??= val(row.abbreviation) ?? null;
     a.countryCode ??= (val(row.countryCode) || '').toUpperCase() || null;
     a.countryLabel ??= val(row.countryLabel) ?? null;
     a.operatingAreaQid ??= qid(row.operating);

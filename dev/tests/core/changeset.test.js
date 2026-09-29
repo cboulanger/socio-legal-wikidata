@@ -298,3 +298,37 @@ test('update-field: an unchanged host organization is not a change', () => {
   d.association.parentQid = 'Q500';
   assert.throws(() => buildChangeSet(d, cfg), /nothing to update/);
 });
+
+test('update-field adds a new abbreviation as a P1813 statement plus an alias, and needs a reference', () => {
+  const d = emptyDraft('update-field');
+  Object.assign(d.association, {
+    qid: 'Q100',
+    original: { labels: { en: 'Asian Law and Society Association' }, descriptions: {}, aliases: {}, abbreviations: {}, formerNames: [], website: null, email: null },
+    labels: { en: 'Asian Law and Society Association' },
+    abbreviations: { en: 'ALSA' },
+  });
+  assert.throws(() => buildChangeSet(d, cfg), /referenceUrl/);
+  d.association.referenceUrl = 'https://alsa.example';
+  const cs = buildChangeSet(d, cfg);
+  assert.deepEqual(cs.ops[0], { type: 'set-terms', target: { qid: 'Q100' }, labels: {}, descriptions: {}, aliases: { en: ['ALSA'] } });
+  const stmt = cs.ops[1];
+  assert.equal(stmt.property, 'P1813');
+  assert.deepEqual(stmt.value, { kind: 'monolingual', text: 'ALSA', language: 'en' });
+  assert.equal(stmt.replace, undefined);
+  assert.deepEqual(stmt.reference, { P854: 'https://alsa.example' });
+  assert.match(cs.summary, /abbreviations \(en\)/);
+  assert.ok(describeChanges(d).includes('abbreviation (en): “ALSA”, also an alias'));
+});
+
+test('create-association carries the abbreviation on the new item', () => {
+  const d = emptyDraft('create-association');
+  Object.assign(d.association, {
+    classQid: 'Q955824', fieldQid: 'Q847034', referenceUrl: 'https://alsa.example',
+    labels: { en: 'Asian Law and Society Association' }, abbreviations: { en: 'ALSA' },
+  });
+  const create = buildChangeSet(d, cfg).ops.find((o) => o.type === 'create-item' && o.ref === 'assoc');
+  const claim = create.claims.find((c) => c.property === 'P1813');
+  assert.deepEqual(claim.value, { kind: 'monolingual', text: 'ALSA', language: 'en' });
+  assert.deepEqual(claim.reference, { P854: 'https://alsa.example' });
+  assert.deepEqual(create.aliases, { en: ['ALSA'] });
+});

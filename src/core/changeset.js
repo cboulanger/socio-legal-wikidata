@@ -1,4 +1,4 @@
-import { validateDraftForChangeset, changedTerms, changedStatements, scopeStatements, changedParent, activeFormerNames, aliasesToSet } from './draft.js';
+import { validateDraftForChangeset, changedTerms, changedStatements, scopeStatements, changedParent, activeFormerNames, aliasesToSet, changedAbbreviations } from './draft.js';
 
 /**
  * @typedef {{kind:'item', qid:string}|{kind:'item', ref:string}
@@ -40,6 +40,11 @@ function formerNameClaims(a, reference) {
     if (r.end) qualifiers.push({ property: 'P582', value: yearOnly(r.end) });
     return { property: 'P1448', value: mono(r.text, r.lang), qualifiers: qualifiers.length ? qualifiers : undefined, reference };
   });
+}
+
+/** "Short name" (P1813) statements for the abbreviations, one per language. */
+function abbreviationClaims(a, reference) {
+  return Object.entries(changedAbbreviations(a)).map(([lang, text]) => ({ property: 'P1813', value: mono(text, lang), reference }));
 }
 
 /**
@@ -123,6 +128,7 @@ export function buildChangeSet(draft, cfg) {
     }
     for (const c of claims) if (assocRefUrl) c.reference = assocRefUrl;
     claims.push(...formerNameClaims(a, assocRefUrl));
+    claims.push(...abbreviationClaims(a, assocRefUrl));
     const terms = changedTerms(a);
     const createAliases = aliasesToSet(a);
     ops.push({
@@ -165,6 +171,9 @@ export function buildChangeSet(draft, cfg) {
   const formerClaims = formerNameClaims(a, assocRefUrl);
   for (const c of formerClaims) ops.push({ type: 'add-statement', target: { qid: a.qid }, ...c });
   if (formerClaims.length) changed.push(`former names (${formerClaims.length})`);
+  const abbrClaims = abbreviationClaims(a, assocRefUrl);
+  for (const c of abbrClaims) ops.push({ type: 'add-statement', target: { qid: a.qid }, ...c });
+  if (abbrClaims.length) changed.push(`abbreviations (${langs(changedAbbreviations(a))})`);
   if (stmts.website) { ops.push({ type: 'add-statement', target: { qid: a.qid }, property: 'P856', value: url(stmts.website), reference: assocRefUrl, replace: true }); changed.push('website'); }
   if (stmts.email) { ops.push({ type: 'add-statement', target: { qid: a.qid }, property: 'P968', value: mailto(stmts.email), reference: assocRefUrl, replace: true }); changed.push('e-mail'); }
   const parent = changedParent(a);
@@ -196,6 +205,9 @@ export function describeChanges(draft) {
   }
   if (stmts.website) lines.push(`website: ${a.original?.website ? `${a.original.website} → ` : ''}${stmts.website}`);
   if (stmts.email) lines.push(`e-mail: ${a.original?.email ? `${a.original.email} → ` : ''}${stmts.email}`);
+  for (const [lang, text] of Object.entries(changedAbbreviations(a))) {
+    lines.push(`abbreviation (${lang}): “${text}”, also an alias`);
+  }
   for (const r of activeFormerNames(a)) {
     const years = r.start || r.end ? ` (${r.start || '?'}–${r.end || 'now'})` : '';
     lines.push(`former name (${r.lang}): “${r.text}”${years}${r.alias ? ', also an alias' : ''}`);

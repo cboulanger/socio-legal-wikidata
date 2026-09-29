@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { emptyDraft, validateDraftForChangeset, changedTerms, changedStatements, originalFromEntity, cleanTerms, scopeStatements, hasScopeChanges, activeFormerNames, validateFormerNames, aliasesToSet } from '../../../src/core/draft.js';
+import { emptyDraft, validateDraftForChangeset, changedTerms, changedStatements, originalFromEntity, cleanTerms, scopeStatements, hasScopeChanges, activeFormerNames, validateFormerNames, aliasesToSet, changedAbbreviations } from '../../../src/core/draft.js';
 
 test('emptyDraft has a mode and nested association/president/journal', () => {
   const d = emptyDraft('create-association');
@@ -91,17 +91,34 @@ test('originalFromEntity reads terms, website, e-mail (without mailto:) and coun
       P31: [{ rank: 'normal', mainsnak: { datavalue: { value: { id: 'Q43229' } } } }, { rank: 'deprecated', mainsnak: { datavalue: { value: { id: 'Q1' } } } }],
       P101: [{ rank: 'normal', mainsnak: { datavalue: { value: { id: 'Q847034' } } } }],
       P361: [{ rank: 'normal', mainsnak: { datavalue: { value: { id: 'Q1202999' } } } }],
+      P1813: [{ rank: 'normal', mainsnak: { datavalue: { value: { text: 'REED', language: 'pt' } } } }],
     },
   };
   assert.deepEqual(originalFromEntity(entity), {
     labels: { pt: 'Rede', en: 'Network' }, descriptions: { en: 'a network' },
     website: 'https://reed.example', email: 'reed@example.org', parentQid: 'Q1202999', countryQid: 'Q155',
-    classQids: ['Q43229'], fieldQids: ['Q847034'], aliases: {}, formerNames: [],
+    classQids: ['Q43229'], fieldQids: ['Q847034'], aliases: {}, abbreviations: { pt: ['REED'] }, formerNames: [],
   });
   assert.deepEqual(originalFromEntity({}), {
     labels: {}, descriptions: {}, website: null, email: null, parentQid: null, countryQid: null, classQids: [], fieldQids: [],
-    aliases: {}, formerNames: [],
+    aliases: {}, abbreviations: {}, formerNames: [],
   });
+});
+
+test('changedAbbreviations ignores blanks and abbreviations already on the item; new ones also become aliases', () => {
+  const a = emptyDraft('update-field').association;
+  a.original.abbreviations = { en: ['ALSA'] };
+  a.original.aliases = { de: ['Alt'] };
+  a.labels = { en: 'Asian Law and Society Association', de: 'Asiatische Vereinigung' };
+  a.abbreviations = { en: 'ALSA', de: ' AVR ', fr: '  ' };
+  assert.deepEqual(changedAbbreviations(a), { de: 'AVR' });
+  assert.deepEqual(aliasesToSet(a), { de: ['Alt', 'AVR'] });
+});
+
+test('an abbreviation in an invalid language is rejected', () => {
+  const d = emptyDraft('update-field');
+  Object.assign(d.association, { qid: 'Q1', referenceUrl: 'https://x.example', abbreviations: { 'not a code': 'X' } });
+  assert.ok(validateDraftForChangeset(d).some((m) => /not a valid language code/.test(m)));
 });
 
 test('cleanTerms trims and drops blanks', () => {

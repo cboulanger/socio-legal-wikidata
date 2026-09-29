@@ -57,9 +57,11 @@ export function createWizard(host, opts) {
       if (opts.seed.association?.qid && saved.association?.qid !== opts.seed.association.qid) return null;
       if (!saved.association?.labels) return null; // a draft from before multilingual support
       saved.association.formerNames ||= [];
+      saved.association.abbreviations ||= {};
       saved.association.original ||= {};
       saved.association.original.aliases ||= {};
       saved.association.original.formerNames ||= [];
+      saved.association.original.abbreviations ||= {};
       return saved;
     } catch { return null; }
   }
@@ -94,7 +96,7 @@ export function createWizard(host, opts) {
       const needsClass = !!config.inScopeClassQid && !o.classQids.some((q) => classes.has(q));
       const needsField = !!config.inScopeFieldQid && !o.fieldQids.includes(config.inScopeFieldQid);
       a.original = {
-        labels: { ...o.labels }, descriptions: { ...o.descriptions }, aliases: o.aliases, formerNames: o.formerNames,
+        labels: { ...o.labels }, descriptions: { ...o.descriptions }, aliases: o.aliases, abbreviations: o.abbreviations, formerNames: o.formerNames,
         website: o.website, email: o.email, parentQid: o.parentQid, needsClass, needsField,
       };
       a.parentQid = o.parentQid;
@@ -103,6 +105,7 @@ export function createWizard(host, opts) {
       a.addToDirectory = arrivedFromSearch && (needsClass || needsField);
       a.labels = { ...o.labels };
       a.descriptions = { ...o.descriptions };
+      a.abbreviations = Object.fromEntries(Object.entries(o.abbreviations).map(([lang, list]) => [lang, list[0]]));
       a.website = o.website;
       a.email = o.email;
       a.countryQid = o.countryQid;
@@ -127,7 +130,7 @@ export function createWizard(host, opts) {
   /** Make sure the details step has its language rows (national, English, existing, chosen). */
   function ensureLangs() {
     const a = draft.association;
-    const existing = [...Object.keys(a.labels), ...Object.keys(a.descriptions)];
+    const existing = [...Object.keys(a.labels), ...Object.keys(a.descriptions), ...Object.keys(a.abbreviations || {})];
     for (const c of initialLanguages({ official, existing })) if (!langs.includes(c)) langs.push(c);
     // the name typed in the "identify" step goes into the first row once
     if (a.identifyName && !nameSeeded && !Object.values(a.labels).some((v) => v && v.trim())) {

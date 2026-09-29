@@ -1,6 +1,6 @@
 import { html } from '../../render.js';
 import { looksPersonal } from '../../core/email-guard.js';
-import { cleanTerms, changedStatements, hasScopeChanges, hasFormerNames, changedParent } from '../../core/draft.js';
+import { cleanTerms, changedStatements, hasScopeChanges, hasFormerNames, hasAbbreviations, changedParent } from '../../core/draft.js';
 import { COMMON_LANGUAGES, languageName } from '../../core/languages.js';
 
 const label = (code) => `${languageName(code)} (${code})`;
@@ -18,7 +18,7 @@ function derived(draft, labelLanguages) {
     visible,
     invisible: visible.length > 0 && named.length > 0 && !named.some((l) => visible.includes(l)),
     needsConfirm: !!(a.email && looksPersonal(a.email) && (draft.mode === 'create-association' || changed.email)),
-    refRequired: draft.mode === 'create-association' || !!(changed.website || changed.email || hasScopeChanges(a) || hasFormerNames(a) || !!changedParent(a)),
+    refRequired: draft.mode === 'create-association' || !!(changed.website || changed.email || hasScopeChanges(a) || hasFormerNames(a) || hasAbbreviations(a) || !!changedParent(a)),
   };
 }
 
@@ -131,6 +131,9 @@ export function renderDetailsForm({ draft, langs, suggestions, labelLanguages = 
           <label>Description
             <input type="text" name="description-${c}" data-field="description" data-lang="${c}" lang="${c}"
                    value="${a.descriptions[c] || ''}" autocomplete="off"></label>
+          <label>Abbreviation
+            <input type="text" name="abbreviation-${c}" data-field="abbreviation" data-lang="${c}" lang="${c}"
+                   value="${a.abbreviations?.[c] || ''}" autocomplete="off"></label>
         </fieldset>`)}
       ${suggestions.length
         ? html`<p class="details__chips">Official language(s):
@@ -195,6 +198,7 @@ export function applyFieldInput(draft, el) {
   const a = draft.association;
   if (field === 'label') a.labels[el.dataset.lang] = el.value;
   else if (field === 'description') a.descriptions[el.dataset.lang] = el.value;
+  else if (field === 'abbreviation') (a.abbreviations ||= {})[el.dataset.lang] = el.value;
   else if (field === 'emailConfirmedShared') a.emailConfirmedShared = el.checked;
   else if (field === 'addToDirectory') a.addToDirectory = el.checked;
   else if (field === 'former') {

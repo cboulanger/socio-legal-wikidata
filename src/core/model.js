@@ -29,6 +29,7 @@
  * @property {string|null} website          // P856
  * @property {string|null} email            // P968
  * @property {string|null} inception        // year as string
+ * @property {string|null} abbreviation      // P1813 short name / acronym
  * @property {PersonRef|null} president
  * @property {string|null} leadUniQid
  * @property {string|null} leadUniLabel
@@ -60,6 +61,7 @@ export function emptyAssociation(qid = '') {
     website: null,
     email: null,
     inception: null,
+    abbreviation: null,
     president: null,
     leadUniQid: null,
     leadUniLabel: null,

@@ -29,6 +29,7 @@ export const MAX_TERM_LENGTH = 250; // Wikidata's limit for labels and descripti
  * @property {Object<string,string>} descriptions  // language code -> description
  * @property {AssociationOriginal} original
  * @property {FormerName[]} formerNames   // rows being added in the form
+ * @property {Object<string,string>} abbreviations // language -> short name / acronym (P1813)
  * @property {boolean} addToDirectory     // edit: also add the missing in-scope type / field-of-work statements
  * @property {string|null} classQid
  * @property {string|null} fieldQid
@@ -76,8 +77,9 @@ export function emptyDraft(mode) {
     mode,
     association: {
       qid: null, identifyName: '', labels: {}, descriptions: {},
-      original: { labels: {}, descriptions: {}, aliases: {}, formerNames: [], website: null, email: null, needsClass: false, needsField: false },
+      original: { labels: {}, descriptions: {}, aliases: {}, abbreviations: {}, formerNames: [], website: null, email: null, needsClass: false, needsField: false },
       formerNames: [],
+      abbreviations: {},
       addToDirectory: false,
       classQid: null, fieldQid: null,
       countryQid: null, countryLabel: null, operatingAreaQid: null, seatQid: null, seatLabel: null, parentQid: null, parentLabel: null,
@@ -140,6 +142,23 @@ export function changedStatements(a) {
   };
 }
 
+/**
+ * Abbreviation (P1813) entries that will be written: non-blank and not already on the item in that
+ * language. Blank means "no change".
+ * @param {DraftAssociation} a
+ * @returns {Object<string,string>}
+ */
+export function changedAbbreviations(a) {
+  const out = {};
+  for (const [lang, text] of Object.entries(cleanTerms(a.abbreviations))) {
+    if (!(a.original?.abbreviations?.[lang] || []).includes(text)) out[lang] = text;
+  }
+  return out;
+}
+
+/** Whether the draft adds any abbreviation (a statement, so it needs a reference URL). */
+export const hasAbbreviations = (a) => Object.keys(changedAbbreviations(a)).length > 0;
+
 const YEAR = /^\d{1,4}$/;
 
 /**
@@ -180,20 +199,25 @@ export function validateFormerNames(a) {
 }
 
 /**
- * Aliases to add so search finds the former names: per language, the ticked former names that are
- * neither the current name nor already an alias. Returns the FULL new alias list per language
- * (existing + new), because the patch replaces the whole list.
+ * Aliases to add so search finds the former names and the abbreviations: per language, the ticked
+ * former names and every new abbreviation that are neither the current name nor already an alias.
+ * Returns the FULL new alias list per language (existing + new), because the patch replaces the
+ * whole list.
  * @param {DraftAssociation} a
  * @returns {Object<string,string[]>}
  */
 export function aliasesToSet(a) {
   const out = {};
   const labels = cleanTerms(a.labels);
-  for (const r of activeFormerNames(a)) {
-    if (!r.alias || !r.text || !isValidLangCode(r.lang)) continue;
-    const current = out[r.lang] || a.original?.aliases?.[r.lang] || [];
-    if (r.text === labels[r.lang] || current.includes(r.text)) continue; // pointless (it is the current name) or already an alias
-    out[r.lang] = [...current, r.text];
+  const wanted = [
+    ...activeFormerNames(a).filter((r) => r.alias).map((r) => ({ lang: r.lang, text: r.text })),
+    ...Object.entries(changedAbbreviations(a)).map(([lang, text]) => ({ lang, text })),
+  ];
+  for (const { lang, text } of wanted) {
+    if (!text || !isValidLangCode(lang)) continue;
+    const current = out[lang] || a.original?.aliases?.[lang] || [];
+    if (text === labels[lang] || current.includes(text)) continue; // pointless (it is the current name) or already an alias
+    out[lang] = [...current, text];
   }
   return out;
 }
@@ -235,7 +259,7 @@ export function hasTermChanges(a) {
 /** Errors about the language codes and lengths of the term maps (shared by step and draft validation). */
 export function validateTerms(a) {
   const e = [];
-  for (const [kind, map] of [['name', a.labels], ['description', a.descriptions]]) {
+  for (const [kind, map] of [['name', a.labels], ['description', a.descriptions], ['abbreviation', a.abbreviations]]) {
     for (const [lang, text] of Object.entries(cleanTerms(map))) {
       if (!isValidLangCode(lang)) e.push(`“${lang}” is not a valid language code`);
       if (text.length > MAX_TERM_LENGTH) e.push(`the ${kind} in “${lang}” is longer than ${MAX_TERM_LENGTH} characters`);
@@ -247,7 +271,7 @@ export function validateTerms(a) {
 /**
  * Read what the editor needs from a `wbgetentities` entity.
  * @param {any} entity
- * @returns {{labels: Object<string,string>, descriptions: Object<string,string>, aliases: Object<string,string[]>, formerNames: FormerName[], website: string|null, email: string|null, parentQid: string|null, countryQid: string|null, classQids: string[], fieldQids: string[]}}
+ * @returns {{labels: Object<string,string>, descriptions: Object<string,string>, aliases: Object<string,string[]>, abbreviations: Object<string,string[]>, formerNames: FormerName[], website: string|null, email: string|null, parentQid: string|null, countryQid: string|null, classQids: string[], fieldQids: string[]}}
  */
 export function originalFromEntity(entity) {
   const terms = (obj) => Object.fromEntries(Object.entries(obj || {}).map(([lang, v]) => [lang, v.value]));
@@ -269,6 +293,11 @@ export function originalFromEntity(entity) {
       text: c.mainsnak.datavalue.value.text, lang: c.mainsnak.datavalue.value.language || '',
       start: yearOf(c.qualifiers?.P580), end: yearOf(c.qualifiers?.P582),
     }));
+  const abbreviations = {};
+  for (const c of entity?.claims?.P1813 || []) {
+    const v = c.rank !== 'deprecated' && c.mainsnak?.datavalue?.value;
+    if (v?.text && v.language) (abbreviations[v.language] ||= []).push(v.text);
+  }
   const aliases = Object.fromEntries(Object.entries(entity?.aliases || {}).map(([lang, list]) => [lang, list.map((x) => x.value)]));
   const country = first('P17');
   const email = first('P968');
@@ -276,6 +305,7 @@ export function originalFromEntity(entity) {
     labels: terms(entity?.labels),
     descriptions: terms(entity?.descriptions),
     aliases,
+    abbreviations,
     formerNames,
     website: first('P856'),
     email: email ? bareEmail(email) : null,
@@ -321,8 +351,9 @@ export function validateDraftForChangeset(d) {
     if (!a.qid) e.push('association.qid is required');
     const former = hasFormerNames(a);
     const parent = !!changedParent(a);
-    if (!hasTermChanges(a) && !changedStatement && !scopeChange && !former && !parent) e.push('nothing to update');
-    if ((changedStatement || scopeChange || former || parent) && !a.referenceUrl) e.push('association.referenceUrl is required');
+    const abbr = hasAbbreviations(a);
+    if (!hasTermChanges(a) && !changedStatement && !scopeChange && !former && !parent && !abbr) e.push('nothing to update');
+    if ((changedStatement || scopeChange || former || parent || abbr) && !a.referenceUrl) e.push('association.referenceUrl is required');
     e.push(...validateTerms(a), ...validateFormerNames(a));
   }
 
