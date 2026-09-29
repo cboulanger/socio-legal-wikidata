@@ -1,6 +1,6 @@
 import { html } from '../../render.js';
 import { looksPersonal } from '../../core/email-guard.js';
-import { cleanTerms, changedStatements } from '../../core/draft.js';
+import { cleanTerms, changedStatements, hasScopeChanges } from '../../core/draft.js';
 import { COMMON_LANGUAGES, languageName } from '../../core/languages.js';
 
 const label = (code) => `${languageName(code)} (${code})`;
@@ -18,7 +18,7 @@ function derived(draft, labelLanguages) {
     visible,
     invisible: visible.length > 0 && named.length > 0 && !named.some((l) => visible.includes(l)),
     needsConfirm: !!(a.email && looksPersonal(a.email) && (draft.mode === 'create-association' || changed.email)),
-    refRequired: draft.mode === 'create-association' || !!(changed.website || changed.email),
+    refRequired: draft.mode === 'create-association' || !!(changed.website || changed.email || hasScopeChanges(a)),
   };
 }
 
@@ -29,6 +29,19 @@ const warnMarkup = (d) => (d.invisible
 
 const confirmMarkup = (draft) => html`<label class="details__confirm"><input type="checkbox" name="emailConfirmedShared"
     data-field="emailConfirmedShared" ${draft.association.emailConfirmedShared ? 'checked' : ''}> This is a shared role address, not a personal one</label>`;
+
+/** Edit mode only: the item exists on Wikidata but is not in the directory yet. */
+const scopeNotice = (draft) => {
+  const o = draft.association.original;
+  if (draft.mode !== 'update-field' || !(o?.needsClass || o?.needsField)) return '';
+  const a = draft.association;
+  const parts = [o.needsClass ? `“instance of” ${a.classQid}` : null, o.needsField ? `“field of work” ${a.fieldQid}` : null].filter(Boolean);
+  return html`<div class="details__scope" data-role="scope-notice">
+      <label><input type="checkbox" name="addToDirectory" data-field="addToDirectory" ${a.addToDirectory ? 'checked' : ''}>
+        This item is not in the directory yet. Add it as a socio-legal association.</label>
+      <p class="details__scopehint">Adds ${parts.join(' and ')} to the Wikidata item (existing statements are kept). A reference URL is required.</p>
+    </div>`;
+};
 
 const refLabel = (d) => (d.refRequired ? '(required)' : '(needed when website or e-mail change)');
 
@@ -49,6 +62,7 @@ export function renderDetailsForm({ draft, langs, suggestions, labelLanguages = 
 
   return html`
     <div class="details">
+      ${scopeNotice(draft)}
       ${langs.map((c) => html`
         <fieldset class="lang" data-lang="${c}">
           <legend>${label(c)}</legend>
@@ -119,6 +133,7 @@ export function applyFieldInput(draft, el) {
   if (field === 'label') a.labels[el.dataset.lang] = el.value;
   else if (field === 'description') a.descriptions[el.dataset.lang] = el.value;
   else if (field === 'emailConfirmedShared') a.emailConfirmedShared = el.checked;
+  else if (field === 'addToDirectory') a.addToDirectory = el.checked;
   else if (field === 'website' || field === 'referenceUrl') a[field] = el.value.trim() || null;
   else if (field === 'email') {
     a.email = el.value.trim() || null;

@@ -9,6 +9,8 @@ export const MAX_TERM_LENGTH = 250; // Wikidata's limit for labels and descripti
  * @property {Object<string,string>} descriptions
  * @property {string|null} website
  * @property {string|null} email
+ * @property {boolean} [needsClass]   // the item lacks an in-scope instance-of (P31), so it is not in the directory
+ * @property {boolean} [needsField]   // the item lacks the in-scope field of work (P101)
  *
  * @typedef {Object} DraftAssociation
  * @property {string|null} qid
@@ -16,6 +18,7 @@ export const MAX_TERM_LENGTH = 250; // Wikidata's limit for labels and descripti
  * @property {Object<string,string>} labels        // language code -> name
  * @property {Object<string,string>} descriptions  // language code -> description
  * @property {AssociationOriginal} original
+ * @property {boolean} addToDirectory     // edit: also add the missing in-scope type / field-of-work statements
  * @property {string|null} classQid
  * @property {string|null} fieldQid
  * @property {string|null} countryQid
@@ -61,7 +64,8 @@ export function emptyDraft(mode) {
     mode,
     association: {
       qid: null, identifyName: '', labels: {}, descriptions: {},
-      original: { labels: {}, descriptions: {}, website: null, email: null },
+      original: { labels: {}, descriptions: {}, website: null, email: null, needsClass: false, needsField: false },
+      addToDirectory: false,
       classQid: null, fieldQid: null,
       countryQid: null, countryLabel: null, operatingAreaQid: null, seatQid: null, seatLabel: null, parentQid: null,
       website: null, email: null, emailConfirmedShared: false, inception: null, referenceUrl: null,
@@ -123,6 +127,25 @@ export function changedStatements(a) {
   };
 }
 
+/**
+ * In-scope statements to add so an existing item shows up in the directory (edit mode, opt-in).
+ * @param {DraftAssociation} a
+ * @returns {{class: string|null, field: string|null}}
+ */
+export function scopeStatements(a) {
+  if (!a.addToDirectory) return { class: null, field: null };
+  return {
+    class: a.original?.needsClass ? a.classQid : null,
+    field: a.original?.needsField ? a.fieldQid : null,
+  };
+}
+
+/** Whether ticking "add to directory" would actually write something. */
+export function hasScopeChanges(a) {
+  const s = scopeStatements(a);
+  return !!(s.class || s.field);
+}
+
 /** Whether an association draft would write anything beyond terms. */
 export function hasTermChanges(a) {
   const t = changedTerms(a);
@@ -144,7 +167,7 @@ export function validateTerms(a) {
 /**
  * Read what the editor needs from a `wbgetentities` entity.
  * @param {any} entity
- * @returns {{labels: Object<string,string>, descriptions: Object<string,string>, website: string|null, email: string|null, countryQid: string|null}}
+ * @returns {{labels: Object<string,string>, descriptions: Object<string,string>, website: string|null, email: string|null, countryQid: string|null, classQids: string[], fieldQids: string[]}}
  */
 export function originalFromEntity(entity) {
   const terms = (obj) => Object.fromEntries(Object.entries(obj || {}).map(([lang, v]) => [lang, v.value]));
@@ -152,6 +175,10 @@ export function originalFromEntity(entity) {
     const claim = (entity?.claims?.[prop] || []).find((c) => c.rank !== 'deprecated' && c.mainsnak?.datavalue);
     return claim ? claim.mainsnak.datavalue.value : null;
   };
+  const ids = (prop) => (entity?.claims?.[prop] || [])
+    .filter((c) => c.rank !== 'deprecated')
+    .map((c) => c.mainsnak?.datavalue?.value?.id)
+    .filter(Boolean);
   const country = first('P17');
   const email = first('P968');
   return {
@@ -160,6 +187,8 @@ export function originalFromEntity(entity) {
     website: first('P856'),
     email: email ? bareEmail(email) : null,
     countryQid: country && typeof country === 'object' ? country.id : null,
+    classQids: ids('P31'),
+    fieldQids: ids('P101'),
   };
 }
 
@@ -170,6 +199,7 @@ export function validateDraftForChangeset(d) {
   const p = d.president;
   const changed = changedStatements(a);
   const changedStatement = !!(changed.website || changed.email);
+  const scopeChange = hasScopeChanges(a);
 
   if (a.email && looksPersonal(a.email) && !a.emailConfirmedShared && (d.mode !== 'update-field' || changed.email)) {
     e.push('association.email looks personal; confirm it is a shared role address');
@@ -195,8 +225,8 @@ export function validateDraftForChangeset(d) {
 
   if (d.mode === 'update-field') {
     if (!a.qid) e.push('association.qid is required');
-    if (!hasTermChanges(a) && !changedStatement) e.push('nothing to update');
-    if (changedStatement && !a.referenceUrl) e.push('association.referenceUrl is required');
+    if (!hasTermChanges(a) && !changedStatement && !scopeChange) e.push('nothing to update');
+    if ((changedStatement || scopeChange) && !a.referenceUrl) e.push('association.referenceUrl is required');
     e.push(...validateTerms(a));
   }
 

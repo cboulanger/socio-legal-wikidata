@@ -156,8 +156,10 @@ export async function createApp(deps) {
       connected: editRuntime.auth.hasSession(),
       onConnect: () => editRuntime.auth.connect(),
       onLeave: async () => { await editRuntime.auth.disconnect(); win.location.search = ''; },
-      onAdd: () => editRuntime.openWizard(drawer, { mode: 'create-association' }, { onSaved: applySaved }),
+      onAdd: () => editRuntime.openWizard(drawer, { mode: 'create-association' }, { onSaved: applySaved, isInDirectory }),
     });
+
+    const isInDirectory = (qid) => store.getState().associations.some((x) => x.qid === qid);
 
     // The SPARQL-backed list lags behind Wikidata, so show what was just saved right away.
     function applySaved(result, draft) {
@@ -165,7 +167,17 @@ export async function createApp(deps) {
       const labels = cleanTerms({ ...a.original.labels, ...a.labels });
       const descriptions = cleanTerms({ ...a.original.descriptions, ...a.descriptions });
       const pick = (m) => (config.labelLanguages || 'en').split(',').map((l) => l.trim()).map((l) => m[l]).find(Boolean) || '';
-      if (draft.mode === 'update-field') {
+      const inList = store.getState().associations.some((x) => x.qid === a.qid);
+      if (draft.mode === 'update-field' && !inList && (a.addToDirectory && (a.original.needsClass || a.original.needsField))) {
+        // an existing Wikidata item that has just been made an in-scope association
+        store.setState((s) => ({
+          associations: [...s.associations, {
+            ...emptyAssociation(a.qid), label: pick(labels) || Object.values(labels)[0] || a.qid,
+            description: pick(descriptions), website: a.website, email: a.email,
+          }],
+          selection: a.qid,
+        }));
+      } else if (draft.mode === 'update-field') {
         store.setState((s) => ({
           associations: s.associations.map((x) => (x.qid !== a.qid ? x : {
             ...x, label: pick(labels) || x.label, description: pick(descriptions) || x.description,

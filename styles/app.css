@@ -125,3 +125,7 @@ body { font-family: var(--font); color: var(--text); background: var(--bg); }
 .typeahead__list li button { display: block; width: 100%; text-align: left; padding: var(--space-2); border: 0; background: none; cursor: pointer; color: inherit; }
 .typeahead__list li button:hover { background: var(--surface); }
 .typeahead__list li span { display: block; font-size: 0.8rem; color: var(--text-muted); }
+.details__scope { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: var(--space-2) var(--space-3); margin: var(--space-2) 0; }
+.details__scope label { display: flex; gap: var(--space-2); align-items: flex-start; margin: 0; }
+.details__scopehint { margin: var(--space-1) 0 0; font-size: 0.8rem; color: var(--text-muted); }
+.typeahead__badge { font-size: 0.75rem; font-style: normal; color: var(--text-muted); margin-left: var(--space-1); }

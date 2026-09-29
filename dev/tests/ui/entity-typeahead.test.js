@@ -67,3 +67,13 @@ test('a stale search response does not overwrite a newer query\'s results', asyn
   assert.match(el.innerHTML, /Fast Result/);
   assert.doesNotMatch(el.innerHTML, /Slow Result/);
 });
+
+test('an optional badge is shown next to each match', async () => {
+  const el = host();
+  const ta = createTypeahead(el, {
+    label: 'Association', searchEntities: search, onPick: () => {},
+    badge: (c) => (c.qid === 'Q2' ? '✓ in directory' : ''),
+  });
+  await ta._typeForTest('asian law');
+  assert.match(el.innerHTML, /✓ in directory/);
+});

@@ -10,6 +10,7 @@ import { rankCandidates } from '../../core/dedupe.js';
  *   onPick: (candidate: import('../../ports/index.js').EntityCandidate) => void,
  *   onCreate?: (name: string) => void,
  *   allowCreate?: boolean,
+ *   badge?: (candidate: import('../../ports/index.js').EntityCandidate) => string,  // short note shown next to a match
  *   alwaysOfferCreate?: boolean,  // also offer "create new" while matches are showing (duplicate check)
  * }} opts
  */
@@ -31,7 +32,7 @@ export function createTypeahead(el, opts) {
             <ul class="typeahead__list">
               ${ranked.map((c) => html`<li>
                 <button type="button" data-pick="${c.qid}">
-                  <strong>${c.label}</strong> <span>${c.description}</span>
+                  <strong>${c.label}</strong> ${opts.badge && opts.badge(c) ? html`<em class="typeahead__badge">${opts.badge(c)}</em>` : ''}<span>${c.description}</span>
                 </button></li>`)}
             </ul>
             ${state.query && ranked.length === 0 && !opts.allowCreate

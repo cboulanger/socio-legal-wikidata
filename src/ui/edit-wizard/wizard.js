@@ -16,6 +16,7 @@ const DRAFT_KEY = 'slw:wizard:draft';
  *   ports: { search: import('../../ports/index.js').SearchPort, write: import('../../ports/index.js').WritePort },
  *   seed: { mode: import('../../core/draft.js').DirectoryDraft['mode'], association?: {qid?: string, label?: string} },
  *   onClose?: () => void,
+ *   isInDirectory?: (qid: string) => boolean,   // is this item already in the on-screen directory?
  *   onSaved?: (result: import('../../ports/index.js').WriteResult, draft: import('../../core/draft.js').DirectoryDraft) => void,
  * }} opts
  */
@@ -35,6 +36,7 @@ export function createWizard(host, opts) {
   let official = [];   // Wikimedia codes of the country's official languages
   let langs = [];      // language rows shown in the details step
   let nameSeeded = false;
+  let arrivedFromSearch = false; // switched from "Add association" after the user found an existing match
 
   const restoredDraft = restore();
   let draft = restoredDraft || seedDraft(mode, opts.seed.association);
@@ -84,7 +86,12 @@ export function createWizard(host, opts) {
       if (!entity) throw new Error(`${draft.association.qid} was not found on Wikidata`);
       const o = originalFromEntity(entity);
       const a = draft.association;
-      a.original = { labels: { ...o.labels }, descriptions: { ...o.descriptions }, website: o.website, email: o.email };
+      const classes = new Set([config.inScopeClassQid, ...(config.inScopeClassQids || [])].filter(Boolean));
+      const needsClass = !!config.inScopeClassQid && !o.classQids.some((q) => classes.has(q));
+      const needsField = !!config.inScopeFieldQid && !o.fieldQids.includes(config.inScopeFieldQid);
+      a.original = { labels: { ...o.labels }, descriptions: { ...o.descriptions }, website: o.website, email: o.email, needsClass, needsField };
+      // someone who searched for this association to add it most likely wants it in the directory
+      a.addToDirectory = arrivedFromSearch && (needsClass || needsField);
       a.labels = { ...o.labels };
       a.descriptions = { ...o.descriptions };
       a.website = o.website;
@@ -221,6 +228,7 @@ export function createWizard(host, opts) {
       createTypeahead(identify, {
         label: 'Association name',
         searchEntities: search,
+        badge: opts.isInDirectory ? (c) => (opts.isInDirectory(c.qid) ? '✓ in directory' : 'not in directory yet') : undefined,
         allowCreate: true,
         alwaysOfferCreate: true,
         onPick: (c) => switchToEdit(c),
@@ -258,6 +266,7 @@ export function createWizard(host, opts) {
     langs = [];
     official = [];
     nameSeeded = false;
+    arrivedFromSearch = true;
     displayName = candidate.label;
     draft = seedDraft(mode, { qid: candidate.qid });
     persist();

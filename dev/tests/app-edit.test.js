@@ -143,3 +143,34 @@ test('after Add association is saved the new association is listed and selected'
   assert.equal(added.countryLabel, 'Brazil');
   assert.match(w.document.getElementById('detail-host').innerHTML, /Network/);
 });
+
+test('the Add association wizard is told which items are already in the directory', async () => {
+  const { w, opened, ready } = editApp('https://app.example/?edit');
+  await ready;
+  w.document.querySelector('[data-role="add"]').click();
+  assert.equal(opened[0].hooks.isInDirectory('Q1'), true);
+  assert.equal(opened[0].hooks.isInDirectory('Q4242'), false);
+});
+
+test('an existing Wikidata item that was just added to the directory shows up in the list and is selected', async () => {
+  const { w, opened, ready } = editApp('https://app.example/?edit');
+  const { store } = await ready;
+  w.document.querySelector('[data-role="add"]').click();
+  opened[0].hooks.onSaved({ created: [], diffUrls: [] }, {
+    mode: 'update-field',
+    association: {
+      qid: 'Q4242', addToDirectory: true, original: { labels: { en: 'Some Society' }, descriptions: {}, needsClass: true, needsField: true },
+      labels: { en: 'Some Society' }, descriptions: {}, website: 'https://society.example', email: null,
+    },
+  });
+  const s = store.getState();
+  assert.equal(s.selection, 'Q4242');
+  assert.equal(s.associations.filter((x) => x.qid === 'Q4242').length, 1);
+  assert.equal(s.associations.find((x) => x.qid === 'Q4242').label, 'Some Society');
+  // saving again does not duplicate it
+  opened[0].hooks.onSaved({ created: [], diffUrls: [] }, {
+    mode: 'update-field',
+    association: { qid: 'Q4242', addToDirectory: true, original: { labels: {}, descriptions: {}, needsClass: true, needsField: true }, labels: { en: 'Renamed' }, descriptions: {}, website: null, email: null },
+  });
+  assert.equal(store.getState().associations.filter((x) => x.qid === 'Q4242').length, 1);
+});

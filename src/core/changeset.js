@@ -1,4 +1,4 @@
-import { validateDraftForChangeset, changedTerms, changedStatements } from './draft.js';
+import { validateDraftForChangeset, changedTerms, changedStatements, scopeStatements } from './draft.js';
 
 /**
  * @typedef {{kind:'item', qid:string}|{kind:'item', ref:string}
@@ -141,6 +141,10 @@ export function buildChangeSet(draft, cfg) {
   }
   if (stmts.website) { ops.push({ type: 'add-statement', target: { qid: a.qid }, property: 'P856', value: url(stmts.website), reference: assocRefUrl, replace: true }); changed.push('website'); }
   if (stmts.email) { ops.push({ type: 'add-statement', target: { qid: a.qid }, property: 'P968', value: mailto(stmts.email), reference: assocRefUrl, replace: true }); changed.push('e-mail'); }
+  const scope = scopeStatements(a);
+  if (scope.class) ops.push({ type: 'add-statement', target: { qid: a.qid }, property: 'P31', value: item(scope.class), reference: assocRefUrl });
+  if (scope.field) ops.push({ type: 'add-statement', target: { qid: a.qid }, property: 'P101', value: item(scope.field), reference: assocRefUrl });
+  if (scope.class || scope.field) changed.push('directory membership');
   return { summary: `socio-legal directory: update ${changed.join(', ')}`, ops };
 }
 
@@ -164,6 +168,9 @@ export function describeChanges(draft) {
   }
   if (stmts.website) lines.push(`website: ${a.original?.website ? `${a.original.website} → ` : ''}${stmts.website}`);
   if (stmts.email) lines.push(`e-mail: ${a.original?.email ? `${a.original.email} → ` : ''}${stmts.email}`);
+  const scope = scopeStatements(a);
+  if (scope.class) lines.push(`add to directory: instance of ${scope.class}`);
+  if (scope.field) lines.push(`add to directory: field of work ${scope.field}`);
   if (draft.mode === 'create-association') {
     if (a.countryLabel || a.countryQid) lines.push(`country: ${a.countryLabel || a.countryQid}`);
     if (a.seatLabel || a.seatQid) lines.push(`seat: ${a.seatLabel || a.seatQid}`);

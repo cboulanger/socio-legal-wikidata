@@ -189,3 +189,23 @@ test('describeChanges lists new and changed names per language', () => {
   });
   assert.deepEqual(describeChanges(d), ['name (en): “Old” → “New”', 'name (de): “Neu” (new)']);
 });
+
+test('update-field with "add to directory" adds only the missing type/field statements, referenced', () => {
+  const d = emptyDraft('update-field');
+  Object.assign(d.association, {
+    qid: 'Q100', classQid: 'Q955824', fieldQid: 'Q2734663', addToDirectory: true, referenceUrl: 'https://x.example/about',
+  });
+  d.association.original.needsClass = true;
+  d.association.original.needsField = true;
+  let cs = buildChangeSet(d, cfg);
+  assert.deepEqual(cs.ops.map((o) => [o.type, o.property, o.value.qid]), [
+    ['add-statement', 'P31', 'Q955824'], ['add-statement', 'P101', 'Q2734663'],
+  ]);
+  assert.ok(cs.ops.every((o) => o.reference.P854 === 'https://x.example/about' && !o.replace)); // added, never replacing other types
+  assert.match(cs.summary, /directory membership/);
+  assert.ok(describeChanges(d).includes('add to directory: instance of Q955824'));
+
+  d.association.original.needsClass = false;
+  cs = buildChangeSet(d, cfg);
+  assert.deepEqual(cs.ops.map((o) => o.property), ['P101']);
+});

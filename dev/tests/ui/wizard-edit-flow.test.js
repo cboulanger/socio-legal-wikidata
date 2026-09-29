@@ -273,3 +273,73 @@ test('the directory-visibility warning follows the names as they are typed', asy
   type(host.querySelector('input[name="label-en"]'), 'Brazilian Network');
   assert.doesNotMatch(warn(), /appear as its Wikidata ID/);              // English is a directory language
 });
+
+const itemEntity = (claims = {}) => ({
+  labels: { en: { language: 'en', value: 'Some Society' } }, descriptions: {},
+  claims: { P17: [{ rank: 'normal', mainsnak: { datavalue: { value: { id: 'Q155' } } } }], ...claims },
+});
+const statementIds = (prop, ...qids) => ({ [prop]: qids.map((q) => ({ rank: 'normal', mainsnak: { datavalue: { value: { id: q } } } })) });
+
+test('an existing item that is not in the directory offers to add it (ticked when the user searched for it)', async () => {
+  const { win, host, ports, applied, type, click } = setup({
+    searchEntities: async () => [{ qid: 'Q42', label: 'Some Society', description: 'society' }],
+    getEntity: async () => itemEntity(statementIds('P31', 'Q43229')),         // an organization, no field of work
+  });
+  createWizard(host, { window: win, config: { ...cfg, inScopeClassQids: ['Q955824', 'Q48204'] }, ports, seed: { mode: 'create-association' }, isInDirectory: () => false });
+  await settle();
+  type(host.querySelector('[data-role="ta-identify"] input[data-role="query"]'), 'Some Society');
+  await settle();
+  assert.match(host.innerHTML, /not in directory yet/);
+  click('[data-pick="Q42"]');
+  await settle();
+
+  const box = host.querySelector('input[name="addToDirectory"]');
+  assert.ok(box, 'the notice is shown');
+  assert.equal(box.checked, true);
+  assert.match(host.querySelector('[data-role="errors"]').textContent, /a reference URL is required/);
+
+  type(host.querySelector('input[name="referenceUrl"]'), 'https://society.example/about');
+  click('[data-role="next"]');
+  assert.match(host.innerHTML, /add to directory: instance of Q955824/);
+  assert.match(host.innerHTML, /add to directory: field of work Q2734663/);
+  click('[data-role="submit"]');
+  await settle();
+  assert.deepEqual(applied[0].ops.map((o) => [o.property, o.value.qid]), [['P31', 'Q955824'], ['P101', 'Q2734663']]);
+  assert.equal(applied[0].ops[0].reference.P854, 'https://society.example/about');
+});
+
+test('the notice can be unticked, and it is not shown for an item that is already in scope', async () => {
+  const notInScope = setup({ getEntity: async () => itemEntity(statementIds('P31', 'Q43229')) });
+  createWizard(notInScope.host, { window: notInScope.win, config: cfg, ports: notInScope.ports, seed: { mode: 'update-field', association: { qid: 'Q1' } } });
+  await settle();
+  const box = notInScope.host.querySelector('input[name="addToDirectory"]');
+  assert.ok(box);
+  assert.equal(box.checked, false);                                        // opened from the card, not from a search: opt-in
+  box.checked = true;
+  box.dispatchEvent(new notInScope.win.Event('input', { bubbles: true }));
+  assert.match(notInScope.host.querySelector('[data-role="errors"]').textContent, /a reference URL is required/);
+  box.checked = false;
+  box.dispatchEvent(new notInScope.win.Event('input', { bubbles: true }));
+  assert.doesNotMatch(notInScope.host.querySelector('[data-role="errors"]').textContent, /a reference URL is required/);
+
+  const inScope = setup({ getEntity: async () => itemEntity({ ...statementIds('P31', 'Q955824'), ...statementIds('P101', 'Q2734663') }) });
+  createWizard(inScope.host, { window: inScope.win, config: cfg, ports: inScope.ports, seed: { mode: 'update-field', association: { qid: 'Q1' } } });
+  await settle();
+  assert.equal(inScope.host.querySelector('input[name="addToDirectory"]'), null);
+});
+
+test('only the missing statement is offered: an item with the type but not the field', async () => {
+  const { win, host, ports, type, click, applied } = setup({
+    getEntity: async () => itemEntity(statementIds('P31', 'Q955824')),
+  });
+  createWizard(host, { window: win, config: cfg, ports, seed: { mode: 'update-field', association: { qid: 'Q1' } } });
+  await settle();
+  const box = host.querySelector('input[name="addToDirectory"]');
+  box.checked = true;
+  box.dispatchEvent(new win.Event('input', { bubbles: true }));
+  type(host.querySelector('input[name="referenceUrl"]'), 'https://x.example');
+  click('[data-role="next"]');
+  click('[data-role="submit"]');
+  await settle();
+  assert.deepEqual(applied[0].ops.map((o) => o.property), ['P101']);
+});

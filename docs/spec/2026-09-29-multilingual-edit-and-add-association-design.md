@@ -246,3 +246,25 @@ Differences from the design above, and behaviour worth knowing:
   `GET /entities/items/{id}/statements?property=`) and are covered by tests against a fake
   `fetch`, but CORS from the GitHub Pages origin and the response shapes still need the first
   real edit (see §9).
+
+## 12. Items that exist on Wikidata but are not in the directory
+
+The directory list is a query: an item appears only if it has an in-scope instance-of
+(`inScopeClassQid(s)`) **and** the in-scope field of work (P101 = `inScopeFieldQid`). An
+association that exists on Wikidata without those statements is therefore invisible.
+
+- **Finding it:** the identify step searches all of Wikidata. Each match is badged
+  "✓ in directory" or "not in directory yet" (the wizard is told the on-screen list through
+  `isInDirectory`). Picking a match continues as Edit details.
+- **Detecting it:** when Edit details loads an item it reads its P31 and P101 values and records
+  `original.needsClass` / `original.needsField` (missing = no in-scope class among P31, or the
+  field not among P101).
+- **Offering the fix:** the details form shows an opt-in checkbox "This item is not in the
+  directory yet. Add it as a socio-legal association", naming exactly what will be added. It is
+  **ticked by default only when the user arrived from a search** in Add association; when opened
+  from a card or otherwise it is unticked. Ticking it counts as a change and requires a reference
+  URL.
+- **Writing it:** only the missing statements are added (`P31`, `P101`), each with the reference,
+  as plain additions: an existing, different P31 (e.g. "organization") is kept.
+- **After saving:** the item is appended to the on-screen list and selected. The query-service
+  data catches up on the next refresh.

@@ -73,3 +73,12 @@ test('an already-stored personal-looking e-mail does not block an unrelated edit
   });
   assert.deepEqual(validateStep('details', d), []);
 });
+
+test('details step (edit): adding to the directory counts as a change and needs a reference', () => {
+  const d = emptyDraft('update-field');
+  Object.assign(d.association, { qid: 'Q1', classQid: 'Q955824', fieldQid: 'Q2734663', addToDirectory: true });
+  d.association.original.needsClass = true;
+  assert.deepEqual(validateStep('details', d), ['a reference URL is required']);
+  d.association.referenceUrl = 'https://x';
+  assert.deepEqual(validateStep('details', d), []);
+});
