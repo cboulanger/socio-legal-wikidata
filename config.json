@@ -13,9 +13,9 @@
   "oauth": {
     "authorizeUrl": "https://meta.wikimedia.org/w/rest.php/oauth2/authorize",
     "tokenUrl": "https://meta.wikimedia.org/w/rest.php/oauth2/access_token",
-    "clientId": "REPLACE_WITH_REGISTERED_CONSUMER_CLIENT_ID",
-    "redirectUri": "https://REPLACE_WITH_DEPLOY_HOST/callback.html",
-    "scopes": "basic editpage createpage",
+    "clientId": "4ab384e954c24ddbc433e47dafb641c2",
+    "redirectUri": "https://cboulanger.github.io/socio-legal-wikidata/callback.html",
+    "scopes": "basic editpage createeditmovepage",
     "revokeUrl": null
   },
   "editTrigger": "either",
