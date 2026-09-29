@@ -7,6 +7,7 @@ import { createCache, loadDirectory as loadDirectoryImpl } from './adapters/brow
 import { queryDirectory as queryDirectoryImpl } from './adapters/sparql-client.js';
 import { renderPanel } from './ui/directory-panel.js';
 import { renderAssociationCard } from './ui/association-card.js';
+import { createRevisionClient } from './adapters/wikidata-revisions.js';
 import { createMapView as createMapViewImpl, toMapPins } from './ui/map-view.js';
 import { renderEditChrome } from './ui/edit-panel.js';
 
@@ -49,6 +50,11 @@ export async function createApp(deps) {
     showLeadership: !!config.leadershipLayerDefault,
   });
 
+  // Who last edited the selected item: the snapshot's value shows at once, a live lookup replaces it.
+  const revisions = deps.revisionClient || (win.fetch ? createRevisionClient({ fetch: win.fetch.bind(win), config }) : null);
+  const liveEdits = new Map();
+  const requestedEdits = new Set();
+
   const panelHost = doc.getElementById('panel-host');
   const detailHost = doc.getElementById('detail-host');
   const mapHost = doc.getElementById('map');
@@ -82,7 +88,17 @@ export async function createApp(deps) {
   function renderDetailRegion() {
     const s = store.getState();
     const a = s.selection ? s.associations.find((x) => x.qid === s.selection) : null;
-    if (a) mount(detailHost, renderAssociationCard(a, { editMode: s.mode === 'edit' }));
+    if (a) {
+      mount(detailHost, renderAssociationCard(a, { editMode: s.mode === 'edit', lastEdit: liveEdits.get(a.qid) || a.lastEdit || null }));
+      if (revisions && !requestedEdits.has(a.qid)) {
+        requestedEdits.add(a.qid);
+        revisions.getLastEdit(a.qid).then((edit) => {
+          if (!edit) return; // keep what the snapshot knew
+          liveEdits.set(a.qid, edit);
+          if (store.getState().selection === a.qid) renderDetailRegion();
+        });
+      }
+    }
     else detailHost.innerHTML = '';
     detailHost.hidden = !a;
     doc.getElementById('app').classList.toggle('has-detail', !!a);
@@ -164,6 +180,7 @@ export async function createApp(deps) {
     // The SPARQL-backed list lags behind Wikidata, so show what was just saved right away.
     function applySaved(result, draft) {
       const a = draft.association;
+      if (a.qid) { revisions?.forget(a.qid); liveEdits.delete(a.qid); requestedEdits.delete(a.qid); } // the item just changed
       const labels = cleanTerms({ ...a.original.labels, ...a.labels });
       const descriptions = cleanTerms({ ...a.original.descriptions, ...a.descriptions });
       const pick = (m) => (config.labelLanguages || 'en').split(',').map((l) => l.trim()).map((l) => m[l]).find(Boolean) || '';

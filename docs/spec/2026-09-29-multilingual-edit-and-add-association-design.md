@@ -268,3 +268,17 @@ association that exists on Wikidata without those statements is therefore invisi
   as plain additions: an existing, different P31 (e.g. "organization") is kept.
 - **After saving:** the item is appended to the on-screen list and selected. The query-service
   data catches up on the next refresh.
+
+## 13. Last editor on the card
+
+The card shows "Last edited by <user> on <date> · history". The user links to their Wikidata user page
+(IP editors: their contributions), the date to that exact revision (`index.php?title=Q…&oldid=…`) and
+"history" to the item history. The edit comment is the date link's tooltip; hidden usernames are never shown.
+
+- **Live:** selecting an item asks the Action API for its latest revision (`adapters/wikidata-revisions.js`,
+  cached per session, failures are silent). Saving an edit clears that item's cached answer.
+- **Snapshot:** `scripts/refresh-snapshot.mjs` fetches the latest revision of every association (50 titles
+  per request) and stores it as `lastEdit`, so the card can show it at once and when the app is running from
+  the snapshot. If that lookup fails, the previous snapshot's values are kept. Any edit to an association
+  now changes the snapshot, so the daily bot commits more often than before.
+- **Card:** shows the snapshot value immediately and replaces it with the live one when it arrives.

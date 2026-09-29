@@ -130,3 +130,58 @@ test('typing in search filters the rows', async () => {
   assert.doesNotMatch(host.innerHTML, /data-qid="Q1"/);
   assert.match(host.innerHTML, /data-qid="Q2"/);
 });
+
+const settleApp = async () => { for (let i = 0; i < 5; i++) await new Promise((r) => setTimeout(r, 0)); };
+const rev = (user, revid) => ({ revid, user, anon: false, userHidden: false, timestamp: '2026-09-29T12:50:46Z', comment: '' });
+
+async function appWith(revisionClient, list = associations) {
+  const win = domFixture();
+  await createApp({
+    window: win,
+    config: { cacheTtlMs: 1, centroidsUrl: 'x', snapshotUrl: 'y', tileUrl: 't', tileAttribution: 'a' },
+    centroids: { DE: [10.4, 51.1] },
+    loadDirectory: async () => ({ associations: list, stale: false, asOf: null }),
+    createMapView: () => ({ render() {}, focus() {} }),
+    detectMode: () => 'read',
+    revisionClient,
+  });
+  return win;
+}
+
+test('the card shows who last edited the item, once the live lookup returns', async () => {
+  const asked = [];
+  const win = await appWith({ getLastEdit: async (qid) => { asked.push(qid); return rev('Panyasan', 2550864341); }, forget() {} });
+  win.document.querySelector('button.row[data-qid="Q1"]').click();
+  await settleApp();
+  const detail = win.document.getElementById('detail-host').innerHTML;
+  assert.match(detail, /Last edited by/);
+  assert.match(detail, /oldid=2550864341/);
+  assert.deepEqual(asked, ['Q1']);
+  win.document.querySelector('button.row[data-qid="Q1"]').click();      // selecting again does not ask again
+  await settleApp();
+  assert.deepEqual(asked, ['Q1']);
+});
+
+test('the snapshot value shows at once and is replaced by the live one', async () => {
+  const list = [{ ...associations[0], lastEdit: rev('SnapshotUser', 100) }, associations[1]];
+  let resolveLive;
+  const win = await appWith({ getLastEdit: () => new Promise((r) => { resolveLive = () => r(rev('LiveUser', 200)); }), forget() {} }, list);
+  win.document.querySelector('button.row[data-qid="Q1"]').click();
+  const detail = () => win.document.getElementById('detail-host').innerHTML;
+  assert.match(detail(), /SnapshotUser/);       // no waiting on the network
+  resolveLive();
+  await settleApp();
+  assert.match(detail(), /LiveUser/);
+  assert.doesNotMatch(detail(), /SnapshotUser/);
+});
+
+test('when the live lookup fails the snapshot value stays; with neither, no line is shown', async () => {
+  const list = [{ ...associations[0], lastEdit: rev('SnapshotUser', 100) }, associations[1]];
+  const win = await appWith({ getLastEdit: async () => null, forget() {} }, list);
+  win.document.querySelector('button.row[data-qid="Q1"]').click();
+  await settleApp();
+  assert.match(win.document.getElementById('detail-host').innerHTML, /SnapshotUser/);
+  win.document.querySelector('button.row[data-qid="Q2"]').click();
+  await settleApp();
+  assert.doesNotMatch(win.document.getElementById('detail-host').innerHTML, /Last edited/);
+});

@@ -48,3 +48,25 @@ test('a javascript: URL in website is neutralised to #', () => {
   const out = renderAssociationCard(bad, {}).value;
   assert.doesNotMatch(out, /javascript:alert/);
 });
+
+const lastEdit = { revid: 2550864341, user: 'Panyasan', anon: false, userHidden: false, timestamp: '2026-09-29T12:50:46Z', comment: 'update names (de)' };
+
+test('shows who last edited the item, linked to the user page, the revision and the history', () => {
+  const out = renderAssociationCard(a, { lastEdit }).value;
+  assert.match(out, /Last edited by/);
+  assert.match(out, /<a href="https:\/\/www\.wikidata\.org\/wiki\/User:Panyasan"[^>]*>Panyasan<\/a>/);
+  assert.match(out, /href="https:\/\/www\.wikidata\.org\/w\/index\.php\?title=Q1&amp;oldid=2550864341"[^>]*title="update names \(de\)">2026-09-29<\/a>/);
+  assert.match(out, /action=history"[^>]*>history<\/a>/);
+});
+
+test('shows no last-edit line until a revision is known, and never leaks a hidden username', () => {
+  assert.doesNotMatch(renderAssociationCard(a, {}).value, /Last edited/);
+  const hidden = renderAssociationCard(a, { lastEdit: { ...lastEdit, userHidden: true, user: '' } }).value;
+  assert.match(hidden, /\(username hidden\)/);
+  assert.doesNotMatch(hidden, /User:/);
+});
+
+test('an editor name is escaped', () => {
+  const out = renderAssociationCard(a, { lastEdit: { ...lastEdit, user: '<img src=x onerror=alert(1)>' } }).value;
+  assert.doesNotMatch(out, /<img/);
+});

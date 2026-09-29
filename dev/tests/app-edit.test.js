@@ -81,7 +81,7 @@ test('edit mode without a session shows Connect, not Add/Leave, and wires onConn
   assert.equal(connectCalled, true);
 });
 
-function editApp(url, associations2 = associations) {
+function editApp(url, associations2 = associations, revisionClient = undefined) {
   const w = win(url);
   const opened = [];
   const config = { cacheTtlMs: 1, tileUrl: 't', tileAttribution: 'a', editTrigger: 'either', editParam: 'edit', labelLanguages: 'en,de,fr,es' };
@@ -92,6 +92,7 @@ function editApp(url, associations2 = associations) {
     loadDirectory: async () => ({ associations: associations2, stale: false, asOf: null }),
     createMapView: () => ({ render() {}, focus() {} }),
     detectMode: async () => 'edit',
+    revisionClient,
     buildEditRuntime: async () => ({
       auth: { hasSession: () => true, connect: async () => {}, disconnect: async () => {} },
       openWizard: (host, seed, hooks) => { opened.push({ seed, hooks }); },
@@ -173,4 +174,23 @@ test('an existing Wikidata item that was just added to the directory shows up in
     association: { qid: 'Q4242', addToDirectory: true, original: { labels: {}, descriptions: {}, needsClass: true, needsField: true }, labels: { en: 'Renamed' }, descriptions: {}, website: null, email: null },
   });
   assert.equal(store.getState().associations.filter((x) => x.qid === 'Q4242').length, 1);
+});
+
+test('saving an edit clears the cached last-edit of that item and looks it up again', async () => {
+  const forgotten = [];
+  let asked = 0;
+  const client = { getLastEdit: async () => { asked += 1; return { revid: asked, user: 'U' + asked, anon: false, userHidden: false, timestamp: '2026-09-29T12:50:46Z', comment: '' }; }, forget: (q) => forgotten.push(q) };
+  const { w, opened, ready } = editApp('https://app.example/?edit', undefined, client);
+  await ready;
+  w.document.querySelector('button.row[data-qid="Q1"]').click();
+  await new Promise((r) => setTimeout(r, 0));
+  assert.match(w.document.getElementById('detail-host').innerHTML, /User:U1/);
+  w.document.querySelector('[data-action="edit"]').click();
+  opened[0].hooks.onSaved({ created: [], diffUrls: [] }, {
+    mode: 'update-field',
+    association: { qid: 'Q1', original: { labels: {}, descriptions: {} }, labels: { en: 'New name' }, descriptions: {}, website: null, email: null },
+  });
+  await new Promise((r) => setTimeout(r, 0));
+  assert.deepEqual(forgotten, ['Q1']);
+  assert.match(w.document.getElementById('detail-host').innerHTML, /User:U2/);
 });

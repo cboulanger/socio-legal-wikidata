@@ -20,7 +20,15 @@
       "leadUniQid": null,
       "leadUniLabel": null,
       "leadCoord": null,
-      "journal": null
+      "journal": null,
+      "lastEdit": {
+        "revid": 2539557822,
+        "user": "Panyasan",
+        "anon": false,
+        "userHidden": false,
+        "timestamp": "2026-09-02T23:04:32Z",
+        "comment": "/* wbeditentity-create-item:0| */ Import via socio-legal-wikidata project (see https://github.com/cboulanger/socio-legal-wikidata)"
+      }
     },
     {
       "qid": "Q141260162",
@@ -41,7 +49,15 @@
       "leadUniQid": null,
       "leadUniLabel": null,
       "leadCoord": null,
-      "journal": null
+      "journal": null,
+      "lastEdit": {
+        "revid": 2539557829,
+        "user": "Panyasan",
+        "anon": false,
+        "userHidden": false,
+        "timestamp": "2026-09-02T23:04:33Z",
+        "comment": "/* wbeditentity-create-item:0| */ Import via socio-legal-wikidata project (see https://github.com/cboulanger/socio-legal-wikidata)"
+      }
     },
     {
       "qid": "Q141260163",
@@ -62,7 +78,15 @@
       "leadUniQid": null,
       "leadUniLabel": null,
       "leadCoord": null,
-      "journal": null
+      "journal": null,
+      "lastEdit": {
+        "revid": 2539557837,
+        "user": "Panyasan",
+        "anon": false,
+        "userHidden": false,
+        "timestamp": "2026-09-02T23:04:35Z",
+        "comment": "/* wbeditentity-create-item:0| */ Import via socio-legal-wikidata project (see https://github.com/cboulanger/socio-legal-wikidata)"
+      }
     },
     {
       "qid": "Q52636089",
@@ -88,6 +112,14 @@
         "label": "Revista Brasileira de Sociologia do Direito",
         "url": "http://www.abrasd.com.br/#!edicaoatual/c1yi4",
         "issn": "2359-5582"
+      },
+      "lastEdit": {
+        "revid": 2542591714,
+        "user": "MS Sakib",
+        "anon": false,
+        "userHidden": false,
+        "timestamp": "2026-09-09T07:25:20Z",
+        "comment": "/* wbsetdescription-add:1|as */ ব্ৰাজিল-ভিত্তিক শৈক্ষিক প্ৰকাশক"
       }
     },
     {
@@ -109,7 +141,15 @@
       "leadUniQid": null,
       "leadUniLabel": null,
       "leadCoord": null,
-      "journal": null
+      "journal": null,
+      "lastEdit": {
+        "revid": 2539557958,
+        "user": "Panyasan",
+        "anon": false,
+        "userHidden": false,
+        "timestamp": "2026-09-02T23:05:02Z",
+        "comment": "/* wbsetclaim-create:1||1 */ [[Property:P968]]: mailto:lch@lawculturehumanities.com, Import via socio-legal-wikidata project (see https://github.com/cboulanger/socio-legal-wikidata)"
+      }
     },
     {
       "qid": "Q141260164",
@@ -135,6 +175,14 @@
         "label": "Indonesian Journal of Socio-Legal Studies",
         "url": "https://scholarhub.ui.ac.id/ijsls",
         "issn": null
+      },
+      "lastEdit": {
+        "revid": 2539557843,
+        "user": "Panyasan",
+        "anon": false,
+        "userHidden": false,
+        "timestamp": "2026-09-02T23:04:36Z",
+        "comment": "/* wbeditentity-create-item:0| */ Import via socio-legal-wikidata project (see https://github.com/cboulanger/socio-legal-wikidata)"
       }
     },
     {
@@ -156,7 +204,15 @@
       "leadUniQid": null,
       "leadUniLabel": null,
       "leadCoord": null,
-      "journal": null
+      "journal": null,
+      "lastEdit": {
+        "revid": 2539557849,
+        "user": "Panyasan",
+        "anon": false,
+        "userHidden": false,
+        "timestamp": "2026-09-02T23:04:37Z",
+        "comment": "/* wbeditentity-create-item:0| */ Import via socio-legal-wikidata project (see https://github.com/cboulanger/socio-legal-wikidata)"
+      }
     },
     {
       "qid": "Q141260166",
@@ -177,7 +233,15 @@
       "leadUniQid": null,
       "leadUniLabel": null,
       "leadCoord": null,
-      "journal": null
+      "journal": null,
+      "lastEdit": {
+        "revid": 2539557855,
+        "user": "Panyasan",
+        "anon": false,
+        "userHidden": false,
+        "timestamp": "2026-09-02T23:04:38Z",
+        "comment": "/* wbeditentity-create-item:0| */ Import via socio-legal-wikidata project (see https://github.com/cboulanger/socio-legal-wikidata)"
+      }
     },
     {
       "qid": "Q88087154",
@@ -198,7 +262,15 @@
       "leadUniQid": null,
       "leadUniLabel": null,
       "leadCoord": null,
-      "journal": null
+      "journal": null,
+      "lastEdit": {
+        "revid": 2539557093,
+        "user": "Panyasan",
+        "anon": false,
+        "userHidden": false,
+        "timestamp": "2026-09-02T23:00:56Z",
+        "comment": "/* wbmergeitems-from:0||Q141260086 */ Merge accidental duplicate created by socio-legal-wikidata import script"
+      }
     },
     {
       "qid": "Q141260087",
@@ -219,7 +291,15 @@
       "leadUniQid": null,
       "leadUniLabel": null,
       "leadCoord": null,
-      "journal": null
+      "journal": null,
+      "lastEdit": {
+        "revid": 2539556117,
+        "user": "Panyasan",
+        "anon": false,
+        "userHidden": false,
+        "timestamp": "2026-09-02T22:56:50Z",
+        "comment": "/* wbeditentity-create-item:0| */ Import via socio-legal-wikidata project (see https://github.com/cboulanger/socio-legal-wikidata)"
+      }
     },
     {
       "qid": "Q141260168",
@@ -240,7 +320,15 @@
       "leadUniQid": null,
       "leadUniLabel": null,
       "leadCoord": null,
-      "journal": null
+      "journal": null,
+      "lastEdit": {
+        "revid": 2539557865,
+        "user": "Panyasan",
+        "anon": false,
+        "userHidden": false,
+        "timestamp": "2026-09-02T23:04:41Z",
+        "comment": "/* wbeditentity-create-item:0| */ Import via socio-legal-wikidata project (see https://github.com/cboulanger/socio-legal-wikidata)"
+      }
     },
     {
       "qid": "Q141260169",
@@ -266,6 +354,14 @@
         "label": "European Journal of Empirical Legal Studies",
         "url": "https://esels.eu/ejels/",
         "issn": null
+      },
+      "lastEdit": {
+        "revid": 2539557870,
+        "user": "Panyasan",
+        "anon": false,
+        "userHidden": false,
+        "timestamp": "2026-09-02T23:04:42Z",
+        "comment": "/* wbeditentity-create-item:0| */ Import via socio-legal-wikidata project (see https://github.com/cboulanger/socio-legal-wikidata)"
       }
     },
     {
@@ -287,7 +383,15 @@
       "leadUniQid": null,
       "leadUniLabel": null,
       "leadCoord": null,
-      "journal": null
+      "journal": null,
+      "lastEdit": {
+        "revid": 2550864341,
+        "user": "Panyasan",
+        "anon": false,
+        "userHidden": false,
+        "timestamp": "2026-09-29T12:50:46Z",
+        "comment": "/* wbeditentity-update-languages-short:0||de */ socio-legal directory: update names (de)"
+      }
     },
     {
       "qid": "Q1268131",
@@ -308,7 +412,15 @@
       "leadUniQid": null,
       "leadUniLabel": null,
       "leadCoord": null,
-      "journal": null
+      "journal": null,
+      "lastEdit": {
+        "revid": 2539557961,
+        "user": "Panyasan",
+        "anon": false,
+        "userHidden": false,
+        "timestamp": "2026-09-02T23:05:04Z",
+        "comment": "/* wbsetclaim-create:1||1 */ [[Property:P968]]: mailto:ivrint.web@gmail.com, Import via socio-legal-wikidata project (see https://github.com/cboulanger/socio-legal-wikidata)"
+      }
     },
     {
       "qid": "Q141260170",
@@ -329,7 +441,15 @@
       "leadUniQid": null,
       "leadUniLabel": null,
       "leadCoord": null,
-      "journal": null
+      "journal": null,
+      "lastEdit": {
+        "revid": 2539557875,
+        "user": "Panyasan",
+        "anon": false,
+        "userHidden": false,
+        "timestamp": "2026-09-02T23:04:43Z",
+        "comment": "/* wbeditentity-create-item:0| */ Import via socio-legal-wikidata project (see https://github.com/cboulanger/socio-legal-wikidata)"
+      }
     },
     {
       "qid": "Q141260090",
@@ -350,7 +470,15 @@
       "leadUniQid": null,
       "leadUniLabel": null,
       "leadCoord": null,
-      "journal": null
+      "journal": null,
+      "lastEdit": {
+        "revid": 2539556151,
+        "user": "Panyasan",
+        "anon": false,
+        "userHidden": false,
+        "timestamp": "2026-09-02T22:56:57Z",
+        "comment": "/* wbeditentity-create-item:0| */ Import via socio-legal-wikidata project (see https://github.com/cboulanger/socio-legal-wikidata)"
+      }
     },
     {
       "qid": "Q141260091",
@@ -371,7 +499,15 @@
       "leadUniQid": null,
       "leadUniLabel": null,
       "leadCoord": null,
-      "journal": null
+      "journal": null,
+      "lastEdit": {
+        "revid": 2539556159,
+        "user": "Panyasan",
+        "anon": false,
+        "userHidden": false,
+        "timestamp": "2026-09-02T22:56:59Z",
+        "comment": "/* wbeditentity-create-item:0| */ Import via socio-legal-wikidata project (see https://github.com/cboulanger/socio-legal-wikidata)"
+      }
     },
     {
       "qid": "Q141260092",
@@ -397,6 +533,14 @@
         "label": "Korean Journal of Law and Society",
         "url": "https://www.dbpia.co.kr/journal/publicationDetail?publicationId=PLCT00015222",
         "issn": "1227-0954"
+      },
+      "lastEdit": {
+        "revid": 2539556165,
+        "user": "Panyasan",
+        "anon": false,
+        "userHidden": false,
+        "timestamp": "2026-09-02T22:57:00Z",
+        "comment": "/* wbeditentity-create-item:0| */ Import via socio-legal-wikidata project (see https://github.com/cboulanger/socio-legal-wikidata)"
       }
     },
     {
@@ -418,7 +562,15 @@
       "leadUniQid": null,
       "leadUniLabel": null,
       "leadCoord": null,
-      "journal": null
+      "journal": null,
+      "lastEdit": {
+        "revid": 2539556171,
+        "user": "Panyasan",
+        "anon": false,
+        "userHidden": false,
+        "timestamp": "2026-09-02T22:57:01Z",
+        "comment": "/* wbeditentity-create-item:0| */ Import via socio-legal-wikidata project (see https://github.com/cboulanger/socio-legal-wikidata)"
+      }
     },
     {
       "qid": "Q6503159",
@@ -439,7 +591,15 @@
       "leadUniQid": null,
       "leadUniLabel": null,
       "leadCoord": null,
-      "journal": null
+      "journal": null,
+      "lastEdit": {
+        "revid": 2540386034,
+        "user": "KrBot",
+        "anon": false,
+        "userHidden": false,
+        "timestamp": "2026-09-05T06:22:23Z",
+        "comment": "/* wbremoveclaims-remove:1| */ [[Property:P571]]: 1964, дублирующееся значение / duplicate value"
+      }
     },
     {
       "qid": "Q141260171",
@@ -460,7 +620,15 @@
       "leadUniQid": null,
       "leadUniLabel": null,
       "leadCoord": null,
-      "journal": null
+      "journal": null,
+      "lastEdit": {
+        "revid": 2539557881,
+        "user": "Panyasan",
+        "anon": false,
+        "userHidden": false,
+        "timestamp": "2026-09-02T23:04:44Z",
+        "comment": "/* wbeditentity-create-item:0| */ Import via socio-legal-wikidata project (see https://github.com/cboulanger/socio-legal-wikidata)"
+      }
     },
     {
       "qid": "Q141260172",
@@ -481,7 +649,15 @@
       "leadUniQid": null,
       "leadUniLabel": null,
       "leadCoord": null,
-      "journal": null
+      "journal": null,
+      "lastEdit": {
+        "revid": 2539557884,
+        "user": "Panyasan",
+        "anon": false,
+        "userHidden": false,
+        "timestamp": "2026-09-02T23:04:46Z",
+        "comment": "/* wbeditentity-create-item:0| */ Import via socio-legal-wikidata project (see https://github.com/cboulanger/socio-legal-wikidata)"
+      }
     },
     {
       "qid": "Q141260173",
@@ -502,7 +678,15 @@
       "leadUniQid": null,
       "leadUniLabel": null,
       "leadCoord": null,
-      "journal": null
+      "journal": null,
+      "lastEdit": {
+        "revid": 2539557892,
+        "user": "Panyasan",
+        "anon": false,
+        "userHidden": false,
+        "timestamp": "2026-09-02T23:04:47Z",
+        "comment": "/* wbeditentity-create-item:0| */ Import via socio-legal-wikidata project (see https://github.com/cboulanger/socio-legal-wikidata)"
+      }
     },
     {
       "qid": "Q141260094",
@@ -523,7 +707,15 @@
       "leadUniQid": null,
       "leadUniLabel": null,
       "leadCoord": null,
-      "journal": null
+      "journal": null,
+      "lastEdit": {
+        "revid": 2539556195,
+        "user": "Panyasan",
+        "anon": false,
+        "userHidden": false,
+        "timestamp": "2026-09-02T22:57:05Z",
+        "comment": "/* wbeditentity-create-item:0| */ Import via socio-legal-wikidata project (see https://github.com/cboulanger/socio-legal-wikidata)"
+      }
     },
     {
       "qid": "Q52608574",
@@ -549,6 +741,14 @@
         "label": "Brazilian Journal of Empirical Legal Studies",
         "url": "http://reedrevista.org/",
         "issn": "2319-0817"
+      },
+      "lastEdit": {
+        "revid": 2544397166,
+        "user": "MS Sakib",
+        "anon": false,
+        "userHidden": false,
+        "timestamp": "2026-09-12T06:08:08Z",
+        "comment": "/* wbsetdescription-add:1|as */ ব্ৰাজিল-ভিত্তিক শৈক্ষিক প্ৰকাশক"
       }
     },
     {
@@ -570,7 +770,15 @@
       "leadUniQid": null,
       "leadUniLabel": null,
       "leadCoord": null,
-      "journal": null
+      "journal": null,
+      "lastEdit": {
+        "revid": 2540384175,
+        "user": "KrBot",
+        "anon": false,
+        "userHidden": false,
+        "timestamp": "2026-09-05T06:15:10Z",
+        "comment": "/* wbremoveclaims-remove:1| */ [[Property:P571]]: 1962, дублирующееся значение / duplicate value"
+      }
     },
     {
       "qid": "Q141260174",
@@ -591,7 +799,15 @@
       "leadUniQid": null,
       "leadUniLabel": null,
       "leadCoord": null,
-      "journal": null
+      "journal": null,
+      "lastEdit": {
+        "revid": 2540179679,
+        "user": "Helgoland71",
+        "anon": false,
+        "userHidden": false,
+        "timestamp": "2026-09-04T17:45:47Z",
+        "comment": "/* wbsetclaim-create:2||1 */ [[Property:P625]]: 47°22'6.884\"N, 8°33'5.018\"E"
+      }
     },
     {
       "qid": "Q141260175",
@@ -612,7 +828,15 @@
       "leadUniQid": null,
       "leadUniLabel": null,
       "leadCoord": null,
-      "journal": null
+      "journal": null,
+      "lastEdit": {
+        "revid": 2539557904,
+        "user": "Panyasan",
+        "anon": false,
+        "userHidden": false,
+        "timestamp": "2026-09-02T23:04:49Z",
+        "comment": "/* wbeditentity-create-item:0| */ Import via socio-legal-wikidata project (see https://github.com/cboulanger/socio-legal-wikidata)"
+      }
     },
     {
       "qid": "Q141260176",
@@ -638,6 +862,14 @@
         "label": "Revista Latinoamericana de Sociología Jurídica",
         "url": "https://usi.edu.ar/publicaciones/revista-latinoamericana-de-sociologia-juridica/",
         "issn": null
+      },
+      "lastEdit": {
+        "revid": 2539557909,
+        "user": "Panyasan",
+        "anon": false,
+        "userHidden": false,
+        "timestamp": "2026-09-02T23:04:50Z",
+        "comment": "/* wbeditentity-create-item:0| */ Import via socio-legal-wikidata project (see https://github.com/cboulanger/socio-legal-wikidata)"
       }
     },
     {
@@ -659,7 +891,15 @@
       "leadUniQid": null,
       "leadUniLabel": null,
       "leadCoord": null,
-      "journal": null
+      "journal": null,
+      "lastEdit": {
+        "revid": 2539557915,
+        "user": "Panyasan",
+        "anon": false,
+        "userHidden": false,
+        "timestamp": "2026-09-02T23:04:51Z",
+        "comment": "/* wbeditentity-create-item:0| */ Import via socio-legal-wikidata project (see https://github.com/cboulanger/socio-legal-wikidata)"
+      }
     },
     {
       "qid": "Q138781707",
@@ -680,7 +920,15 @@
       "leadUniQid": null,
       "leadUniLabel": null,
       "leadCoord": null,
-      "journal": null
+      "journal": null,
+      "lastEdit": {
+        "revid": 2539557926,
+        "user": "Panyasan",
+        "anon": false,
+        "userHidden": false,
+        "timestamp": "2026-09-02T23:04:55Z",
+        "comment": "/* wbsetclaim-create:1||1 */ [[Property:P571]]: 1990, Import via socio-legal-wikidata project (see https://github.com/cboulanger/socio-legal-wikidata)"
+      }
     },
     {
       "qid": "Q141260178",
@@ -701,7 +949,15 @@
       "leadUniQid": null,
       "leadUniLabel": null,
       "leadCoord": null,
-      "journal": null
+      "journal": null,
+      "lastEdit": {
+        "revid": 2539557929,
+        "user": "Panyasan",
+        "anon": false,
+        "userHidden": false,
+        "timestamp": "2026-09-02T23:04:56Z",
+        "comment": "/* wbeditentity-create-item:0| */ Import via socio-legal-wikidata project (see https://github.com/cboulanger/socio-legal-wikidata)"
+      }
     },
     {
       "qid": "Q141260095",
@@ -722,7 +978,15 @@
       "leadUniQid": null,
       "leadUniLabel": null,
       "leadCoord": null,
-      "journal": null
+      "journal": null,
+      "lastEdit": {
+        "revid": 2539556212,
+        "user": "Panyasan",
+        "anon": false,
+        "userHidden": false,
+        "timestamp": "2026-09-02T22:57:13Z",
+        "comment": "/* wbeditentity-create-item:0| */ Import via socio-legal-wikidata project (see https://github.com/cboulanger/socio-legal-wikidata)"
+      }
     },
     {
       "qid": "Q141260179",
@@ -743,7 +1007,15 @@
       "leadUniQid": null,
       "leadUniLabel": null,
       "leadCoord": null,
-      "journal": null
+      "journal": null,
+      "lastEdit": {
+        "revid": 2539557935,
+        "user": "Panyasan",
+        "anon": false,
+        "userHidden": false,
+        "timestamp": "2026-09-02T23:04:57Z",
+        "comment": "/* wbeditentity-create-item:0| */ Import via socio-legal-wikidata project (see https://github.com/cboulanger/socio-legal-wikidata)"
+      }
     },
     {
       "qid": "Q141260096",
@@ -764,7 +1036,15 @@
       "leadUniQid": null,
       "leadUniLabel": null,
       "leadCoord": null,
-      "journal": null
+      "journal": null,
+      "lastEdit": {
+        "revid": 2539556216,
+        "user": "Panyasan",
+        "anon": false,
+        "userHidden": false,
+        "timestamp": "2026-09-02T22:57:15Z",
+        "comment": "/* wbeditentity-create-item:0| */ Import via socio-legal-wikidata project (see https://github.com/cboulanger/socio-legal-wikidata)"
+      }
     },
     {
       "qid": "Q141260180",
@@ -785,7 +1065,15 @@
       "leadUniQid": null,
       "leadUniLabel": null,
       "leadCoord": null,
-      "journal": null
+      "journal": null,
+      "lastEdit": {
+        "revid": 2539557943,
+        "user": "Panyasan",
+        "anon": false,
+        "userHidden": false,
+        "timestamp": "2026-09-02T23:04:59Z",
+        "comment": "/* wbeditentity-create-item:0| */ Import via socio-legal-wikidata project (see https://github.com/cboulanger/socio-legal-wikidata)"
+      }
     },
     {
       "qid": "Q111548489",
@@ -811,6 +1099,14 @@
         "label": "The Sociology of Law",
         "url": "https://www.jstage.jst.go.jp/browse/jsl/list/-char/ja",
         "issn": "2424-1423"
+      },
+      "lastEdit": {
+        "revid": 2540394889,
+        "user": "KrBot",
+        "anon": false,
+        "userHidden": false,
+        "timestamp": "2026-09-05T06:56:16Z",
+        "comment": "/* wbremoveclaims-remove:1| */ [[Property:P31]]: [[Q955824]], дублирующееся значение / duplicate value"
       }
     }
   ]
