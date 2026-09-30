@@ -3,6 +3,9 @@ import { isValidLangCode } from './languages.js';
 
 export const MAX_TERM_LENGTH = 250; // Wikidata's limit for labels and descriptions
 
+const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
+const isValidIsoDate = (s) => ISO_DATE.test(s) && !Number.isNaN(Date.parse(s));
+
 /**
  * @typedef {Object} FormerName  // a name the association used before (an "official name" statement)
  * @property {string} text
@@ -48,15 +51,6 @@ export const MAX_TERM_LENGTH = 250; // Wikidata's limit for labels and descripti
  * @property {string|null} inception     // 'YYYY'
  * @property {string|null} referenceUrl
  *
- * @typedef {Object} DraftPerson
- * @property {string|null} qid
- * @property {string} label
- * @property {string} description
- * @property {string|null} homepage
- * @property {string|null} orcid
- * @property {string|null} universityQid
- * @property {string|null} referenceUrl
- *
  * @typedef {Object} DraftJournal
  * @property {string|null} qid
  * @property {string} label
@@ -64,13 +58,42 @@ export const MAX_TERM_LENGTH = 250; // Wikidata's limit for labels and descripti
  * @property {string|null} issn
  * @property {string|null} referenceUrl
  *
+ * @typedef {Object} DraftOfficerPerson
+ * @property {string|null} qid                  // an existing person, or null to create one
+ * @property {Object<string,string>} labels      // language code -> name (new person only)
+ * @property {string} description                // short English description (new person only)
+ * @property {string|null} birthDate             // 'YYYY-MM-DD', new person only, optional
+ * @property {string|null} affiliationQid        // P108 target, optional
+ * @property {string|null} affiliationLabel      // display only
+ * @property {string|null} orcid                 // P496, optional
+ * @property {string|null} homepage              // P856, optional
+ *
+ * @typedef {Object} DraftOfficerRow
+ * @property {DraftOfficerPerson} person
+ * @property {string} officeQid                  // P3831 value; defaults to config.officeTypes[0].qid
+ * @property {string} officeLabel                // display only
+ * @property {string} begin                      // 'YYYY-MM-DD', required
+ * @property {string|null} end                   // 'YYYY-MM-DD', optional ("present" if blank)
+ *
+ * @typedef {Object} LeadershipHistoryRow         // an existing P488 statement, read from Wikidata
+ * @property {string} statementId
+ * @property {string} personQid
+ * @property {string} personLabel
+ * @property {string|null} officeQid
+ * @property {string} officeLabel                 // "chairperson" fallback if no P3831 qualifier
+ * @property {string|null} begin
+ * @property {string|null} end                    // null = still open
+ *
+ * @typedef {Object} LeadershipOriginal
+ * @property {LeadershipHistoryRow[]} history      // every P488 statement, sorted begin desc
+ * @property {LeadershipHistoryRow|null} current   // the one row (if any) with no end date
+ *
  * @typedef {Object} DirectoryDraft
- * @property {'create-association'|'change-president'|'update-field'} mode
+ * @property {'create-association'|'manage-leadership'|'update-field'} mode
  * @property {DraftAssociation} association
- * @property {DraftPerson} president
  * @property {DraftJournal|null} journal
- * @property {string|null} previousPresidentStatementId
- * @property {string|null} termStart    // ISO date
+ * @property {DraftOfficerRow[]} officers            // manage-leadership only: rows being added
+ * @property {LeadershipOriginal|null} leadershipOriginal  // manage-leadership only: loaded from Wikidata
  */
 
 /** @param {DirectoryDraft['mode']} mode @returns {DirectoryDraft} */
@@ -87,13 +110,21 @@ export function emptyDraft(mode) {
       countryQid: null, countryLabel: null, operatingAreaQid: null, seatQid: null, seatLabel: null, parentQid: null, parentLabel: null,
       website: null, email: null, emailConfirmedShared: false, inception: null, referenceUrl: null,
     },
-    president: {
-      qid: null, label: '', description: '', homepage: null, orcid: null,
-      universityQid: null, referenceUrl: null,
-    },
     journal: null,
-    previousPresidentStatementId: null,
-    termStart: null,
+    officers: [],
+    leadershipOriginal: null,
+  };
+}
+
+/**
+ * A blank officer row, ready for the UI to fill in.
+ * @param {string} officeQid @param {string} officeLabel
+ * @returns {DraftOfficerRow}
+ */
+export function emptyOfficerRow(officeQid, officeLabel) {
+  return {
+    person: { qid: null, labels: {}, description: '', birthDate: null, affiliationQid: null, affiliationLabel: null, orcid: null, homepage: null },
+    officeQid, officeLabel, begin: '', end: null,
   };
 }
 
@@ -328,11 +359,37 @@ export function originalFromEntity(entity) {
   };
 }
 
+const TIME_RE = /^[+-]?0*(\d{1,4})-(\d{2})-(\d{2})/;
+
+/** A Wikidata time qualifier's first value, as 'YYYY-MM-DD', or null. */
+function dateOf(qualifiers) {
+  const m = TIME_RE.exec(qualifiers?.[0]?.datavalue?.value?.time || '');
+  return m ? `${m[1].padStart(4, '0')}-${m[2]}-${m[3]}` : null;
+}
+
+/**
+ * Parse an entity's P488 (chairperson) claims into leadership rows. No label resolution
+ * here (QIDs only) — that is the adapter's job, since it is the only layer that talks to
+ * the network (see `adapters/wikibase-api.js`'s `getLeadershipHistory`).
+ * @param {any} entity
+ * @returns {{statementId: string, personQid: string, officeQid: string|null, begin: string|null, end: string|null}[]}
+ */
+export function leadershipClaimsFromEntity(entity) {
+  return (entity?.claims?.P488 || [])
+    .filter((c) => c.rank !== 'deprecated' && c.mainsnak?.datavalue?.value?.id)
+    .map((c) => ({
+      statementId: c.id,
+      personQid: c.mainsnak.datavalue.value.id,
+      officeQid: c.qualifiers?.P3831?.[0]?.datavalue?.value?.id || null,
+      begin: dateOf(c.qualifiers?.P580),
+      end: dateOf(c.qualifiers?.P582),
+    }));
+}
+
 /** @param {DirectoryDraft} d @returns {string[]} */
 export function validateDraftForChangeset(d) {
   const e = [];
   const a = d.association;
-  const p = d.president;
   const changed = changedStatements(a);
   const changedStatement = !!(changed.website || changed.email);
   const scopeChange = hasScopeChanges(a);
@@ -346,17 +403,33 @@ export function validateDraftForChangeset(d) {
     if (!a.classQid) e.push('association.classQid is required');
     if (!a.fieldQid) e.push('association.fieldQid is required');
     if (!a.referenceUrl) e.push('association.referenceUrl is required');
-    // a president is optional for now; if one is given, a new person needs the usual evidence
-    if (p.label && !p.qid && !p.universityQid) e.push('president.universityQid is required for a new person');
-    if (p.label && !p.qid && !p.referenceUrl) e.push('president.referenceUrl is required for a new person');
     e.push(...validateTerms(a), ...validateFormerNames(a));
   }
 
-  if (d.mode === 'change-president') {
+  if (d.mode === 'manage-leadership') {
     if (!a.qid) e.push('association.qid is required');
-    if (!p.qid && !p.label) e.push('president identity is required');
-    if (!d.termStart) e.push('termStart is required');
-    if (!p.qid && !p.universityQid) e.push('president.universityQid is required for a new person');
+    const rows = d.officers || [];
+    if (rows.length === 0) e.push('add at least one officeholder');
+    let openCount = 0;
+    for (const row of rows) {
+      const rp = row.person;
+      const hasName = Object.keys(cleanTerms(rp.labels)).length > 0;
+      if (!rp.qid && !hasName) e.push('name the officeholder or pick an existing person');
+      if (!rp.qid) {
+        if (!rp.affiliationQid && !rp.orcid) e.push('a new officeholder needs an affiliation or an ORCID iD');
+        e.push(...validateTerms({ labels: rp.labels, descriptions: {}, abbreviations: {} }));
+      }
+      if (!row.officeQid) e.push('pick the type of office');
+      if (!row.begin || !isValidIsoDate(row.begin)) e.push('the term needs a valid begin date');
+      if (row.end) {
+        if (!isValidIsoDate(row.end)) e.push('the end date is not valid');
+        else if (row.begin && isValidIsoDate(row.begin) && row.end < row.begin) e.push('the end date is before the begin date');
+      } else {
+        openCount += 1;
+      }
+    }
+    if (openCount > 1) e.push('only one officeholder can be the current one — give the others an end date');
+    if (rows.length > 0 && !a.referenceUrl) e.push('association.referenceUrl is required');
   }
 
   if (d.mode === 'update-field') {

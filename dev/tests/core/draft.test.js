@@ -1,8 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { emptyDraft, validateDraftForChangeset, changedTerms, changedStatements, originalFromEntity, cleanTerms, scopeStatements, hasScopeChanges, activeFormerNames, validateFormerNames, aliasesToSet, changedAbbreviations } from '../../../src/core/draft.js';
+import { emptyDraft, validateDraftForChangeset, changedTerms, changedStatements, originalFromEntity, cleanTerms, scopeStatements, hasScopeChanges, activeFormerNames, validateFormerNames, aliasesToSet, changedAbbreviations, emptyOfficerRow, leadershipClaimsFromEntity } from '../../../src/core/draft.js';
 
-test('emptyDraft has a mode and nested association/president/journal', () => {
+test('emptyDraft has a mode and nested association/journal', () => {
   const d = emptyDraft('create-association');
   assert.equal(d.mode, 'create-association');
   assert.equal(d.association.qid, null);
@@ -14,14 +14,6 @@ test('validateDraftForChangeset: create-association requires a name, class, fiel
   const errs = validateDraftForChangeset(d);
   assert.ok(errs.includes('association.labels: at least one name is required'));
   assert.ok(errs.includes('association.referenceUrl is required'));
-});
-
-test('validateDraftForChangeset: change-president requires association.qid, president identity, termStart', () => {
-  const d = emptyDraft('change-president');
-  const errs = validateDraftForChangeset(d);
-  assert.ok(errs.includes('association.qid is required'));
-  assert.ok(errs.includes('president identity is required'));
-  assert.ok(errs.includes('termStart is required'));
 });
 
 test('a personal e-mail without emailConfirmedShared is an error', () => {
@@ -40,12 +32,6 @@ test('validateDraftForChangeset: update-field requires a reference URL', () => {
   assert.ok(errs.includes('association.referenceUrl is required'));
   d.association.referenceUrl = 'https://source.example/announcement';
   assert.equal(validateDraftForChangeset(d).length, 0);
-});
-
-test('create-association does not require a president', () => {
-  const d = emptyDraft('create-association');
-  Object.assign(d.association, { labels: { pt: 'Rede' }, classQid: 'Q1', fieldQid: 'Q2', referenceUrl: 'https://x' });
-  assert.deepEqual(validateDraftForChangeset(d), []);
 });
 
 test('update-field: a term-only change needs no reference URL; a language code and length are checked', () => {
@@ -212,4 +198,116 @@ test('update-field: a former name is a change that needs a reference URL', () =>
   assert.deepEqual(validateDraftForChangeset(d), ['association.referenceUrl is required']);
   d.association.referenceUrl = 'https://x.example';
   assert.deepEqual(validateDraftForChangeset(d), []);
+});
+
+test('emptyDraft("manage-leadership") starts with an empty officers list and no loaded original', () => {
+  const d = emptyDraft('manage-leadership');
+  assert.deepEqual(d.officers, []);
+  assert.equal(d.leadershipOriginal, null);
+});
+
+test('emptyOfficerRow seeds a blank row with the given default office', () => {
+  const row = emptyOfficerRow('Q1255921', 'President');
+  assert.equal(row.officeQid, 'Q1255921');
+  assert.equal(row.officeLabel, 'President');
+  assert.equal(row.begin, '');
+  assert.equal(row.end, null);
+  assert.equal(row.person.qid, null);
+  assert.deepEqual(row.person.labels, {});
+});
+
+test('leadershipClaimsFromEntity parses P488 claims with P580/P582/P3831 qualifiers', () => {
+  const entity = {
+    claims: {
+      P488: [
+        {
+          id: 'Q100$A', rank: 'normal',
+          mainsnak: { datavalue: { value: { id: 'Q5' } } },
+          qualifiers: {
+            P580: [{ datavalue: { value: { time: '+1995-06-01T00:00:00Z' } } }],
+            P582: [{ datavalue: { value: { time: '+2010-01-15T00:00:00Z' } } }],
+            P3831: [{ datavalue: { value: { id: 'Q140686' } } }],
+          },
+        },
+        {
+          id: 'Q100$B', rank: 'normal',
+          mainsnak: { datavalue: { value: { id: 'Q9' } } },
+          qualifiers: { P580: [{ datavalue: { value: { time: '+2010-01-15T00:00:00Z' } } }] },
+        },
+        { id: 'Q100$C', rank: 'deprecated', mainsnak: { datavalue: { value: { id: 'Q999' } } } },
+      ],
+    },
+  };
+  const rows = leadershipClaimsFromEntity(entity);
+  assert.equal(rows.length, 2);
+  assert.deepEqual(rows[0], { statementId: 'Q100$A', personQid: 'Q5', officeQid: 'Q140686', begin: '1995-06-01', end: '2010-01-15' });
+  assert.deepEqual(rows[1], { statementId: 'Q100$B', personQid: 'Q9', officeQid: null, begin: '2010-01-15', end: null });
+});
+
+test('leadershipClaimsFromEntity on an entity with no P488 claims returns []', () => {
+  assert.deepEqual(leadershipClaimsFromEntity({ claims: {} }), []);
+  assert.deepEqual(leadershipClaimsFromEntity({}), []);
+});
+
+test('validateDraftForChangeset: manage-leadership requires at least one officeholder row', () => {
+  const d = emptyDraft('manage-leadership');
+  d.association.qid = 'Q100';
+  assert.ok(validateDraftForChangeset(d).includes('add at least one officeholder'));
+});
+
+test('validateDraftForChangeset: manage-leadership — an existing person only needs office + begin date', () => {
+  const d = emptyDraft('manage-leadership');
+  d.association.qid = 'Q100';
+  d.association.referenceUrl = 'https://x.example';
+  d.officers.push({ ...emptyOfficerRow('Q1255921', 'President'), person: { ...emptyOfficerRow('Q1', '').person, qid: 'Q200' }, begin: '2024-01-01' });
+  assert.deepEqual(validateDraftForChangeset(d), []);
+});
+
+test('validateDraftForChangeset: manage-leadership — a new person needs affiliation or ORCID', () => {
+  const d = emptyDraft('manage-leadership');
+  d.association.qid = 'Q100';
+  d.association.referenceUrl = 'https://x.example';
+  const row = emptyOfficerRow('Q1255921', 'President');
+  row.person.labels = { en: 'Jane Roe' };
+  row.begin = '2024-01-01';
+  d.officers.push(row);
+  assert.ok(validateDraftForChangeset(d).includes('a new officeholder needs an affiliation or an ORCID iD'));
+  row.person.orcid = '0000-0002-1825-0097';
+  assert.deepEqual(validateDraftForChangeset(d), []);
+});
+
+test('validateDraftForChangeset: manage-leadership — begin is required, end must not precede begin', () => {
+  const d = emptyDraft('manage-leadership');
+  d.association.qid = 'Q100';
+  d.association.referenceUrl = 'https://x.example';
+  const row = emptyOfficerRow('Q1255921', 'President');
+  row.person.qid = 'Q200';
+  d.officers.push(row);
+  assert.ok(validateDraftForChangeset(d).includes('the term needs a valid begin date'));
+  row.begin = '2024-06-01';
+  row.end = '2024-01-01';
+  assert.ok(validateDraftForChangeset(d).includes('the end date is before the begin date'));
+  row.end = '2024-12-31';
+  assert.deepEqual(validateDraftForChangeset(d), []);
+});
+
+test('validateDraftForChangeset: manage-leadership — at most one row may be left open (current)', () => {
+  const d = emptyDraft('manage-leadership');
+  d.association.qid = 'Q100';
+  d.association.referenceUrl = 'https://x.example';
+  const row = (qid) => ({ ...emptyOfficerRow('Q1255921', 'President'), person: { ...emptyOfficerRow('Q1', '').person, qid }, begin: '2024-01-01' });
+  d.officers.push(row('Q200'), row('Q300'));
+  assert.ok(validateDraftForChangeset(d).includes('only one officeholder can be the current one — give the others an end date'));
+  d.officers[0].end = '2024-06-30'; // after its own begin (2024-01-01) — a closed past term
+  assert.deepEqual(validateDraftForChangeset(d), []);
+});
+
+test('validateDraftForChangeset: manage-leadership requires a reference URL once any row is present', () => {
+  const d = emptyDraft('manage-leadership');
+  d.association.qid = 'Q100';
+  const row = emptyOfficerRow('Q1255921', 'President');
+  row.person.qid = 'Q200';
+  row.begin = '2024-01-01';
+  d.officers.push(row);
+  assert.ok(validateDraftForChangeset(d).includes('association.referenceUrl is required'));
 });
