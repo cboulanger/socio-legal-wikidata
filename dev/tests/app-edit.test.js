@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { JSDOM } from 'jsdom';
 import { emptyAssociation } from '../../src/core/model.js';
 import { createApp } from '../../src/app.js';
+import { clearLeadershipHistoryCache } from '../../src/ui/components/leadership-history.js';
 
 function win(url) {
   return new JSDOM(`<!doctype html><div id="app">
@@ -191,4 +192,25 @@ test('saving an edit clears the cached last-edit of that item and looks it up ag
   await new Promise((r) => setTimeout(r, 0));
   assert.deepEqual(forgotten, ['Q1']);
   assert.match(w.document.getElementById('detail-host').innerHTML, /User:U2/);
+});
+
+test('clicking "Manage leadership" opens the wizard in manage-leadership mode', async () => {
+  const { w, opened, ready } = editApp('https://app.example/?edit');
+  await ready;
+  w.document.querySelector('button.row[data-qid="Q1"]').click();
+  w.document.querySelector('[data-action="leadership"]').click();
+  assert.equal(opened[0].seed.mode, 'manage-leadership');
+  assert.equal(opened[0].seed.association.qid, 'Q1');
+});
+
+test('saving a manage-leadership change clears the leadership-history cache for that association', async () => {
+  clearLeadershipHistoryCache('Q1');
+  const { w, opened, ready } = editApp('https://app.example/?edit');
+  await ready;
+  w.document.querySelector('button.row[data-qid="Q1"]').click();
+  w.document.querySelector('[data-action="leadership"]').click();
+  const { hooks, seed } = opened[0];
+  assert.doesNotThrow(() => hooks.onSaved({ via: 'direct', created: [], diffUrls: [] }, {
+    mode: 'manage-leadership', association: { qid: seed.association.qid, original: { labels: {}, descriptions: {} }, labels: {}, descriptions: {} }, officers: [],
+  }));
 });

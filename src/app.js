@@ -10,6 +10,7 @@ import { renderAssociationCard } from './ui/association-card.js';
 import { createRevisionClient } from './adapters/wikidata-revisions.js';
 import { createMapView as createMapViewImpl, toMapPins } from './ui/map-view.js';
 import { renderEditChrome } from './ui/edit-panel.js';
+import { mountLeadershipHistory, clearLeadershipHistoryCache } from './ui/components/leadership-history.js';
 
 /**
  * Read-only composition root. Every collaborator is injectable so the whole
@@ -23,6 +24,7 @@ import { renderEditChrome } from './ui/edit-panel.js';
  *   detectMode: () => ('read'|'edit') | Promise<'read'|'edit'>,
  *   buildEditRuntime?: () => Promise<{
  *     auth: {hasSession: () => boolean, connect: () => Promise<void>, disconnect: () => Promise<void>},
+ *     getLeadershipHistory?: (qid: string) => Promise<any>,
  *     openWizard: (host: HTMLElement, seed: any, hooks?: {onSaved?: Function}) => void,
  *   }>,
  * }} deps
@@ -90,6 +92,9 @@ export async function createApp(deps) {
     const a = s.selection ? s.associations.find((x) => x.qid === s.selection) : null;
     if (a) {
       mount(detailHost, renderAssociationCard(a, { editMode: s.mode === 'edit', lastEdit: liveEdits.get(a.qid) || a.lastEdit || null }));
+      if (s.mode === 'edit' && editRuntime?.getLeadershipHistory) {
+        mountLeadershipHistory(detailHost, { qid: a.qid, getHistory: editRuntime.getLeadershipHistory });
+      }
       if (revisions && !requestedEdits.has(a.qid)) {
         requestedEdits.add(a.qid);
         revisions.getLastEdit(a.qid).then((edit) => {
@@ -224,19 +229,24 @@ export async function createApp(deps) {
           countryLabel: a.countryLabel, seatQid: a.seatQid, seatLabel: a.seatLabel,
         };
         store.setState((s) => ({ associations: [...s.associations, added], selection: created.qid }));
+      } else if (draft.mode === 'manage-leadership') {
+        clearLeadershipHistoryCache(a.qid);
       }
     }
     paintChrome();
 
     detailHost.addEventListener('click', (e) => {
-      const btn = e.target.closest('[data-action="edit"]');
-      if (!btn) return;
-      const a = store.getState().associations.find((x) => x.qid === btn.dataset.qid);
-      if (!a) return;
-      editRuntime.openWizard(drawer, {
-        mode: 'update-field',
-        association: { qid: a.qid, label: a.label },
-      }, { onSaved: applySaved });
+      const editBtn = e.target.closest('[data-action="edit"]');
+      const leadershipBtn = e.target.closest('[data-action="leadership"]');
+      if (editBtn) {
+        const a = store.getState().associations.find((x) => x.qid === editBtn.dataset.qid);
+        if (!a) return;
+        editRuntime.openWizard(drawer, { mode: 'update-field', association: { qid: a.qid, label: a.label } }, { onSaved: applySaved });
+      } else if (leadershipBtn) {
+        const a = store.getState().associations.find((x) => x.qid === leadershipBtn.dataset.qid);
+        if (!a) return;
+        editRuntime.openWizard(drawer, { mode: 'manage-leadership', association: { qid: a.qid, label: a.label } }, { onSaved: applySaved });
+      }
     });
   }
 
@@ -313,6 +323,7 @@ if (typeof window !== 'undefined' && window.document?.getElementById('app')) {
         : api;
       return {
         auth,
+        getLeadershipHistory: api.getLeadershipHistory,
         openWizard: (host, seed, hooks = {}) => createWizard(host, { window, config, ports: { search: api, write }, seed, onClose: () => { host.innerHTML = ''; }, ...hooks }),
       };
     },
