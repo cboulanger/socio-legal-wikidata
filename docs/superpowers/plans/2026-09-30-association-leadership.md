@@ -835,7 +835,7 @@ test('two interleaved new-person + P488 pairs both resolve via LAST (manage-lead
   const out = serialize(cs);
   // neither P488 link should have fallen back to a "# MANUAL" comment
   assert.equal((out.match(/# MANUAL/g) || []).length, 0);
-  assert.equal((out.match(/^LAST\tP488\tLAST$/gm) || []).length, 2);
+  assert.equal((out.match(/^Q100\tP488\tLAST\t/gm) || []).length, 2);
 });
 ```
 

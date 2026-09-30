@@ -50,3 +50,21 @@ test('quoted values escape embedded quotes and backslashes', () => {
   assert.match(out, /LAST\tP856\t"https:\/\/example\.org\/\\"x\\""/);
   assert.match(out, /S854\t"https:\/\/ref\.example\/\\"y\\""/);
 });
+
+test('two interleaved new-person + P488 pairs both resolve via LAST (manage-leadership ordering)', () => {
+  const cs = {
+    summary: 'socio-legal directory: update leadership (2 entries)',
+    ops: [
+      { type: 'create-item', ref: 'person-0', labels: { en: 'Jane Roe' }, descriptions: {}, claims: [{ property: 'P31', value: { kind: 'item', qid: 'Q5' } }] },
+      { type: 'add-statement', target: { qid: 'Q100' }, property: 'P488', value: { kind: 'item', ref: 'person-0' },
+        qualifiers: [{ property: 'P580', value: { kind: 'time', value: '1990-01-01', precision: 11 } }] },
+      { type: 'create-item', ref: 'person-1', labels: { en: 'John Doe' }, descriptions: {}, claims: [{ property: 'P31', value: { kind: 'item', qid: 'Q5' } }] },
+      { type: 'add-statement', target: { qid: 'Q100' }, property: 'P488', value: { kind: 'item', ref: 'person-1' },
+        qualifiers: [{ property: 'P580', value: { kind: 'time', value: '1995-01-01', precision: 11 } }] },
+    ],
+  };
+  const out = serialize(cs);
+  // neither P488 link should have fallen back to a "# MANUAL" comment
+  assert.equal((out.match(/# MANUAL/g) || []).length, 0);
+  assert.equal((out.match(/^Q100\tP488\tLAST\t/gm) || []).length, 2);
+});
