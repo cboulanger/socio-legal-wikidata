@@ -895,7 +895,9 @@ test('getLeadershipHistory: labels are batched in one request, sorted newest-beg
           qualifiers: { P580: [{ datavalue: { value: { time: '+2010-01-01T00:00:00Z' } } }] } },
       ] } } } });
     }
-    assert.match(url, /ids=Q5%7CQ9%7CQ140686|ids=Q9%7CQ5%7CQ140686/); // batched, order not asserted strictly beyond containment
+    assert.match(url, /action=wbgetentities.*props=labels/); // one batched label lookup, not one request per row
+    const ids = new URL(url).searchParams.get('ids').split('|');
+    assert.deepEqual(new Set(ids), new Set(['Q5', 'Q9', 'Q140686']));
     return ok({ entities: {
       Q5: { labels: { en: { value: 'Eva Kocher' } } },
       Q9: { labels: { en: { value: 'Old Pres' } } },

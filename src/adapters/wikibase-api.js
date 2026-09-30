@@ -1,3 +1,5 @@
+import { leadershipClaimsFromEntity } from '../core/draft.js';
+
 /**
  * @typedef {import('../core/changeset.js').ChangeSet} ChangeSet
  * @typedef {import('../core/changeset.js').Value} Value
@@ -97,6 +99,30 @@ export function createWikibaseApi({ fetch, config, getToken }) {
       } catch {
         return [];
       }
+    },
+
+    /**
+     * Every P488 (chairperson) statement on `qid`, labelled and sorted newest-begin-first.
+     * @param {string} qid
+     * @returns {Promise<{history: import('../core/draft.js').LeadershipHistoryRow[], current: import('../core/draft.js').LeadershipHistoryRow|null}>}
+     */
+    async getLeadershipHistory(qid) {
+      const entity = await this.getEntity(qid);
+      const claims = leadershipClaimsFromEntity(entity);
+      if (!claims.length) return { history: [], current: null };
+      const ids = [...new Set(claims.flatMap((c) => [c.personQid, c.officeQid].filter(Boolean)))];
+      const j = await getJson(`${action}?action=wbgetentities&format=json&origin=*&props=labels&languages=en&ids=${ids.join('%7C')}`);
+      const labelOf = (id) => j.entities?.[id]?.labels?.en?.value || id;
+      const history = claims
+        .map((c) => ({
+          statementId: c.statementId, personQid: c.personQid, personLabel: labelOf(c.personQid),
+          officeQid: c.officeQid, officeLabel: c.officeQid ? labelOf(c.officeQid) : 'chairperson',
+          begin: c.begin, end: c.end,
+        }))
+        .sort((x, y) => (y.begin || '').localeCompare(x.begin || ''));
+      const open = history.filter((r) => !r.end);
+      const current = open.length ? open.reduce((best, r) => ((r.begin || '') > (best.begin || '') ? r : best)) : null;
+      return { history, current };
     },
 
     async lookupByExternalId(property, value) {

@@ -26,6 +26,7 @@
  * @property {(text: string, type: 'item') => Promise<EntityCandidate[]>} searchEntities
  * @property {(qid: string) => Promise<any>} getEntity
  * @property {(property: string, value: string) => Promise<EntityCandidate[]>} lookupByExternalId
+ * @property {(qid: string) => Promise<{history: import('../core/draft.js').LeadershipHistoryRow[], current: import('../core/draft.js').LeadershipHistoryRow|null}>} [getLeadershipHistory]
  *
  * @typedef {Object} WriteResult
  * @property {'direct'|'quickstatements'} via
