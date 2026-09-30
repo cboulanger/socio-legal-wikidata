@@ -1639,8 +1639,7 @@ test('fetches only on first open, renders rows, and reuses the session cache on 
   const { host } = cardWithDisclosure();
   mountLeadershipHistory(host, { qid: 'Q1', getHistory });
   const details = host.querySelector('details');
-  details.open = true;
-  details.dispatchEvent(new host.ownerDocument.defaultView.Event('toggle'));
+  details.open = true; // jsdom (like a real browser) fires a native 'toggle' event from this setter
   await new Promise((r) => setTimeout(r, 0));
   assert.match(host.querySelector('[data-role="leadership-history-body"]').innerHTML, /Old Pres/);
   assert.equal(calls, 1);
@@ -1650,7 +1649,6 @@ test('fetches only on first open, renders rows, and reuses the session cache on 
   mountLeadershipHistory(host2, { qid: 'Q1', getHistory });
   const details2 = host2.querySelector('details');
   details2.open = true;
-  details2.dispatchEvent(new host2.ownerDocument.defaultView.Event('toggle'));
   await new Promise((r) => setTimeout(r, 0));
   assert.match(host2.querySelector('[data-role="leadership-history-body"]').innerHTML, /Old Pres/);
   assert.equal(calls, 1);
@@ -1663,14 +1661,14 @@ test('shows an inline error on failure and allows a retry on the next open', asy
   const { host } = cardWithDisclosure();
   mountLeadershipHistory(host, { qid: 'Q2', getHistory });
   const details = host.querySelector('details');
-  const toggle = () => details.dispatchEvent(new host.ownerDocument.defaultView.Event('toggle'));
 
-  details.open = true; toggle();
+  details.open = true;
   await new Promise((r) => setTimeout(r, 0));
   assert.match(host.querySelector('[data-role="leadership-history-body"]').innerHTML, /Could not load/);
 
-  details.open = false; toggle();
-  details.open = true; toggle();
+  details.open = false;
+  await new Promise((r) => setTimeout(r, 0));
+  details.open = true;
   await new Promise((r) => setTimeout(r, 0));
   assert.match(host.querySelector('[data-role="leadership-history-body"]').innerHTML, /No leadership history/);
   assert.equal(calls, 2);
