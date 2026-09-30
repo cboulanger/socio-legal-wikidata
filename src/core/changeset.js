@@ -1,4 +1,4 @@
-import { validateDraftForChangeset, changedTerms, changedStatements, scopeStatements, changedParent, changedOperatingArea, activeFormerNames, aliasesToSet, changedAbbreviations } from './draft.js';
+import { validateDraftForChangeset, changedTerms, changedStatements, scopeStatements, changedParent, changedOperatingArea, activeFormerNames, aliasesToSet, changedAbbreviations, cleanTerms } from './draft.js';
 
 /**
  * @typedef {{kind:'item', qid:string}|{kind:'item', ref:string}
@@ -49,7 +49,7 @@ function abbreviationClaims(a, reference) {
 
 /**
  * @param {import('./draft.js').DirectoryDraft} draft
- * @param {{humanQid:string, researcherQid:string, academicJournalQid:string}} cfg
+ * @param {{humanQid:string, researcherQid:string, academicJournalQid:string, today?:string}} cfg
  * @returns {ChangeSet}
  */
 export function buildChangeSet(draft, cfg) {
@@ -59,31 +59,7 @@ export function buildChangeSet(draft, cfg) {
   /** @type {Op[]} */
   const ops = [];
   const a = draft.association;
-  const p = draft.president;
   const j = draft.journal;
-
-  // --- person (create if new) ---
-  let personValue = null;
-  if (draft.mode !== 'update-field') {
-    if (p.qid) {
-      personValue = item(p.qid);
-      if (p.universityQid) {
-        ops.push({ type: 'add-statement', target: { qid: p.qid }, property: 'P108', value: item(p.universityQid), reference: p.referenceUrl ? { P854: p.referenceUrl } : undefined });
-      }
-    } else if (p.label) {
-      /** @type {Claim[]} */
-      const claims = [
-        { property: 'P31', value: item(cfg.humanQid) },
-        { property: 'P106', value: item(cfg.researcherQid) },
-        { property: 'P108', value: item(p.universityQid) },
-      ];
-      if (p.homepage) claims.push({ property: 'P856', value: url(p.homepage) });
-      if (p.orcid) claims.push({ property: 'P496', value: extId(p.orcid) });
-      for (const c of claims) if (p.referenceUrl) c.reference = { P854: p.referenceUrl };
-      ops.push({ type: 'create-item', ref: 'person', labels: { en: p.label }, descriptions: p.description ? { en: p.description } : {}, claims });
-      personValue = ref('person');
-    }
-  }
 
   // --- journal (create if new) ---
   if (j) {
@@ -119,13 +95,6 @@ export function buildChangeSet(draft, cfg) {
     if (a.website) claims.push({ property: 'P856', value: url(a.website) });
     if (a.email) claims.push({ property: 'P968', value: mailto(a.email) });
     if (a.inception) claims.push({ property: 'P571', value: year(a.inception) });
-    if (personValue) {
-      claims.push({
-        property: 'P488',
-        value: personValue,
-        qualifiers: draft.termStart ? [{ property: 'P580', value: day(draft.termStart) }] : undefined,
-      });
-    }
     for (const c of claims) if (assocRefUrl) c.reference = assocRefUrl;
     claims.push(...formerNameClaims(a, assocRefUrl));
     claims.push(...abbreviationClaims(a, assocRefUrl));
@@ -135,23 +104,48 @@ export function buildChangeSet(draft, cfg) {
       type: 'create-item', ref: 'assoc', labels: terms.labels, descriptions: terms.descriptions,
       ...(Object.keys(createAliases).length ? { aliases: createAliases } : {}), claims,
     });
-    const extras = [j ? 'journal' : null, personValue ? 'president' : null].filter(Boolean);
-    return { summary: `socio-legal directory: create association${extras.length ? ` with ${extras.join(' and ')}` : ''}`, ops };
+    return { summary: `socio-legal directory: create association${j ? ' with journal' : ''}`, ops };
   }
 
-  if (draft.mode === 'change-president') {
-    ops.push({
-      type: 'add-statement',
-      target: { qid: a.qid },
-      property: 'P488',
-      value: personValue,
-      qualifiers: [{ property: 'P580', value: day(draft.termStart) }],
-      reference: assocRefUrl || (p.referenceUrl ? { P854: p.referenceUrl } : undefined),
+  if (draft.mode === 'manage-leadership') {
+    const today = cfg.today || new Date().toISOString().slice(0, 10);
+    const rows = draft.officers || [];
+    let openRow = null;
+    rows.forEach((row, i) => {
+      const rp = row.person;
+      let value;
+      if (rp.qid) {
+        value = item(rp.qid);
+        if (rp.affiliationQid) {
+          ops.push({
+            type: 'add-statement', target: { qid: rp.qid }, property: 'P108', value: item(rp.affiliationQid),
+            qualifiers: [{ property: 'P585', value: day(today) }], reference: assocRefUrl,
+          });
+        }
+      } else {
+        const personRef = `person-${i}`;
+        /** @type {Claim[]} */
+        const claims = [
+          { property: 'P31', value: item(cfg.humanQid) },
+          { property: 'P106', value: item(cfg.researcherQid) },
+        ];
+        if (rp.birthDate) claims.push({ property: 'P569', value: day(rp.birthDate) });
+        if (rp.affiliationQid) claims.push({ property: 'P108', value: item(rp.affiliationQid), qualifiers: [{ property: 'P585', value: day(today) }] });
+        if (rp.homepage) claims.push({ property: 'P856', value: url(rp.homepage) });
+        if (rp.orcid) claims.push({ property: 'P496', value: extId(rp.orcid) });
+        for (const c of claims) if (assocRefUrl) c.reference = assocRefUrl;
+        ops.push({ type: 'create-item', ref: personRef, labels: cleanTerms(rp.labels), descriptions: rp.description ? { en: rp.description } : {}, claims });
+        value = ref(personRef);
+      }
+      const qualifiers = [{ property: 'P580', value: day(row.begin) }, { property: 'P3831', value: item(row.officeQid) }];
+      if (row.end) qualifiers.push({ property: 'P582', value: day(row.end) });
+      ops.push({ type: 'add-statement', target: { qid: a.qid }, property: 'P488', value, qualifiers, reference: assocRefUrl });
+      if (!row.end) openRow = row;
     });
-    if (draft.previousPresidentStatementId) {
-      ops.push({ type: 'end-statement', statementId: draft.previousPresidentStatementId, endDate: draft.termStart });
+    if (openRow && draft.leadershipOriginal?.current) {
+      ops.push({ type: 'end-statement', statementId: draft.leadershipOriginal.current.statementId, endDate: openRow.begin });
     }
-    return { summary: 'socio-legal directory: record new president', ops };
+    return { summary: `socio-legal directory: update leadership (${rows.length} ${rows.length === 1 ? 'entry' : 'entries'})`, ops };
   }
 
   // update-field
@@ -228,6 +222,18 @@ export function describeChanges(draft) {
     if (a.seatLabel || a.seatQid) lines.push(`seat: ${a.seatLabel || a.seatQid}`);
     if (a.parentQid) lines.push(`part of: ${a.parentLabel || a.parentQid}`);
     if (a.referenceUrl) lines.push(`reference: ${a.referenceUrl}`);
+  }
+  if (draft.mode === 'manage-leadership') {
+    for (const row of draft.officers || []) {
+      const who = row.person.qid
+        ? `${row.person.qid} (existing person)`
+        : `${Object.values(row.person.labels || {})[0] || '(unnamed)'} (new person)`;
+      lines.push(`${row.officeLabel || row.officeQid}: ${who}, ${row.begin || '?'} – ${row.end || 'present'}`);
+    }
+    const openRow = (draft.officers || []).find((r) => !r.end);
+    if (openRow && draft.leadershipOriginal?.current) {
+      lines.push(`ends the previous officeholder's term at ${openRow.begin}`);
+    }
   }
   return lines;
 }

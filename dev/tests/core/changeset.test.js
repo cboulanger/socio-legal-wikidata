@@ -5,48 +5,6 @@ import { buildChangeSet, describeChanges } from '../../../src/core/changeset.js'
 
 const cfg = { humanQid: 'Q5', researcherQid: 'Q1650915', academicJournalQid: 'Q737498' };
 
-test('change-president with an existing person: one add + one end statement', () => {
-  const d = emptyDraft('change-president');
-  d.association.qid = 'Q100';
-  d.president.qid = 'Q200';
-  d.president.universityQid = 'Q300';
-  d.president.referenceUrl = 'https://uni.example/staff/x';
-  d.termStart = '2026-01-01';
-  d.previousPresidentStatementId = 'Q100$abc-123';
-
-  const cs = buildChangeSet(d, cfg);
-  const add = cs.ops.find((o) => o.type === 'add-statement' && o.property === 'P488');
-  assert.deepEqual(add.target, { qid: 'Q100' });
-  assert.deepEqual(add.value, { kind: 'item', qid: 'Q200' });
-  assert.deepEqual(add.qualifiers, [{ property: 'P580', value: { kind: 'time', value: '2026-01-01', precision: 11 } }]);
-  assert.ok(add.reference);
-  const end = cs.ops.find((o) => o.type === 'end-statement');
-  assert.deepEqual(end, { type: 'end-statement', statementId: 'Q100$abc-123', endDate: '2026-01-01' });
-  assert.match(cs.summary, /new president/i);
-});
-
-test('change-president with a NEW person: create-item first, refs wired', () => {
-  const d = emptyDraft('change-president');
-  d.association.qid = 'Q100';
-  d.president.label = 'Jane Roe';
-  d.president.homepage = 'https://uni.example/roe';
-  d.president.orcid = '0000-0002-1825-0097';
-  d.president.universityQid = 'Q300';
-  d.president.referenceUrl = 'https://uni.example/staff/roe';
-  d.termStart = '2026-01-01';
-
-  const cs = buildChangeSet(d, cfg);
-  const create = cs.ops.find((o) => o.type === 'create-item' && o.ref === 'person');
-  assert.equal(create.labels.en, 'Jane Roe');
-  assert.ok(create.claims.some((c) => c.property === 'P31' && c.value.qid === 'Q5'));
-  assert.ok(create.claims.some((c) => c.property === 'P106' && c.value.qid === 'Q1650915'));
-  assert.ok(create.claims.some((c) => c.property === 'P108' && c.value.qid === 'Q300'));
-  assert.ok(create.claims.some((c) => c.property === 'P856' && c.value.value === 'https://uni.example/roe'));
-  assert.ok(create.claims.some((c) => c.property === 'P496' && c.value.value === '0000-0002-1825-0097'));
-  const add = cs.ops.find((o) => o.type === 'add-statement' && o.property === 'P488');
-  assert.deepEqual(add.value, { kind: 'item', ref: 'person' });
-});
-
 test('create-association with a new journal links journal P123 to the association ref', () => {
   const d = emptyDraft('create-association');
   Object.assign(d.association, {
@@ -56,8 +14,6 @@ test('create-association with a new journal links journal P123 to the associatio
     website: 'https://esels.eu', email: 'contact@esels.eu',
     inception: '2021', referenceUrl: 'https://esels.eu/about',
   });
-  d.president.qid = 'Q400';
-  d.termStart = '2024-01-01';
   d.journal = { qid: null, label: 'European Journal of Empirical Legal Studies', url: 'https://esels.eu/ejels/', issn: null, referenceUrl: 'https://esels.eu/ejels/' };
 
   const cs = buildChangeSet(d, cfg);
@@ -68,8 +24,6 @@ test('create-association with a new journal links journal P123 to the associatio
   assert.ok(assoc.claims.some((c) => c.property === 'P101' && c.value.qid === 'Q847034'));
   assert.ok(assoc.claims.some((c) => c.property === 'P17' && c.value.qid === 'Q55'));
   assert.ok(assoc.claims.some((c) => c.property === 'P571' && c.value.precision === 9));
-  const p488 = assoc.claims.find((c) => c.property === 'P488');
-  assert.deepEqual(p488.value, { kind: 'item', qid: 'Q400' });
   const journal = cs.ops.find((o) => o.type === 'create-item' && o.ref === 'journal');
   assert.ok(journal.claims.some((c) => c.property === 'P123' && c.value.ref === 'assoc'));
 });
@@ -92,7 +46,6 @@ test('P968 (email) is always stored as a mailto: URI, in both create and update-
     labels: { en: 'X' }, classQid: 'Q955824', fieldQid: 'Q847034', email: 'office@body.org',
     referenceUrl: 'https://body.org',
   });
-  created.president.qid = 'Q400';
   const csCreate = buildChangeSet(created, cfg);
   const assoc = csCreate.ops.find((o) => o.type === 'create-item' && o.ref === 'assoc');
   const p968Create = assoc.claims.find((c) => c.property === 'P968');
@@ -123,7 +76,6 @@ test('linking an EXISTING journal emits add-statements, not a create-item', () =
     labels: { en: 'Law and Society Association' },
     classQid: 'Q955824', fieldQid: 'Q847034', referenceUrl: 'https://example.org/about',
   });
-  d.president.qid = 'Q400';
   d.journal = { qid: 'Q6502970', label: 'Law & Society Review', url: 'https://example.org/lsr', issn: '0023-9216', referenceUrl: 'https://example.org/lsr' };
 
   const cs = buildChangeSet(d, cfg);
@@ -139,7 +91,7 @@ test('linking an EXISTING journal emits add-statements, not a create-item', () =
   assert.equal(p236.value.value, '0023-9216');
 });
 
-test('create-association without a president creates only the association (no empty person)', () => {
+test('create-association creates only the association item (no person, no P488)', () => {
   const d = emptyDraft('create-association');
   Object.assign(d.association, {
     labels: { pt: 'Rede de Pesquisa Empírica em Direito' }, classQid: 'Q955824', fieldQid: 'Q847034',
@@ -348,4 +300,132 @@ test('update-field: a changed operating area alone is a valid change and replace
   assert.equal(op.replace, true);
   assert.match(cs.summary, /operating area/);
   assert.ok(describeChanges(d).includes('operating area: Asia'));
+});
+
+test('manage-leadership: an existing person gets a referenced P488 with begin/office qualifiers', () => {
+  const d = emptyDraft('manage-leadership');
+  d.association.qid = 'Q100';
+  d.association.referenceUrl = 'https://x.example/board';
+  d.officers.push({
+    person: { qid: 'Q200', labels: {}, description: '', birthDate: null, affiliationQid: null, affiliationLabel: null, orcid: null, homepage: null },
+    officeQid: 'Q1255921', officeLabel: 'President', begin: '2024-01-01', end: null,
+  });
+  const cs = buildChangeSet(d, cfg);
+  assert.equal(cs.ops.length, 1);
+  const op = cs.ops[0];
+  assert.equal(op.type, 'add-statement');
+  assert.deepEqual(op.target, { qid: 'Q100' });
+  assert.equal(op.property, 'P488');
+  assert.deepEqual(op.value, { kind: 'item', qid: 'Q200' });
+  assert.deepEqual(op.qualifiers, [
+    { property: 'P580', value: { kind: 'time', value: '2024-01-01', precision: 11 } },
+    { property: 'P3831', value: { kind: 'item', qid: 'Q1255921' } },
+  ]);
+  assert.deepEqual(op.reference, { P854: 'https://x.example/board' });
+});
+
+test('manage-leadership: a past term (end given) adds P582 too, and needs no current-officer end-statement', () => {
+  const d = emptyDraft('manage-leadership');
+  d.association.qid = 'Q100';
+  d.association.referenceUrl = 'https://x.example/history';
+  d.officers.push({
+    person: { qid: 'Q200', labels: {}, description: '', birthDate: null, affiliationQid: null, affiliationLabel: null, orcid: null, homepage: null },
+    officeQid: 'Q140686', officeLabel: 'Chairperson', begin: '1995-06-01', end: '2010-01-15',
+  });
+  const cs = buildChangeSet(d, cfg);
+  assert.equal(cs.ops.length, 1);
+  assert.deepEqual(cs.ops[0].qualifiers, [
+    { property: 'P580', value: { kind: 'time', value: '1995-06-01', precision: 11 } },
+    { property: 'P3831', value: { kind: 'item', qid: 'Q140686' } },
+    { property: 'P582', value: { kind: 'time', value: '2010-01-15', precision: 11 } },
+  ]);
+});
+
+test('manage-leadership: a new person is created with P569/P108(+P585)/P496/P856, then linked via P488', () => {
+  const d = emptyDraft('manage-leadership');
+  d.association.qid = 'Q100';
+  d.association.referenceUrl = 'https://x.example/about';
+  d.officers.push({
+    person: {
+      qid: null, labels: { en: 'Jane Roe', pt: 'Joana Roe' }, description: 'legal scholar',
+      birthDate: '1970-03-04', affiliationQid: 'Q300', affiliationLabel: 'Example University',
+      orcid: '0000-0002-1825-0097', homepage: 'https://uni.example/roe',
+    },
+    officeQid: 'Q1255921', officeLabel: 'President', begin: '2024-01-01', end: null,
+  });
+  const cs = buildChangeSet(d, { ...cfg, today: '2026-09-30' });
+  const create = cs.ops.find((o) => o.type === 'create-item' && o.ref === 'person-0');
+  assert.deepEqual(create.labels, { en: 'Jane Roe', pt: 'Joana Roe' });
+  assert.deepEqual(create.descriptions, { en: 'legal scholar' });
+  assert.ok(create.claims.some((c) => c.property === 'P31' && c.value.qid === 'Q5'));
+  assert.ok(create.claims.some((c) => c.property === 'P106' && c.value.qid === 'Q1650915'));
+  assert.ok(create.claims.some((c) => c.property === 'P569' && c.value.value === '1970-03-04' && c.value.precision === 11));
+  const aff = create.claims.find((c) => c.property === 'P108');
+  assert.deepEqual(aff.value, { kind: 'item', qid: 'Q300' });
+  assert.deepEqual(aff.qualifiers, [{ property: 'P585', value: { kind: 'time', value: '2026-09-30', precision: 11 } }]);
+  assert.ok(create.claims.some((c) => c.property === 'P496' && c.value.value === '0000-0002-1825-0097'));
+  assert.ok(create.claims.some((c) => c.property === 'P856' && c.value.value === 'https://uni.example/roe'));
+  assert.ok(create.claims.every((c) => c.reference?.P854 === 'https://x.example/about'));
+  // the P488 statement for this row must immediately follow its own create-item, for the
+  // QuickStatements LAST-reference ordering constraint (see quickstatements.test.js)
+  const createIdx = cs.ops.indexOf(create);
+  const link = cs.ops[createIdx + 1];
+  assert.equal(link.property, 'P488');
+  assert.deepEqual(link.value, { kind: 'item', ref: 'person-0' });
+});
+
+test('manage-leadership: a new row with no end date auto-ends the previously open statement', () => {
+  const d = emptyDraft('manage-leadership');
+  d.association.qid = 'Q100';
+  d.association.referenceUrl = 'https://x.example/board';
+  d.leadershipOriginal = { history: [], current: { statementId: 'Q100$OLD', personQid: 'Q9', officeQid: null, officeLabel: 'chairperson', begin: '2018-01-01', end: null } };
+  d.officers.push({
+    person: { qid: 'Q200', labels: {}, description: '', birthDate: null, affiliationQid: null, affiliationLabel: null, orcid: null, homepage: null },
+    officeQid: 'Q1255921', officeLabel: 'President', begin: '2024-01-01', end: null,
+  });
+  const cs = buildChangeSet(d, cfg);
+  const end = cs.ops.find((o) => o.type === 'end-statement');
+  assert.deepEqual(end, { type: 'end-statement', statementId: 'Q100$OLD', endDate: '2024-01-01' });
+});
+
+test('manage-leadership: a purely historical batch (no open row) does not touch the existing current statement', () => {
+  const d = emptyDraft('manage-leadership');
+  d.association.qid = 'Q100';
+  d.association.referenceUrl = 'https://x.example/history';
+  d.leadershipOriginal = { history: [], current: { statementId: 'Q100$OLD', personQid: 'Q9', officeQid: null, officeLabel: 'chairperson', begin: '2018-01-01', end: null } };
+  d.officers.push({
+    person: { qid: 'Q200', labels: {}, description: '', birthDate: null, affiliationQid: null, affiliationLabel: null, orcid: null, homepage: null },
+    officeQid: 'Q1255921', officeLabel: 'President', begin: '1990-01-01', end: '1995-01-01',
+  });
+  const cs = buildChangeSet(d, cfg);
+  assert.equal(cs.ops.some((o) => o.type === 'end-statement'), false);
+});
+
+test('manage-leadership: picking an existing person with a current affiliation writes a P585-dated P108, no create-item', () => {
+  const d = emptyDraft('manage-leadership');
+  d.association.qid = 'Q100';
+  d.association.referenceUrl = 'https://x.example/board';
+  d.officers.push({
+    person: { qid: 'Q200', labels: {}, description: '', birthDate: null, affiliationQid: 'Q300', affiliationLabel: 'Example University', orcid: null, homepage: null },
+    officeQid: 'Q1255921', officeLabel: 'President', begin: '2024-01-01', end: null,
+  });
+  const cs = buildChangeSet(d, { ...cfg, today: '2026-09-30' });
+  assert.equal(cs.ops.some((o) => o.type === 'create-item'), false);
+  const aff = cs.ops.find((o) => o.property === 'P108');
+  assert.deepEqual(aff.target, { qid: 'Q200' });
+  assert.deepEqual(aff.value, { kind: 'item', qid: 'Q300' });
+  assert.deepEqual(aff.qualifiers, [{ property: 'P585', value: { kind: 'time', value: '2026-09-30', precision: 11 } }]);
+});
+
+test('describeChanges: manage-leadership lists each row and the auto-end', () => {
+  const d = emptyDraft('manage-leadership');
+  d.association.qid = 'Q100';
+  d.leadershipOriginal = { history: [], current: { statementId: 'Q100$OLD', personQid: 'Q9', officeQid: null, officeLabel: 'chairperson', begin: '2018-01-01', end: null } };
+  d.officers.push({
+    person: { qid: 'Q200', labels: {}, description: '', birthDate: null, affiliationQid: null, affiliationLabel: null, orcid: null, homepage: null },
+    officeQid: 'Q1255921', officeLabel: 'President', begin: '2024-01-01', end: null,
+  });
+  const lines = describeChanges(d);
+  assert.ok(lines.includes('President: Q200 (existing person), 2024-01-01 – present'));
+  assert.ok(lines.some((l) => /ends the previous officeholder.s term at 2024-01-01/.test(l)));
 });
