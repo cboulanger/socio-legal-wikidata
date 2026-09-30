@@ -105,5 +105,10 @@ Step-by-step registration is in
   existing Wikidata item to the directory.
 - Record **former names** as dated official-name statements.
 - Pick the **host organization** an association is part of.
+- **Manage leadership**: look up or create the person holding an office
+  (president, chairperson, ...), with begin/end dates, and back-fill past
+  officeholders for historical background. Shown on the card as a
+  "Leadership history" disclosure.
 
-Design: [`docs/spec/2026-09-29-multilingual-edit-and-add-association-design.md`](docs/spec/2026-09-29-multilingual-edit-and-add-association-design.md).
+Design: [`docs/spec/2026-09-29-multilingual-edit-and-add-association-design.md`](docs/spec/2026-09-29-multilingual-edit-and-add-association-design.md),
+[`docs/spec/2026-09-30-association-leadership-design.md`](docs/spec/2026-09-30-association-leadership-design.md).

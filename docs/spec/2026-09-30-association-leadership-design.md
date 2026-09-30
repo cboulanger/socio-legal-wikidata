@@ -1,6 +1,6 @@
 # Association leadership ("Add association president") — Design
 
-**Status:** Draft
+**Status:** Implemented
 **Date:** 2026-09-30
 **Builds on:** [`2026-09-01-socio-legal-associations-directory-design.md`](2026-09-01-socio-legal-associations-directory-design.md) §1.3/§2.3 (data model,
 leadership layer) and [`2026-09-29-multilingual-edit-and-add-association-design.md`](2026-09-29-multilingual-edit-and-add-association-design.md) (multilingual
