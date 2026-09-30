@@ -1,11 +1,11 @@
 import { looksPersonal } from '../../core/email-guard.js';
-import { cleanTerms, changedStatements, hasTermChanges, hasScopeChanges, hasFormerNames, hasAbbreviations, changedParent, changedOperatingArea, validateTerms, validateFormerNames } from '../../core/draft.js';
+import { cleanTerms, changedStatements, hasTermChanges, hasScopeChanges, hasFormerNames, hasAbbreviations, changedParent, changedOperatingArea, validateTerms, validateFormerNames, validateDraftForChangeset } from '../../core/draft.js';
 
 /** @type {Object<import('../../core/draft.js').DirectoryDraft['mode'], string[]>} */
 export const STEP_ORDER = {
   // place comes before details: the country decides which national language is suggested
   'create-association': ['identify', 'place', 'details', 'review'],
-  'change-president': ['identify', 'people', 'review'],
+  'manage-leadership': ['officers', 'review'],
   'update-field': ['details', 'review'],
 };
 
@@ -16,7 +16,6 @@ export const STEP_ORDER = {
  */
 export function validateStep(step, d) {
   const a = d.association;
-  const p = d.president;
   const e = [];
 
   if (step === 'identify') {
@@ -46,13 +45,8 @@ export function validateStep(step, d) {
     e.push(...validateTerms(a), ...validateFormerNames(a));
   }
 
-  if (step === 'people') {
-    if (!p.qid && !p.label) e.push('choose or name the president');
-    if (!p.qid) {
-      if (!p.universityQid) e.push('pick the president’s university');
-      if (!p.referenceUrl) e.push('a reference URL for the new person is required');
-    }
-    if (d.mode === 'change-president' && !d.termStart) e.push('set the term start date');
+  if (step === 'officers') {
+    return validateDraftForChangeset(d);
   }
 
   if (step === 'journal') {

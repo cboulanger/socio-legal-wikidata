@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { emptyDraft } from '../../../src/core/draft.js';
+import { emptyDraft, validateDraftForChangeset } from '../../../src/core/draft.js';
 import { STEP_ORDER, validateStep } from '../../../src/ui/edit-wizard/steps.js';
 
 test('STEP_ORDER for create-association: place comes before details (the country suggests the language)', () => {
@@ -31,13 +31,15 @@ test('details step enforces reference and the personal-e-mail confirmation', () 
   assert.equal(validateStep('details', d).length, 0);
 });
 
-test('people step requires a president and, for a new person, a university + reference', () => {
-  const d = emptyDraft('create-association');
-  assert.ok(validateStep('people', d).includes('choose or name the president'));
-  d.president.label = 'Jane';
-  assert.ok(validateStep('people', d).includes('pick the president’s university'));
-  d.president.universityQid = 'Q1';
-  assert.ok(validateStep('people', d).includes('a reference URL for the new person is required'));
+test('STEP_ORDER for manage-leadership: officers then review, no identify (the association is already known)', () => {
+  assert.deepEqual(STEP_ORDER['manage-leadership'], ['officers', 'review']);
+});
+
+test('officers step reuses the full draft validation, so "add at least one officeholder" surfaces immediately', () => {
+  const d = emptyDraft('manage-leadership');
+  d.association.qid = 'Q100';
+  assert.deepEqual(validateStep('officers', d), validateDraftForChangeset(d));
+  assert.ok(validateStep('officers', d).includes('add at least one officeholder'));
 });
 
 test('place step needs a country or a seat', () => {
