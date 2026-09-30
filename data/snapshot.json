@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-29",
+  "generatedAt": "2026-09-30",
   "associations": [
     {
       "qid": "Q141260161",
@@ -44,7 +44,7 @@
       ],
       "countryCode": "JP",
       "countryLabel": "Japan",
-      "operatingAreaQid": null,
+      "operatingAreaQid": "Q48",
       "seatQid": null,
       "seatLabel": null,
       "seatCoord": null,
@@ -61,12 +61,12 @@
       "leadCoord": null,
       "journal": null,
       "lastEdit": {
-        "revid": 2550924162,
+        "revid": 2550944076,
         "user": "Panyasan",
         "anon": false,
         "userHidden": false,
-        "timestamp": "2026-09-29T16:32:56Z",
-        "comment": "/* wbremoveclaims-remove:1| */ [[Property:P101]]: [[Q2734663]], #quickstatements; #temporary_batch_1790699525268"
+        "timestamp": "2026-09-29T17:46:52Z",
+        "comment": "/* wbsetclaim-create:1||1 */ [[Property:P2541]]: [[Q48]], socio-legal directory: update operating area"
       }
     },
     {
