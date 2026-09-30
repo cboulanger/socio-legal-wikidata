@@ -71,3 +71,16 @@ test('an editor name is escaped', () => {
   const out = renderAssociationCard(a, { lastEdit: { ...lastEdit, user: '<img src=x onerror=alert(1)>' } }).value;
   assert.doesNotMatch(out, /<img/);
 });
+
+test('edit mode shows a "Manage leadership" button and a Leadership history disclosure', () => {
+  const out = renderAssociationCard(a, { editMode: true }).value;
+  assert.match(out, /data-action="leadership"/);
+  assert.match(out, /<details class="card__history"/);
+  assert.match(out, /Leadership history/);
+});
+
+test('read mode shows neither the leadership button nor the history disclosure', () => {
+  const out = renderAssociationCard(a, { editMode: false }).value;
+  assert.doesNotMatch(out, /data-action="leadership"/);
+  assert.doesNotMatch(out, /card__history/);
+});

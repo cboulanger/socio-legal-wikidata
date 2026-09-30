@@ -31,13 +31,22 @@ export function renderAssociationCard(a, { editMode = false, lastEdit = null } =
               : a.president.label}
             ${a.leadUniLabel ? html`<span class="card__sub">${a.leadUniLabel}</span>` : ''}</p>`
         : ''}
+      ${editMode
+        ? html`<details class="card__history" data-qid="${a.qid}">
+            <summary>Leadership history</summary>
+            <div data-role="leadership-history-body"></div>
+          </details>`
+        : ''}
       <p class="card__row">journal:
         ${a.journal
           ? html`<a href="${safeHref(a.journal.url || '#')}" rel="noopener" target="_blank">${a.journal.label}</a>`
           : '—'}</p>
       ${lastEdit ? renderLastEdit(a.qid, lastEdit, editMode) : ''}
       ${editMode
-        ? html`<p class="card__actions"><button type="button" data-action="edit" data-qid="${a.qid}">Edit</button></p>`
+        ? html`<p class="card__actions">
+            <button type="button" data-action="edit" data-qid="${a.qid}">Edit</button>
+            <button type="button" data-action="leadership" data-qid="${a.qid}">Manage leadership</button>
+          </p>`
         : ''}
     </article>`;
 }
