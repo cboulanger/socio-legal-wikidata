@@ -7,32 +7,35 @@ function env() {
   const dom = new JSDOM('<!doctype html><div id="w"></div>', { url: 'https://app.example/' });
   return dom.window;
 }
-const cfg = { humanQid: 'Q5', researcherQid: 'Q1650915', academicJournalQid: 'Q737498', inScopeClassQid: 'Q955824', inScopeFieldQid: 'Q847034' };
+const cfg = { humanQid: 'Q5', researcherQid: 'Q1650915', academicJournalQid: 'Q737498', inScopeClassQid: 'Q955824', inScopeFieldQid: 'Q847034', officeTypes: [{ qid: 'Q1255921', label: 'President' }] };
 
-test('a change-president flow produces the expected ChangeSet and calls the write port', async () => {
+test('a manage-leadership flow produces the expected ChangeSet and calls the write port', async () => {
   const win = env();
   const host = win.document.getElementById('w');
   let applied = null;
   const ports = {
-    search: { searchEntities: async () => [], getEntity: async () => null, lookupByExternalId: async () => [] },
+    search: {
+      searchEntities: async () => [], lookupByExternalId: async () => [],
+      getEntity: async () => ({ claims: {} }),
+      getLeadershipHistory: async () => ({ history: [], current: { statementId: 'Q100$OLD', personQid: 'Q9', officeQid: null, officeLabel: 'chairperson', begin: '2018-01-01', end: null } }),
+    },
     write: { applyChangeSet: async (cs) => { applied = cs; return { via: 'direct', created: [], diffUrls: ['https://www.wikidata.org/wiki/Q100'] }; } },
   };
   const wizard = createWizard(host, {
-    window: win, config: cfg, ports,
-    seed: { mode: 'change-president', association: { qid: 'Q100', label: 'Body' } },
+    window: win, config: cfg,
+    ports,
+    seed: { mode: 'manage-leadership', association: { qid: 'Q100', label: 'Body' } },
   });
+  await new Promise((r) => setTimeout(r, 0)); // let loadLeadershipOriginal's promise resolve
 
-  // fill the draft directly (the DOM steps are exercised in manual QA)
   wizard._setDraft((d) => {
-    d.president.qid = 'Q200';
-    d.president.universityQid = 'Q300';
-    d.president.referenceUrl = 'https://uni/staff';
-    d.termStart = '2026-01-01';
-    d.previousPresidentStatementId = 'Q100$OLD';
+    d.association.referenceUrl = 'https://uni.example/board';
+    d.officers[0].person.qid = 'Q200';
+    d.officers[0].begin = '2026-01-01';
   });
 
   const result = await wizard.submit();
-  assert.equal(applied.summary, 'socio-legal directory: record new president');
+  assert.match(applied.summary, /update leadership/);
   assert.ok(applied.ops.some((o) => o.type === 'add-statement' && o.property === 'P488'));
   assert.ok(applied.ops.some((o) => o.type === 'end-statement'));
   assert.deepEqual(result.diffUrls, ['https://www.wikidata.org/wiki/Q100']);

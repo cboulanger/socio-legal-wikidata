@@ -1,10 +1,11 @@
 import { html, mount, safeHref } from '../../render.js';
-import { emptyDraft, originalFromEntity } from '../../core/draft.js';
+import { emptyDraft, originalFromEntity, emptyOfficerRow } from '../../core/draft.js';
 import { buildChangeSet, describeChanges } from '../../core/changeset.js';
 import { initialLanguages, languageSuggestions, isValidLangCode } from '../../core/languages.js';
 import { createTypeahead } from '../components/entity-typeahead.js';
 import { STEP_ORDER, validateStep } from './steps.js';
 import { renderDetailsForm, refreshDetailsDerived, applyFieldInput } from './details-form.js';
+import { renderLeadershipForm, applyLeadershipFieldInput } from './leadership-form.js';
 
 const DRAFT_KEY = 'slw:wizard:draft';
 
@@ -56,6 +57,7 @@ export function createWizard(host, opts) {
       if (saved.mode !== opts.seed.mode) return null;
       if (opts.seed.association?.qid && saved.association?.qid !== opts.seed.association.qid) return null;
       if (!saved.association?.labels) return null; // a draft from before multilingual support
+      if (saved.mode === 'manage-leadership' && !Array.isArray(saved.officers)) return null;
       saved.association.formerNames ||= [];
       saved.association.abbreviations ||= {};
       saved.association.original ||= {};
@@ -121,6 +123,27 @@ export function createWizard(host, opts) {
     render();
   }
 
+  /** manage-leadership: fetch existing leadership and seed one blank row. */
+  async function loadLeadershipOriginal() {
+    loading = true;
+    loadError = '';
+    render();
+    try {
+      draft.leadershipOriginal = ports.search.getLeadershipHistory
+        ? await ports.search.getLeadershipHistory(draft.association.qid)
+        : { history: [], current: null };
+      if (draft.officers.length === 0) {
+        const first = config.officeTypes?.[0];
+        draft.officers.push(emptyOfficerRow(first?.qid || '', first?.label || ''));
+      }
+      persist();
+    } catch (err) {
+      loadError = `Could not load leadership from Wikidata: ${err.message}`;
+    }
+    loading = false;
+    render();
+  }
+
   /** Best-effort display label of an item; falls back to the bare id. */
   async function labelOf(qid) {
     try {
@@ -174,11 +197,17 @@ export function createWizard(host, opts) {
         labelLanguages: config.labelLanguages || '',
       });
     }
+    if (step === 'officers') {
+      return renderLeadershipForm({ draft, config });
+    }
     if (step === 'review') {
       const lines = describeChanges(draft);
       return html`<p class="wizard__hint">This will be written to Wikidata:</p>
         <ul class="wizard__review">${lines.map((l) => html`<li>${l}</li>`)}</ul>
-        ${failure ? html`<p class="wizard__fail">${failure}</p>` : ''}`;
+        ${failure ? html`<p class="wizard__fail">${failure}</p>` : ''}
+        ${failure && draft.mode === 'manage-leadership'
+          ? html`<p class="wizard__fail">Check the item on Wikidata before retrying — some rows may already be saved.</p>`
+          : ''}`;
     }
     return html`<p class="wizard__hint">Fill the fields for “${step}”.</p>`;
   }
@@ -245,6 +274,7 @@ export function createWizard(host, opts) {
   function mountPickers() {
     mountParentPicker();
     mountAreaPicker();
+    mountLeadershipPickers();
     const search = (text) => ports.search.searchEntities(text, 'item');
     const a = draft.association;
     const identify = host.querySelector('[data-role="ta-identify"]');
@@ -304,6 +334,35 @@ export function createWizard(host, opts) {
     });
   }
 
+  /** One person / affiliation / "other office" typeahead per officer row. */
+  function mountLeadershipPickers() {
+    const search = (text) => ports.search.searchEntities(text, 'item');
+    (draft.officers || []).forEach((row, i) => {
+      const personEl = host.querySelector(`[data-role="ta-officer-${i}"]`);
+      if (personEl) {
+        createTypeahead(personEl, {
+          label: 'Person', searchEntities: search, allowCreate: true,
+          onPick: (c) => { row.person.qid = c.qid; persist(); render(); },
+          onCreate: (name) => { row.person.labels = { en: name }; persist(); render(); },
+        });
+      }
+      const affEl = host.querySelector(`[data-role="ta-officer-affiliation-${i}"]`);
+      if (affEl) {
+        createTypeahead(affEl, {
+          label: 'Current affiliation', searchEntities: search,
+          onPick: (c) => { row.person.affiliationQid = c.qid; row.person.affiliationLabel = c.label; persist(); render(); },
+        });
+      }
+      const officeEl = host.querySelector(`[data-role="ta-officer-office-${i}"]`);
+      if (officeEl) {
+        createTypeahead(officeEl, {
+          label: 'Office', searchEntities: search,
+          onPick: (c) => { row.officeQid = c.qid; row.officeLabel = c.label; row._customOffice = false; persist(); render(); },
+        });
+      }
+    });
+  }
+
   /** The user found the association already on Wikidata: continue as "Edit details" for it. */
   function switchToEdit(candidate) {
     mode = 'update-field';
@@ -337,7 +396,11 @@ export function createWizard(host, opts) {
 
   on('input', (e) => {
     if (e.target.closest('.typeahead')) return; // the pickers manage their own state
-    if (applyFieldInput(draft, e.target)) { failure = ''; persist(); refreshDerived(); }
+    if (applyFieldInput(draft, e.target)) { failure = ''; persist(); refreshDerived(); return; }
+    if (e.target.dataset?.field === 'officer-office' && e.target.value === '__other__') {
+      applyLeadershipFieldInput(draft, e.target); persist(); render(); return;
+    }
+    if (applyLeadershipFieldInput(draft, e.target)) { failure = ''; persist(); refreshDerived(); }
   });
 
   on('click', async (e) => {
@@ -374,6 +437,24 @@ export function createWizard(host, opts) {
       const picked = host.querySelector('[data-role="lang-select"]')?.value;
       addLanguage(custom?.trim() ? custom : picked);
     }
+    else if (role('add-officer')) {
+      const first = config.officeTypes?.[0];
+      draft.officers.push(emptyOfficerRow(first?.qid || '', first?.label || ''));
+      persist(); render();
+    }
+    else if (role('remove-officer')) { draft.officers.splice(Number(role('remove-officer').dataset.index), 1); persist(); render(); }
+    else if (role('clear-officer-person')) {
+      const r = draft.officers[Number(role('clear-officer-person').dataset.index)];
+      r.person.qid = null; r.person.labels = {}; persist(); render();
+    }
+    else if (role('clear-officer-affiliation')) {
+      const r = draft.officers[Number(role('clear-officer-affiliation').dataset.index)];
+      r.person.affiliationQid = null; r.person.affiliationLabel = null; persist(); render();
+    }
+    else if (role('officer-add-lang')) {
+      const r = draft.officers[Number(role('officer-add-lang').dataset.index)];
+      r.person._showSecondName = true; persist(); render();
+    }
   });
 
   async function submitInternal() {
@@ -392,6 +473,7 @@ export function createWizard(host, opts) {
   }
 
   if (mode === 'update-field' && !restoredDraft && draft.association.qid && ports.search?.getEntity) loadOriginal();
+  else if (mode === 'manage-leadership' && !restoredDraft && draft.association.qid) loadLeadershipOriginal();
   else {
     if (draft.association.countryQid) loadOfficial(draft.association.countryQid).then(render);
     render();
@@ -410,5 +492,5 @@ function errorList(errs) {
 }
 
 function title(mode) {
-  return { 'create-association': 'Add association', 'change-president': 'Record new president', 'update-field': 'Edit details' }[mode];
+  return { 'create-association': 'Add association', 'manage-leadership': 'Manage leadership', 'update-field': 'Edit details' }[mode];
 }
