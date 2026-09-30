@@ -24,5 +24,13 @@
   "quickstatementsUrl": "https://quickstatements.toolforge.org/#/v1=",
   "humanQid": "Q5",
   "researcherQid": "Q1650915",
-  "academicJournalQid": "Q737498"
+  "academicJournalQid": "Q737498",
+  "officeTypes": [
+    { "qid": "Q1255921", "label": "President" },
+    { "qid": "Q140686", "label": "Chairperson" },
+    { "qid": "Q42178", "label": "Vice-president" },
+    { "qid": "Q6501749", "label": "Secretary-general" },
+    { "qid": "Q388338", "label": "Treasurer" },
+    { "qid": "Q1758037", "label": "Speaker" }
+  ]
 }
