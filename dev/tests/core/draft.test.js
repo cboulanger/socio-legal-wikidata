@@ -38,6 +38,22 @@ test('validateDraftForChangeset: a dissolution year before the founding year is 
   assert.ok(validateDraftForChangeset(dj).some((e) => /journal: the end year is before the start year/.test(e)));
 });
 
+test('validateDraftForChangeset: a wikipedia.org reference URL is rejected, for an association or a journal (Wikidata disallows citing Wikipedia itself)', () => {
+  const d = emptyDraft('update-field');
+  Object.assign(d.association, { qid: 'Q1', website: 'https://x.example', referenceUrl: 'https://de.wikipedia.org/wiki/Eva_Kocher' });
+  assert.ok(validateDraftForChangeset(d).some((e) => /association\.referenceUrl.*[Ww]ikipedia/.test(e)));
+  d.association.referenceUrl = 'https://en.m.wikipedia.org/wiki/Eva_Kocher'; // a mobile subdomain is still wikipedia.org
+  assert.ok(validateDraftForChangeset(d).some((e) => /association\.referenceUrl.*[Ww]ikipedia/.test(e)));
+  d.association.referenceUrl = 'https://x.example/about';
+  assert.ok(!validateDraftForChangeset(d).some((e) => /[Ww]ikipedia/.test(e)));
+
+  const dj = emptyDraft('update-journal');
+  dj.journalEntity = emptyJournalEntity('Q100');
+  dj.journalEntity.website = 'https://x.example';
+  dj.journalEntity.referenceUrl = 'https://en.wikipedia.org/wiki/Example_Journal';
+  assert.ok(validateDraftForChangeset(dj).some((e) => /journal\.referenceUrl.*[Ww]ikipedia/.test(e)));
+});
+
 test('validateDraftForChangeset: update-field requires a reference URL', () => {
   const d = emptyDraft('update-field');
   d.association.qid = 'Q1';

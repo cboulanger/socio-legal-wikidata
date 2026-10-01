@@ -294,6 +294,18 @@ export function yearOrderError(what, start, end) {
   return Number(start) > Number(end) ? `${what}: the end year is before the start year` : null;
 }
 
+// Wikidata's P854 (reference URL) format constraint disallows wikipedia.org: a reference
+// must point at the primary source, not at Wikipedia's own article about it.
+const WIKIPEDIA_HOST = /(^|\.)wikipedia\.org$/i;
+
+/** null if `url` is blank/not a URL/not Wikipedia; else an error string. */
+export function wikipediaReferenceError(what, url) {
+  if (!url) return null;
+  let host;
+  try { host = new URL(url).hostname; } catch { return null; }
+  return WIKIPEDIA_HOST.test(host) ? `${what}: a Wikipedia URL cannot be used as a reference — Wikidata does not allow citing Wikipedia itself; use the source it cites instead` : null;
+}
+
 /**
  * The former-name rows that will actually be written: blank rows are ignored and rows that are
  * already on the item (same name, language and years) are dropped.
@@ -607,6 +619,14 @@ export function validateDraftForChangeset(d) {
 
   const assocYearErr = yearOrderError('association', a.inception, a.closed);
   if (assocYearErr) e.push(assocYearErr);
+
+  const assocRefErr = wikipediaReferenceError('association.referenceUrl', a.referenceUrl);
+  if (assocRefErr) e.push(assocRefErr);
+
+  if (d.journalEntity) {
+    const journalRefErr = wikipediaReferenceError('journal.referenceUrl', d.journalEntity.referenceUrl);
+    if (journalRefErr) e.push(journalRefErr);
+  }
 
   if (d.mode === 'create-association') {
     if (Object.keys(cleanTerms(a.labels)).length === 0) e.push('association.labels: at least one name is required');

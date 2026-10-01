@@ -31,6 +31,17 @@ test('details step enforces reference and the personal-e-mail confirmation', () 
   assert.equal(validateStep('details', d).length, 0);
 });
 
+test('details step rejects a wikipedia.org reference URL', () => {
+  const d = emptyDraft('create-association');
+  d.association.labels = { pt: 'X' };
+  d.association.classQid = 'Q955824';
+  d.association.fieldQid = 'Q847034';
+  d.association.referenceUrl = 'https://de.wikipedia.org/wiki/Eva_Kocher';
+  assert.ok(validateStep('details', d).some((m) => /[Ww]ikipedia/.test(m)));
+  d.association.referenceUrl = 'https://x.example/about';
+  assert.equal(validateStep('details', d).length, 0);
+});
+
 test('STEP_ORDER for manage-leadership: officers then review, no identify (the association is already known)', () => {
   assert.deepEqual(STEP_ORDER['manage-leadership'], ['officers', 'review']);
 });

@@ -1,5 +1,5 @@
 import { looksPersonal } from '../../core/email-guard.js';
-import { cleanTerms, changedStatements, hasTermChanges, hasScopeChanges, hasFormerNames, hasAbbreviations, changedParent, changedOperatingArea, validateTerms, validateFormerNames, validateDraftForChangeset, yearOrderError } from '../../core/draft.js';
+import { cleanTerms, changedStatements, hasTermChanges, hasScopeChanges, hasFormerNames, hasAbbreviations, changedParent, changedOperatingArea, validateTerms, validateFormerNames, validateDraftForChangeset, yearOrderError, wikipediaReferenceError } from '../../core/draft.js';
 
 /** @type {Object<import('../../core/draft.js').DirectoryDraft['mode'], string[]>} */
 export const STEP_ORDER = {
@@ -55,6 +55,8 @@ export function validateStep(step, d) {
     }
     const assocYearErr = yearOrderError('association', a.inception, a.closed);
     if (assocYearErr) e.push(assocYearErr);
+    const assocRefErr = wikipediaReferenceError('association.referenceUrl', a.referenceUrl);
+    if (assocRefErr) e.push(assocRefErr);
     e.push(...validateTerms(a), ...validateFormerNames(a));
   }
 
