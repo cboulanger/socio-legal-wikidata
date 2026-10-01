@@ -226,7 +226,7 @@ export function describeChanges(draft) {
   if (draft.mode === 'manage-leadership') {
     for (const row of draft.officers || []) {
       const who = row.person.qid
-        ? `${row.person.qid} (existing person)`
+        ? `${row.person.pickedLabel || row.person.qid}${row.person.pickedBirthYear ? ` (b. ${row.person.pickedBirthYear})` : ''} (existing person)`
         : `${Object.values(row.person.labels || {})[0] || '(unnamed)'} (new person)`;
       lines.push(`${row.officeLabel || row.officeQid}: ${who}, ${row.begin || '?'} – ${row.end || 'present'}`);
     }

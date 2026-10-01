@@ -77,3 +77,16 @@ test('an optional badge is shown next to each match', async () => {
   await ta._typeForTest('asian law');
   assert.match(el.innerHTML, /✓ in directory/);
 });
+
+test('a person candidate with birth year, occupation and field of work shows a detail line; one with none of those shows no extra line', async () => {
+  const el = host();
+  const personSearch = async () => [
+    { qid: 'Q1', label: 'Jane Doe', description: 'legal scholar', birthYear: '1975', occupationLabels: ['historian'], fieldLabels: ['sociology of law'] },
+    { qid: 'Q2', label: 'Jane Doe', description: 'unrelated person' },
+  ];
+  const ta = createTypeahead(el, { label: 'Person', searchEntities: personSearch, onPick: () => {}, allowCreate: true });
+  await ta._typeForTest('jane doe');
+  assert.match(el.innerHTML, /typeahead__detail">b\. 1975 · historian · sociology of law</);
+  const q2Button = el.querySelector('[data-pick="Q2"]');
+  assert.doesNotMatch(q2Button.innerHTML, /typeahead__detail/);
+});

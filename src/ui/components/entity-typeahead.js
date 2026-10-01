@@ -1,6 +1,15 @@
 import { html, mount } from '../../render.js';
 import { rankCandidates } from '../../core/dedupe.js';
 
+/** "b. 1975 · historian · sociology of law" from whichever parts a candidate carries; '' if none. */
+function personDetail(c) {
+  const parts = [];
+  if (c.birthYear) parts.push(`b. ${c.birthYear}`);
+  if (c.occupationLabels?.length) parts.push(c.occupationLabels.join(', '));
+  if (c.fieldLabels?.length) parts.push(c.fieldLabels.join(', '));
+  return parts.join(' · ');
+}
+
 /**
  * Search-first entity picker. Renders into `el`.
  * @param {HTMLElement} el
@@ -32,7 +41,7 @@ export function createTypeahead(el, opts) {
             <ul class="typeahead__list">
               ${ranked.map((c) => html`<li>
                 <button type="button" data-pick="${c.qid}">
-                  <strong>${c.label}</strong> ${opts.badge && opts.badge(c) ? html`<em class="typeahead__badge">${opts.badge(c)}</em>` : ''}<span>${c.description}</span>
+                  <strong>${c.label}</strong> ${opts.badge && opts.badge(c) ? html`<em class="typeahead__badge">${opts.badge(c)}</em>` : ''}<span>${c.description}</span>${personDetail(c) ? html`<span class="typeahead__detail">${personDetail(c)}</span>` : ''}
                 </button></li>`)}
             </ul>
             ${state.query && ranked.length === 0 && !opts.allowCreate

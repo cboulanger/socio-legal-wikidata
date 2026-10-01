@@ -56,6 +56,51 @@ export function createWikibaseApi({ fetch, config, getToken }) {
     },
 
     /**
+     * Like searchEntities, but for picking a person: each match is annotated with birth year
+     * (P569), occupation (P106) and field of work (P101), where present, so a list of
+     * same-named people can be told apart. Never throws: a lookup failure just falls back to
+     * the plain search results.
+     * @param {string} text
+     * @returns {Promise<(EntityCandidate & {birthYear: string|null, occupationLabels: string[], fieldLabels: string[]})[]>}
+     */
+    async searchPersons(text) {
+      const base = await this.searchEntities(text, 'item');
+      if (!base.length) return base;
+      try {
+        const qids = base.map((c) => c.qid);
+        const claimsJson = await getJson(`${action}?action=wbgetentities&format=json&origin=*&props=claims&ids=${qids.join('%7C')}`);
+        const values = (entity, prop) => (entity?.claims?.[prop] || [])
+          .filter((c) => c.rank !== 'deprecated')
+          .map((c) => c.mainsnak?.datavalue?.value);
+        const birthYearOf = (entity) => {
+          const v = values(entity, 'P569')[0];
+          const m = v?.precision >= 9 && typeof v.time === 'string' ? v.time.match(/^[+-](\d+)-/) : null;
+          return m ? String(Number(m[1])) : null;
+        };
+        const idsOf = (entity, prop) => values(entity, prop).map((v) => v?.id).filter(Boolean).slice(0, 2);
+
+        const perQid = new Map(qids.map((qid) => {
+          const entity = claimsJson.entities?.[qid];
+          return [qid, { birthYear: birthYearOf(entity), occupationQids: idsOf(entity, 'P106'), fieldQids: idsOf(entity, 'P101') }];
+        }));
+
+        const labelQids = [...new Set([...perQid.values()].flatMap((p) => [...p.occupationQids, ...p.fieldQids]))];
+        let labelOf = (id) => id;
+        if (labelQids.length) {
+          const labelsJson = await getJson(`${action}?action=wbgetentities&format=json&origin=*&props=labels&languages=en&ids=${labelQids.join('%7C')}`);
+          labelOf = (id) => labelsJson.entities?.[id]?.labels?.en?.value || id;
+        }
+
+        return base.map((c) => {
+          const p = perQid.get(c.qid);
+          return { ...c, birthYear: p.birthYear, occupationLabels: p.occupationQids.map(labelOf), fieldLabels: p.fieldQids.map(labelOf) };
+        });
+      } catch {
+        return base;
+      }
+    },
+
+    /**
      * Search for countries (instance of Q6256). Any failure or an empty result yields [].
      * @param {string} text
      */

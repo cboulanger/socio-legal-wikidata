@@ -36,7 +36,9 @@ function affiliationField(p, i) {
 function personSection(row, i) {
   const p = row.person;
   if (p.qid) {
-    return html`<p class="wizard__chosen">Person: <strong>${p.qid}</strong>
+    const who = p.pickedLabel || p.qid;
+    const display = p.pickedBirthYear ? `${who} (b. ${p.pickedBirthYear})` : who;
+    return html`<p class="wizard__chosen">Person: <strong>${display}</strong>
         <button type="button" data-role="clear-officer-person" data-index="${i}">change</button></p>
       <p class="officer__afflabel">Current affiliation (optional)</p>
       ${affiliationField(p, i)}`;

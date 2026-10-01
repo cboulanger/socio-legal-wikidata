@@ -60,6 +60,8 @@ const isValidIsoDate = (s) => ISO_DATE.test(s) && !Number.isNaN(Date.parse(s));
  *
  * @typedef {Object} DraftOfficerPerson
  * @property {string|null} qid                  // an existing person, or null to create one
+ * @property {string|null} pickedLabel           // display only: qid's label at pick time
+ * @property {string|null} pickedBirthYear       // display only: qid's birth year at pick time, if known
  * @property {Object<string,string>} labels      // language code -> name (new person only)
  * @property {string} description                // short English description (new person only)
  * @property {string|null} birthDate             // 'YYYY-MM-DD', new person only, optional
@@ -123,7 +125,7 @@ export function emptyDraft(mode) {
  */
 export function emptyOfficerRow(officeQid, officeLabel) {
   return {
-    person: { qid: null, labels: {}, description: '', birthDate: null, affiliationQid: null, affiliationLabel: null, orcid: null, homepage: null },
+    person: { qid: null, pickedLabel: null, pickedBirthYear: null, labels: {}, description: '', birthDate: null, affiliationQid: null, affiliationLabel: null, orcid: null, homepage: null },
     officeQid, officeLabel, begin: '', end: null,
   };
 }

@@ -429,3 +429,14 @@ test('describeChanges: manage-leadership lists each row and the auto-end', () =>
   assert.ok(lines.includes('President: Q200 (existing person), 2024-01-01 – present'));
   assert.ok(lines.some((l) => /ends the previous officeholder.s term at 2024-01-01/.test(l)));
 });
+
+test('describeChanges: an existing person picked from the typeahead is shown by name and birth year, not the bare qid', () => {
+  const d = emptyDraft('manage-leadership');
+  d.association.qid = 'Q100';
+  d.officers.push({
+    person: { qid: 'Q200', pickedLabel: 'Jane Doe', pickedBirthYear: '1975', labels: {}, description: '', birthDate: null, affiliationQid: null, affiliationLabel: null, orcid: null, homepage: null },
+    officeQid: 'Q1255921', officeLabel: 'President', begin: '2024-01-01', end: null,
+  });
+  const lines = describeChanges(d);
+  assert.ok(lines.includes('President: Jane Doe (b. 1975) (existing person), 2024-01-01 – present'));
+});

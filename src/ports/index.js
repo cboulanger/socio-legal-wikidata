@@ -27,6 +27,7 @@
  * @property {(qid: string) => Promise<any>} getEntity
  * @property {(property: string, value: string) => Promise<EntityCandidate[]>} lookupByExternalId
  * @property {(qid: string) => Promise<{history: import('../core/draft.js').LeadershipHistoryRow[], current: import('../core/draft.js').LeadershipHistoryRow|null}>} [getLeadershipHistory]
+ * @property {(text: string) => Promise<(EntityCandidate & {birthYear: string|null, occupationLabels: string[], fieldLabels: string[]})[]>} [searchPersons]
  *
  * @typedef {Object} WriteResult
  * @property {'direct'|'quickstatements'} via

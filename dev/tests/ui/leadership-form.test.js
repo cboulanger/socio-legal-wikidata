@@ -28,6 +28,18 @@ test('an existing person (qid set) shows the chosen state and an affiliation pic
   assert.doesNotMatch(out, /New person/);
 });
 
+test('an existing person picked from the typeahead shows their name and birth year, not the bare qid', () => {
+  const draft = emptyDraft('manage-leadership');
+  const row = emptyOfficerRow('Q1255921', 'President');
+  row.person.qid = 'Q200';
+  row.person.pickedLabel = 'Jane Doe';
+  row.person.pickedBirthYear = '1975';
+  draft.officers.push(row);
+  const out = renderLeadershipForm({ draft, config }).value;
+  assert.match(out, /Person: <strong>Jane Doe \(b\. 1975\)<\/strong>/);
+  assert.doesNotMatch(out, />Q200</);
+});
+
 test('a new person (labels set, no qid) shows the create-person fields including birth date and ORCID', () => {
   const draft = emptyDraft('manage-leadership');
   const row = emptyOfficerRow('Q1255921', 'President');

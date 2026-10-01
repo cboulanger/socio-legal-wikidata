@@ -337,12 +337,16 @@ export function createWizard(host, opts) {
   /** One person / affiliation / "other office" typeahead per officer row. */
   function mountLeadershipPickers() {
     const search = (text) => ports.search.searchEntities(text, 'item');
+    const personSearch = ports.search.searchPersons ? (text) => ports.search.searchPersons(text) : search;
     (draft.officers || []).forEach((row, i) => {
       const personEl = host.querySelector(`[data-role="ta-officer-${i}"]`);
       if (personEl) {
         createTypeahead(personEl, {
-          label: 'Person', searchEntities: search, allowCreate: true,
-          onPick: (c) => { row.person.qid = c.qid; persist(); render(); },
+          label: 'Person', searchEntities: personSearch, allowCreate: true,
+          onPick: (c) => {
+            row.person.qid = c.qid; row.person.pickedLabel = c.label; row.person.pickedBirthYear = c.birthYear || null;
+            persist(); render();
+          },
           onCreate: (name) => { row.person.labels = { en: name }; persist(); render(); },
         });
       }
@@ -445,7 +449,7 @@ export function createWizard(host, opts) {
     else if (role('remove-officer')) { draft.officers.splice(Number(role('remove-officer').dataset.index), 1); persist(); render(); }
     else if (role('clear-officer-person')) {
       const r = draft.officers[Number(role('clear-officer-person').dataset.index)];
-      r.person.qid = null; r.person.labels = {}; persist(); render();
+      r.person.qid = null; r.person.labels = {}; r.person.pickedLabel = null; r.person.pickedBirthYear = null; persist(); render();
     }
     else if (role('clear-officer-affiliation')) {
       const r = draft.officers[Number(role('clear-officer-affiliation').dataset.index)];
