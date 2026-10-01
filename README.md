@@ -113,7 +113,8 @@ Step-by-step registration is in
 ### What edit mode can do
 
 - **Edit details** of an association: names, descriptions and abbreviations
-  (P1813) in several languages, website, e-mail.
+  (P1813) in several languages, website, e-mail, founding year and, if the
+  association is defunct, a dissolution year.
 - **Add association**: create a new item after a duplicate check, or add an
   existing Wikidata item to the directory.
 - Record **former names** as dated official-name statements.

@@ -75,6 +75,7 @@ export function buildChangeSet(draft, cfg) {
     if (a.website) claims.push({ property: 'P856', value: url(a.website) });
     if (a.email) claims.push({ property: 'P968', value: mailto(a.email) });
     if (a.inception) claims.push({ property: 'P571', value: year(a.inception) });
+    if (a.closed) claims.push({ property: 'P576', value: year(a.closed) });
     for (const c of claims) if (assocRefUrl) c.reference = assocRefUrl;
     claims.push(...formerNameClaims(a, assocRefUrl));
     claims.push(...abbreviationClaims(a, assocRefUrl));
@@ -240,6 +241,8 @@ export function buildChangeSet(draft, cfg) {
   if (abbrClaims.length) changed.push(`abbreviations (${langs(changedAbbreviations(a))})`);
   if (stmts.website) { ops.push({ type: 'add-statement', target: { qid: a.qid }, property: 'P856', value: url(stmts.website), reference: assocRefUrl, replace: true }); changed.push('website'); }
   if (stmts.email) { ops.push({ type: 'add-statement', target: { qid: a.qid }, property: 'P968', value: mailto(stmts.email), reference: assocRefUrl, replace: true }); changed.push('e-mail'); }
+  if (stmts.inception) { ops.push({ type: 'add-statement', target: { qid: a.qid }, property: 'P571', value: year(stmts.inception), reference: assocRefUrl, replace: true }); changed.push('founding year'); }
+  if (stmts.closed) { ops.push({ type: 'add-statement', target: { qid: a.qid }, property: 'P576', value: year(stmts.closed), reference: assocRefUrl, replace: true }); changed.push('dissolution year'); }
   const parent = changedParent(a);
   if (parent) { ops.push({ type: 'add-statement', target: { qid: a.qid }, property: 'P361', value: item(parent), reference: assocRefUrl, replace: true }); changed.push('part of'); }
   const area = changedOperatingArea(a);
@@ -271,6 +274,8 @@ export function describeChanges(draft) {
   }
   if (stmts.website) lines.push(`website: ${a.original?.website ? `${a.original.website} → ` : ''}${stmts.website}`);
   if (stmts.email) lines.push(`e-mail: ${a.original?.email ? `${a.original.email} → ` : ''}${stmts.email}`);
+  if (stmts.inception) lines.push(`founding year: ${a.original?.inception ? `${a.original.inception} → ` : ''}${stmts.inception}`);
+  if (stmts.closed) lines.push(`dissolution year: ${a.original?.closed ? `${a.original.closed} → ` : ''}${stmts.closed}`);
   for (const [lang, text] of Object.entries(changedAbbreviations(a))) {
     lines.push(`abbreviation (${lang}): “${text}”, also an alias`);
   }
@@ -291,6 +296,8 @@ export function describeChanges(draft) {
     if (a.countryLabel || a.countryQid) lines.push(`country: ${a.countryLabel || a.countryQid}`);
     if (a.seatLabel || a.seatQid) lines.push(`seat: ${a.seatLabel || a.seatQid}`);
     if (a.parentQid) lines.push(`part of: ${a.parentLabel || a.parentQid}`);
+    if (a.inception) lines.push(`founding year: ${a.inception}`);
+    if (a.closed) lines.push(`dissolution year: ${a.closed}`);
     if (a.referenceUrl) lines.push(`reference: ${a.referenceUrl}`);
   }
   if (draft.mode === 'manage-leadership') {

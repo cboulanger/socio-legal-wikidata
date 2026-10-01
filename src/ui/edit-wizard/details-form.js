@@ -18,7 +18,7 @@ function derived(draft, labelLanguages) {
     visible,
     invisible: visible.length > 0 && named.length > 0 && !named.some((l) => visible.includes(l)),
     needsConfirm: !!(a.email && looksPersonal(a.email) && (draft.mode === 'create-association' || changed.email)),
-    refRequired: draft.mode === 'create-association' || !!(changed.website || changed.email || hasScopeChanges(a) || hasFormerNames(a) || hasAbbreviations(a) || !!changedParent(a) || !!changedOperatingArea(a)),
+    refRequired: draft.mode === 'create-association' || !!(changed.website || changed.email || changed.inception || changed.closed || hasScopeChanges(a) || hasFormerNames(a) || hasAbbreviations(a) || !!changedParent(a) || !!changedOperatingArea(a)),
   };
 }
 
@@ -153,6 +153,8 @@ export function renderDetailsForm({ draft, langs, suggestions, labelLanguages = 
       </div>
       ${langError ? html`<p class="wizard__errors">${langError}</p>` : ''}
       <div data-role="visibility-warn">${warnMarkup(d)}</div>
+      <label>Founded (year) <input type="text" inputmode="numeric" name="inception" data-field="inception" value="${a.inception || ''}" autocomplete="off"></label>
+      <label>Dissolved (year, if defunct) <input type="text" inputmode="numeric" name="closed" data-field="closed" value="${a.closed || ''}" autocomplete="off"></label>
       ${formerSection(draft)}
       ${parentSection(a)}
       ${operatingAreaSection(a)}
@@ -212,7 +214,7 @@ export function applyFieldInput(draft, el) {
     if (el.dataset.prop === 'alias') row.alias = el.checked;
     else row[el.dataset.prop] = el.value;
   }
-  else if (field === 'website' || field === 'referenceUrl') a[field] = el.value.trim() || null;
+  else if (field === 'website' || field === 'referenceUrl' || field === 'inception' || field === 'closed') a[field] = el.value.trim() || null;
   else if (field === 'email') {
     a.email = el.value.trim() || null;
     a.emailConfirmedShared = false; // the confirmation belongs to the address it was given for

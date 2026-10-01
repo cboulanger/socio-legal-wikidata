@@ -44,6 +44,12 @@ test('renders a journal line when present, "—" when absent', () => {
   assert.match(renderAssociationCard(withJournal, {}).value, /ZfRS/);
 });
 
+test('shows a founding year when set, nothing when absent', () => {
+  const withYear = { ...a, inception: '1923' };
+  assert.match(renderAssociationCard(withYear, {}).value, /founded:\s*1923/);
+  assert.doesNotMatch(renderAssociationCard(a, {}).value, /founded:/);
+});
+
 test('a javascript: URL in website is neutralised to #', () => {
   const bad = { ...a, website: 'javascript:alert(1)' };
   const out = renderAssociationCard(bad, {}).value;

@@ -16,6 +16,7 @@ export function renderAssociationCard(a, { editMode = false, lastEdit = null } =
       <button type="button" class="card__close" data-role="close-card" aria-label="Close">×</button>
       <h2 class="card__title">${a.label}${a.abbreviation ? html` <span class="card__abbr">(${a.abbreviation})</span>` : ''}</h2>
       <p class="card__meta">${scope}${a.countryLabel ? html` · ${a.countryLabel}` : ''}</p>
+      ${a.inception ? html`<p class="card__row">founded: ${a.inception}</p>` : ''}
       ${a.parentLabel
         ? html`<p class="card__row">part of ${a.parentUrl
             ? html`<a href="${safeHref(a.parentUrl)}" rel="noopener" target="_blank">${a.parentLabel}</a>`

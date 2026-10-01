@@ -1,5 +1,5 @@
 import { looksPersonal } from '../../core/email-guard.js';
-import { cleanTerms, changedStatements, hasTermChanges, hasScopeChanges, hasFormerNames, hasAbbreviations, changedParent, changedOperatingArea, validateTerms, validateFormerNames, validateDraftForChangeset } from '../../core/draft.js';
+import { cleanTerms, changedStatements, hasTermChanges, hasScopeChanges, hasFormerNames, hasAbbreviations, changedParent, changedOperatingArea, validateTerms, validateFormerNames, validateDraftForChangeset, yearOrderError } from '../../core/draft.js';
 
 /** @type {Object<import('../../core/draft.js').DirectoryDraft['mode'], string[]>} */
 export const STEP_ORDER = {
@@ -39,7 +39,7 @@ export function validateStep(step, d) {
       return validateDraftForChangeset(d);
     }
     const changed = changedStatements(a);
-    const statementChanged = !!(changed.website || changed.email || hasScopeChanges(a) || hasFormerNames(a) || hasAbbreviations(a) || !!changedParent(a) || !!changedOperatingArea(a));
+    const statementChanged = !!(changed.website || changed.email || changed.inception || changed.closed || hasScopeChanges(a) || hasFormerNames(a) || hasAbbreviations(a) || !!changedParent(a) || !!changedOperatingArea(a));
     if (d.mode === 'create-association') {
       if (!a.classQid) e.push('pick the association type');
       if (!a.fieldQid) e.push('the field of work is required');
@@ -53,6 +53,8 @@ export function validateStep(step, d) {
     if (a.email && looksPersonal(a.email) && !a.emailConfirmedShared && (d.mode === 'create-association' || changed.email)) {
       e.push('this e-mail looks personal — confirm it is a shared role address, or replace it');
     }
+    const assocYearErr = yearOrderError('association', a.inception, a.closed);
+    if (assocYearErr) e.push(assocYearErr);
     e.push(...validateTerms(a), ...validateFormerNames(a));
   }
 

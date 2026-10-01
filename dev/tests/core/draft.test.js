@@ -24,6 +24,20 @@ test('a personal e-mail without emailConfirmedShared is an error', () => {
   assert.ok(errs.some((e) => /personal/i.test(e)));
 });
 
+test('validateDraftForChangeset: a dissolution year before the founding year is an error, for an association or a journal', () => {
+  const d = emptyDraft('update-field');
+  Object.assign(d.association, { qid: 'Q1', inception: '2010', closed: '2000' });
+  assert.ok(validateDraftForChangeset(d).some((e) => /association: the end year is before the start year/.test(e)));
+  d.association.closed = '2020';
+  assert.ok(!validateDraftForChangeset(d).some((e) => /end year is before the start year/.test(e)));
+
+  const dj = emptyDraft('update-journal');
+  dj.journalEntity = emptyJournalEntity('Q100');
+  dj.journalEntity.founded = '2010';
+  dj.journalEntity.closed = '2000';
+  assert.ok(validateDraftForChangeset(dj).some((e) => /journal: the end year is before the start year/.test(e)));
+});
+
 test('validateDraftForChangeset: update-field requires a reference URL', () => {
   const d = emptyDraft('update-field');
   d.association.qid = 'Q1';
@@ -66,6 +80,19 @@ test('changedStatements compares e-mail without the mailto: prefix', () => {
   assert.equal(changedStatements(a).email, 'other@x.org');
 });
 
+test('changedStatements diffs founding/dissolution years, blank meaning "no change"', () => {
+  const a = emptyDraft('update-field').association;
+  a.original.inception = '1923';
+  a.inception = '1923';
+  assert.equal(changedStatements(a).inception, null);         // unchanged
+  a.inception = '1924';
+  assert.equal(changedStatements(a).inception, '1924');        // changed
+  a.inception = '';
+  assert.equal(changedStatements(a).inception, null);          // blank: no change
+  a.closed = '1999';
+  assert.equal(changedStatements(a).closed, '1999');            // newly set
+});
+
 test('originalFromEntity reads terms, website, e-mail (without mailto:) and country', () => {
   const entity = {
     labels: { pt: { language: 'pt', value: 'Rede' }, en: { language: 'en', value: 'Network' } },
@@ -83,13 +110,29 @@ test('originalFromEntity reads terms, website, e-mail (without mailto:) and coun
   };
   assert.deepEqual(originalFromEntity(entity), {
     labels: { pt: 'Rede', en: 'Network' }, descriptions: { en: 'a network' },
-    website: 'https://reed.example', email: 'reed@example.org', parentQid: 'Q1202999', operatingAreaQid: 'Q48', countryQid: 'Q155',
+    website: 'https://reed.example', email: 'reed@example.org', inception: null, closed: null,
+    parentQid: 'Q1202999', operatingAreaQid: 'Q48', countryQid: 'Q155',
     classQids: ['Q43229'], fieldQids: ['Q847034'], aliases: {}, abbreviations: { pt: ['REED'] }, formerNames: [],
   });
   assert.deepEqual(originalFromEntity({}), {
-    labels: {}, descriptions: {}, website: null, email: null, parentQid: null, operatingAreaQid: null, countryQid: null, classQids: [], fieldQids: [],
+    labels: {}, descriptions: {}, website: null, email: null, inception: null, closed: null,
+    parentQid: null, operatingAreaQid: null, countryQid: null, classQids: [], fieldQids: [],
     aliases: {}, abbreviations: {}, formerNames: [],
   });
+});
+
+test('originalFromEntity reads founding/dissolution years (P571/P576), ignoring deprecated claims', () => {
+  const o = originalFromEntity({
+    claims: {
+      P571: [{ rank: 'normal', mainsnak: { datavalue: { value: { time: '+1923-00-00T00:00:00Z', precision: 9 } } } }],
+      P576: [
+        { rank: 'deprecated', mainsnak: { datavalue: { value: { time: '+1999-00-00T00:00:00Z', precision: 9 } } } },
+        { rank: 'normal', mainsnak: { datavalue: { value: { time: '+1945-00-00T00:00:00Z', precision: 9 } } } },
+      ],
+    },
+  });
+  assert.equal(o.inception, '1923');
+  assert.equal(o.closed, '1945');
 });
 
 test('changedAbbreviations ignores blanks and abbreviations already on the item; new ones also become aliases', () => {

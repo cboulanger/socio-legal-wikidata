@@ -43,6 +43,25 @@ test('Edit details loads the item and shows the national language and English si
   assert.match(host.innerHTML, /Portuguese/);                            // language shown by name
 });
 
+test('Edit details loads the existing founding/dissolution year, and unmodified fields need no reference', async () => {
+  const { win, host, ports } = setup({
+    getEntity: async () => ({
+      labels: { pt: { language: 'pt', value: 'Rede' } },
+      descriptions: {},
+      claims: {
+        P571: [{ rank: 'normal', mainsnak: { datavalue: { value: { time: '+1923-00-00T00:00:00Z', precision: 9 } } } }],
+        P576: [{ rank: 'normal', mainsnak: { datavalue: { value: { time: '+1945-00-00T00:00:00Z', precision: 9 } } } }],
+      },
+    }),
+  });
+  const wizard = createWizard(host, { window: win, config: cfg, ports, seed: { mode: 'update-field', association: { qid: 'Q1', label: 'REED' } } });
+  await settle();
+  assert.equal(host.querySelector('input[name="inception"]').value, '1923');
+  assert.equal(host.querySelector('input[name="closed"]').value, '1945');
+  assert.equal(wizard.getDraft().association.original.inception, '1923');
+  assert.ok(host.querySelector('[data-role="next"]').disabled);       // loaded value isn't a "change"
+});
+
 test('Edit details: adding an English name is written as a single set-terms op, and nothing else', async () => {
   const { win, host, ports, applied, type, click } = setup();
   const wizard = createWizard(host, { window: win, config: cfg, ports, seed: { mode: 'update-field', association: { qid: 'Q1', label: 'REED' } } });
@@ -72,6 +91,31 @@ test('Edit details: a new website needs a reference URL before it can be saved',
   assert.match(host.innerHTML, /a reference URL is required/);
   type(host.querySelector('input[name="referenceUrl"]'), 'https://reed.example/sobre');
   assert.equal(host.querySelector('[data-role="next"]').disabled, false);
+});
+
+test('Edit details: a founding or dissolution year needs a reference URL before it can be saved', async () => {
+  const { win, host, ports, type } = setup();
+  const wizard = createWizard(host, { window: win, config: cfg, ports, seed: { mode: 'update-field', association: { qid: 'Q1' } } });
+  await settle();
+  type(host.querySelector('input[name="inception"]'), '1923');
+  assert.ok(host.querySelector('[data-role="next"]').disabled);
+  assert.match(host.innerHTML, /a reference URL is required/);
+  type(host.querySelector('input[name="closed"]'), '1945');
+  type(host.querySelector('input[name="referenceUrl"]'), 'https://reed.example/sobre');
+  assert.equal(host.querySelector('[data-role="next"]').disabled, false);
+  assert.equal(wizard.getDraft().association.inception, '1923');
+  assert.equal(wizard.getDraft().association.closed, '1945');
+});
+
+test('Edit details: a dissolution year before the founding year is reported as an error', async () => {
+  const { win, host, ports, type } = setup();
+  createWizard(host, { window: win, config: cfg, ports, seed: { mode: 'update-field', association: { qid: 'Q1' } } });
+  await settle();
+  type(host.querySelector('input[name="inception"]'), '1990');
+  type(host.querySelector('input[name="closed"]'), '1980');
+  type(host.querySelector('input[name="referenceUrl"]'), 'https://reed.example/sobre');
+  assert.match(host.innerHTML, /the end year is before the start year/);
+  assert.ok(host.querySelector('[data-role="next"]').disabled);
 });
 
 test('an extra language can be added from the picker or by typing a code; bad codes are rejected', async () => {
@@ -206,7 +250,7 @@ test('typing never replaces the input being typed in (focus, caret and value sur
   const { win, host, ports } = setup();
   createWizard(host, { window: win, config: cfg, ports, seed: { mode: 'update-field', association: { qid: 'Q1' } } });
   await settle();
-  for (const name of ['label-en', 'description-pt', 'website', 'email', 'referenceUrl']) {
+  for (const name of ['label-en', 'description-pt', 'website', 'email', 'inception', 'closed', 'referenceUrl']) {
     const el = host.querySelector(`input[name="${name}"]`);
     el.focus();
     el.value = 'abc';

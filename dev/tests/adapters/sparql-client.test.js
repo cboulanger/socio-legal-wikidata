@@ -28,6 +28,12 @@ test('buildDirectoryQuery matches every configured class directly (no P279* subc
   assert.doesNotMatch(q, /\?assoc wdt:P31\/wdt:P279\*/); // the slow, scope-incomplete pattern this replaced
 });
 
+test('buildDirectoryQuery excludes defunct associations and defunct association-published journals', () => {
+  const q = buildDirectoryQuery(cfg);
+  assert.match(q, /\?assoc wdt:P101 wd:Q847034 \.\n\s*FILTER NOT EXISTS \{ \?assoc wdt:P576 \?assocDissolved\. \}/);
+  assert.match(q, /FILTER NOT EXISTS \{ \?journal wdt:P576 \?journalDissolved\. \}/);
+});
+
 test('mapBindings reduces rows to one Association per qid with nested refs', async () => {
   const json = JSON.parse(await readFile(new URL('../fixtures/sparql-directory.json', import.meta.url)));
   const list = mapBindings(json);
@@ -95,6 +101,11 @@ test('buildJournalQuery injects config and keeps the key triples', () => {
   assert.match(q, /wdt:P921 wd:Q847034/);
   assert.match(q, /\(wdt:P17\|wdt:P495\) \?country/);
   assert.match(q, /bd:serviceParam wikibase:language "en,de"/);
+});
+
+test('buildJournalQuery excludes defunct independent journals', () => {
+  const q = buildJournalQuery(journalCfg);
+  assert.match(q, /FILTER NOT EXISTS \{ \?journal wdt:P576 \?journalDissolved\. \}/);
 });
 
 test('mapJournalBindings maps one row per journal, with COALESCE-style country fallback', () => {

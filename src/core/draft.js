@@ -19,6 +19,8 @@ const isValidIsoDate = (s) => ISO_DATE.test(s) && !Number.isNaN(Date.parse(s));
  * @property {Object<string,string>} descriptions
  * @property {string|null} website
  * @property {string|null} email
+ * @property {string|null} [inception]    // 'YYYY', as loaded from Wikidata
+ * @property {string|null} [closed]       // 'YYYY', as loaded from Wikidata
  * @property {string|null} [parentQid]    // "part of" (P361) as loaded
  * @property {string|null} [operatingAreaQid] // "operating area" (P2541) as loaded
  * @property {Object<string,string[]>} [aliases]     // existing aliases per language
@@ -49,6 +51,7 @@ const isValidIsoDate = (s) => ISO_DATE.test(s) && !Number.isNaN(Date.parse(s));
  * @property {string|null} email
  * @property {boolean} emailConfirmedShared
  * @property {string|null} inception     // 'YYYY'
+ * @property {string|null} closed        // 'YYYY', if the association is defunct
  * @property {string|null} referenceUrl
  *
  * @typedef {Object} JournalOriginal   // values as loaded from Wikidata (empty when creating)
@@ -159,13 +162,13 @@ export function emptyDraft(mode) {
     mode,
     association: {
       qid: null, identifyName: '', labels: {}, descriptions: {},
-      original: { labels: {}, descriptions: {}, aliases: {}, abbreviations: {}, formerNames: [], website: null, email: null, needsClass: false, needsField: false },
+      original: { labels: {}, descriptions: {}, aliases: {}, abbreviations: {}, formerNames: [], website: null, email: null, inception: null, closed: null, needsClass: false, needsField: false },
       formerNames: [],
       abbreviations: {},
       addToDirectory: false,
       classQid: null, fieldQid: null,
       countryQid: null, countryLabel: null, operatingAreaQid: null, seatQid: null, seatLabel: null, parentQid: null, parentLabel: null,
-      website: null, email: null, emailConfirmedShared: false, inception: null, referenceUrl: null,
+      website: null, email: null, emailConfirmedShared: false, inception: null, closed: null, referenceUrl: null,
     },
     officers: [],
     leadershipOriginal: null,
@@ -248,16 +251,21 @@ export function changedTerms(a) {
 }
 
 /**
- * Website / e-mail values that differ from what is on Wikidata. Blank means "no change".
+ * Website / e-mail / founding year / dissolution year values that differ from what is on
+ * Wikidata. Blank means "no change".
  * @param {DraftAssociation} a
- * @returns {{website: string|null, email: string|null}}
+ * @returns {{website: string|null, email: string|null, inception: string|null, closed: string|null}}
  */
 export function changedStatements(a) {
   const website = (a.website || '').trim();
   const email = bareEmail(a.email);
+  const inception = (a.inception || '').trim();
+  const closed = (a.closed || '').trim();
   return {
     website: website && website !== (a.original?.website || '').trim() ? website : null,
     email: email && email !== bareEmail(a.original?.email) ? email : null,
+    inception: inception && inception !== (a.original?.inception || '').trim() ? inception : null,
+    closed: closed && closed !== (a.original?.closed || '').trim() ? closed : null,
   };
 }
 
@@ -279,6 +287,12 @@ export function changedAbbreviations(a) {
 export const hasAbbreviations = (a) => Object.keys(changedAbbreviations(a)).length > 0;
 
 const YEAR = /^\d{1,4}$/;
+
+/** null if either side is blank/invalid; else an error string if `end` precedes `start`. */
+export function yearOrderError(what, start, end) {
+  if (!YEAR.test(start || '') || !YEAR.test(end || '')) return null;
+  return Number(start) > Number(end) ? `${what}: the end year is before the start year` : null;
+}
 
 /**
  * The former-name rows that will actually be written: blank rows are ignored and rows that are
@@ -310,9 +324,8 @@ export function validateFormerNames(a) {
     for (const [label, y] of [['from', r.start], ['until', r.end]]) {
       if (y && !YEAR.test(y)) e.push(`former name “${r.text}”: “${y}” is not a year (${label})`);
     }
-    if (YEAR.test(r.start) && YEAR.test(r.end) && Number(r.start) > Number(r.end)) {
-      e.push(`former name “${r.text}”: the end year is before the start year`);
-    }
+    const orderErr = yearOrderError(`former name “${r.text}”`, r.start, r.end);
+    if (orderErr) e.push(orderErr);
   }
   return e;
 }
@@ -462,10 +475,6 @@ export function journalOriginalFromEntity(entity) {
     .filter((c) => c.rank !== 'deprecated')
     .map((c) => c.mainsnak?.datavalue?.value?.id)
     .filter(Boolean);
-  const yearOf = (value) => {
-    const m = /^[+-]?0*(\d+)-/.exec(value?.time || '');
-    return m ? m[1] : null;
-  };
   const publisher = first('P123');
   return {
     labels: terms(entity?.labels),
@@ -473,8 +482,8 @@ export function journalOriginalFromEntity(entity) {
     website: first('P856'),
     websiteAsOf: dateOf(mainClaim('P856')?.qualifiers?.P585),
     issn: first('P236'),
-    founded: yearOf(first('P571')),
-    closed: yearOf(first('P576')),
+    founded: yearOfTimeValue(first('P571')),
+    closed: yearOfTimeValue(first('P576')),
     openAlexId: first('P10283'),
     publisherQid: publisher && typeof publisher === 'object' ? publisher.id : null,
     classQids: ids('P31'),
@@ -541,6 +550,8 @@ export function originalFromEntity(entity) {
     formerNames,
     website: first('P856'),
     email: email ? bareEmail(email) : null,
+    inception: yearOfTimeValue(first('P571')),
+    closed: yearOfTimeValue(first('P576')),
     parentQid: ids('P361')[0] || null,
     operatingAreaQid: ids('P2541')[0] || null,
     countryQid: country && typeof country === 'object' ? country.id : null,
@@ -555,6 +566,12 @@ const TIME_RE = /^[+-]?0*(\d{1,4})-(\d{2})-(\d{2})/;
 function dateOf(qualifiers) {
   const m = TIME_RE.exec(qualifiers?.[0]?.datavalue?.value?.time || '');
   return m ? `${m[1].padStart(4, '0')}-${m[2]}-${m[3]}` : null;
+}
+
+/** A Wikidata time datavalue's year, unpadded (e.g. '1923'), or null. */
+function yearOfTimeValue(value) {
+  const m = /^[+-]?0*(\d+)-/.exec(value?.time || '');
+  return m ? m[1] : null;
 }
 
 /**
@@ -581,12 +598,15 @@ export function validateDraftForChangeset(d) {
   const e = [];
   const a = d.association;
   const changed = changedStatements(a);
-  const changedStatement = !!(changed.website || changed.email);
+  const changedStatement = !!(changed.website || changed.email || changed.inception || changed.closed);
   const scopeChange = hasScopeChanges(a);
 
   if (a.email && looksPersonal(a.email) && !a.emailConfirmedShared && (d.mode !== 'update-field' || changed.email)) {
     e.push('association.email looks personal; confirm it is a shared role address');
   }
+
+  const assocYearErr = yearOrderError('association', a.inception, a.closed);
+  if (assocYearErr) e.push(assocYearErr);
 
   if (d.mode === 'create-association') {
     if (Object.keys(cleanTerms(a.labels)).length === 0) e.push('association.labels: at least one name is required');
@@ -636,7 +656,11 @@ export function validateDraftForChangeset(d) {
     const j = d.journalEntity;
     if (!j || Object.keys(cleanTerms(j.labels)).length === 0) e.push('journal.labels: at least one title is required');
     if (!j?.referenceUrl) e.push('journal.referenceUrl is required');
-    if (j) e.push(...validateTerms({ labels: j.labels, descriptions: j.descriptions, abbreviations: {} }));
+    if (j) {
+      e.push(...validateTerms({ labels: j.labels, descriptions: j.descriptions, abbreviations: {} }));
+      const journalYearErr = yearOrderError('journal', j.founded, j.closed);
+      if (journalYearErr) e.push(journalYearErr);
+    }
   }
 
   if (d.mode === 'update-journal') {
@@ -645,6 +669,10 @@ export function validateDraftForChangeset(d) {
     const termChange = j ? hasJournalTermChanges(j) : false;
     const fieldChange = j ? hasJournalFieldChanges(j) : false;
     const scopeChange = j ? hasJournalScopeChanges(j) : false;
+    if (j) {
+      const journalYearErr = yearOrderError('journal', j.founded, j.closed);
+      if (journalYearErr) e.push(journalYearErr);
+    }
     if (!termChange && !fieldChange && !scopeChange) e.push('nothing to update');
     if ((termChange || fieldChange || scopeChange) && !j?.referenceUrl) e.push('journal.referenceUrl is required');
     if (j) e.push(...validateTerms({ labels: j.labels, descriptions: j.descriptions, abbreviations: {} }));

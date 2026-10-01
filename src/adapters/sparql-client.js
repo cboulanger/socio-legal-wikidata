@@ -31,6 +31,7 @@ WHERE {
   VALUES ?class { %CLASSES% }
   ?assoc wdt:P31 ?class .
   ?assoc wdt:P101 wd:%FIELD% .
+  FILTER NOT EXISTS { ?assoc wdt:P576 ?assocDissolved. }
   OPTIONAL { ?assoc wdt:P856 ?website. }
   OPTIONAL { ?assoc wdt:P968 ?email. }
   OPTIONAL { ?assoc wdt:P1813 ?abbreviation. }
@@ -55,6 +56,7 @@ WHERE {
   OPTIONAL {
     ?journal wdt:P123 ?assoc .
     ?journal wdt:P31/wdt:P279* wd:Q737498 .
+    FILTER NOT EXISTS { ?journal wdt:P576 ?journalDissolved. }
     OPTIONAL { ?journal wdt:P856 ?journalUrl. }
     OPTIONAL { ?journal wdt:P236 ?issn. }
   }
@@ -168,6 +170,7 @@ const JOURNAL_QUERY_TEMPLATE = `SELECT ?journal ?journalLabel ?journalDescriptio
 WHERE {
   ?journal wdt:P31/wdt:P279* wd:%ACADEMIC_JOURNAL% .
   ?journal wdt:P921 wd:%FIELD% .
+  FILTER NOT EXISTS { ?journal wdt:P576 ?journalDissolved. }
   OPTIONAL { ?journal wdt:P123 ?publisher. }
   OPTIONAL { ?journal (wdt:P17|wdt:P495) ?country. OPTIONAL { ?country wdt:P297 ?countryCode. } }
   SERVICE wikibase:label { bd:serviceParam wikibase:language "%LANGS%". }

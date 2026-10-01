@@ -115,7 +115,7 @@ export function createWizard(host, opts) {
       const needsField = !!config.inScopeFieldQid && !o.fieldQids.includes(config.inScopeFieldQid);
       a.original = {
         labels: { ...o.labels }, descriptions: { ...o.descriptions }, aliases: o.aliases, abbreviations: o.abbreviations, formerNames: o.formerNames,
-        website: o.website, email: o.email, parentQid: o.parentQid, operatingAreaQid: o.operatingAreaQid, needsClass, needsField,
+        website: o.website, email: o.email, inception: o.inception, closed: o.closed, parentQid: o.parentQid, operatingAreaQid: o.operatingAreaQid, needsClass, needsField,
       };
       a.parentQid = o.parentQid;
       a.parentLabel = o.parentQid ? await labelOf(o.parentQid) : null;
@@ -128,6 +128,8 @@ export function createWizard(host, opts) {
       a.abbreviations = Object.fromEntries(Object.entries(o.abbreviations).map(([lang, list]) => [lang, list[0]]));
       a.website = o.website;
       a.email = o.email;
+      a.inception = o.inception;
+      a.closed = o.closed;
       a.countryQid = o.countryQid;
       displayName = o.labels.en || Object.values(o.labels)[0] || displayName;
       await loadOfficial(o.countryQid);

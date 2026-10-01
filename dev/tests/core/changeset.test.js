@@ -61,6 +61,40 @@ test('create-association creates only the association item (no person, no P488)'
   assert.match(cs.summary, /create association/);
 });
 
+test('create-association writes P571/P576 when founding/dissolution years are given', () => {
+  const d = emptyDraft('create-association');
+  Object.assign(d.association, {
+    labels: { en: 'Defunct Society' }, classQid: 'Q955824', fieldQid: 'Q847034',
+    referenceUrl: 'https://x.example', inception: '1923', closed: '1945',
+  });
+  const create = buildChangeSet(d, cfg).ops[0];
+  const founded = create.claims.find((c) => c.property === 'P571');
+  const closed = create.claims.find((c) => c.property === 'P576');
+  assert.deepEqual(founded.value, { kind: 'time', value: '1923-01-01', precision: 9 });
+  assert.deepEqual(closed.value, { kind: 'time', value: '1945-01-01', precision: 9 });
+});
+
+test('update-field writes a changed founding/dissolution year as a replacing, referenced P571/P576', () => {
+  const d = emptyDraft('update-field');
+  Object.assign(d.association, {
+    qid: 'Q100', referenceUrl: 'https://x.example/history',
+    original: { labels: {}, descriptions: {}, website: null, email: null, inception: null, closed: null },
+    inception: '1923', closed: '1945',
+  });
+  const cs = buildChangeSet(d, cfg);
+  const founded = cs.ops.find((o) => o.property === 'P571');
+  const closed = cs.ops.find((o) => o.property === 'P576');
+  assert.deepEqual(founded.value, { kind: 'time', value: '1923-01-01', precision: 9 });
+  assert.equal(founded.replace, true);
+  assert.deepEqual(founded.reference, { P854: 'https://x.example/history' });
+  assert.deepEqual(closed.value, { kind: 'time', value: '1945-01-01', precision: 9 });
+  assert.equal(closed.replace, true);
+  assert.match(cs.summary, /founding year/);
+  assert.match(cs.summary, /dissolution year/);
+  assert.ok(describeChanges(d).some((l) => /founding year:.*1923/.test(l)));
+  assert.ok(describeChanges(d).some((l) => /dissolution year:.*1945/.test(l)));
+});
+
 test('update-field writes only the changed terms, in one set-terms op', () => {
   const d = emptyDraft('update-field');
   Object.assign(d.association, {
