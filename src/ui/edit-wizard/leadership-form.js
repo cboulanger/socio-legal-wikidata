@@ -24,38 +24,28 @@ function nameFields(p, i) {
       : html`<button type="button" data-role="officer-add-lang" data-index="${i}">+ add another language</button>`}`;
 }
 
-/** Current affiliation: chosen state, or the typeahead placeholder the wizard mounts into. */
-function affiliationField(p, i) {
-  return p.affiliationQid
-    ? html`<p class="wizard__chosen">Current affiliation: <strong>${p.affiliationLabel || p.affiliationQid}</strong>
-        <button type="button" data-role="clear-officer-affiliation" data-index="${i}">change</button></p>`
-    : html`<div data-role="ta-officer-affiliation-${i}"></div>`;
+/** Current affiliation: the typeahead placeholder — its chosen/change/remove state is owned by the picker itself. */
+function affiliationField(i) {
+  return html`<div data-role="ta-officer-affiliation-${i}"></div>`;
 }
 
 /** Person picker: search-first, then either "existing person chosen" or the new-person fields. */
 function personSection(row, i) {
   const p = row.person;
-  if (p.qid) {
-    const who = p.pickedLabel || p.qid;
-    const display = p.pickedBirthYear ? `${who} (b. ${p.pickedBirthYear})` : who;
-    return html`<p class="wizard__chosen">Person: <strong>${display}</strong>
-        <button type="button" data-role="clear-officer-person" data-index="${i}">change</button></p>
-      <p class="officer__afflabel">Current affiliation (optional)</p>
-      ${affiliationField(p, i)}`;
+  if (!p.qid && Object.keys(p.labels).length > 0) {
+    return html`<fieldset class="officer__person">
+        <legend>New person</legend>
+        ${nameFields(p, i)}
+        <label>Description <input type="text" data-field="officer-description" data-index="${i}" value="${p.description || ''}" autocomplete="off"></label>
+        <label>Birth date <input type="date" data-field="officer-birthdate" data-index="${i}" value="${dateStr(p.birthDate)}"></label>
+        <p class="officer__afflabel">Current affiliation, or an ORCID iD below — at least one is required</p>
+        ${affiliationField(i)}
+        <label>ORCID iD <input type="text" data-field="officer-orcid" data-index="${i}" value="${p.orcid || ''}" autocomplete="off"></label>
+        <label>Homepage <input type="text" inputmode="url" data-field="officer-homepage" data-index="${i}" value="${p.homepage || ''}" autocomplete="off"></label>
+      </fieldset>`;
   }
-  if (Object.keys(p.labels).length === 0) {
-    return html`<div data-role="ta-officer-${i}"></div>`;
-  }
-  return html`<fieldset class="officer__person">
-      <legend>New person</legend>
-      ${nameFields(p, i)}
-      <label>Description <input type="text" data-field="officer-description" data-index="${i}" value="${p.description || ''}" autocomplete="off"></label>
-      <label>Birth date <input type="date" data-field="officer-birthdate" data-index="${i}" value="${dateStr(p.birthDate)}"></label>
-      <p class="officer__afflabel">Current affiliation, or an ORCID iD below — at least one is required</p>
-      ${affiliationField(p, i)}
-      <label>ORCID iD <input type="text" data-field="officer-orcid" data-index="${i}" value="${p.orcid || ''}" autocomplete="off"></label>
-      <label>Homepage <input type="text" inputmode="url" data-field="officer-homepage" data-index="${i}" value="${p.homepage || ''}" autocomplete="off"></label>
-    </fieldset>`;
+  return html`<div data-role="ta-officer-${i}"></div>
+    ${p.qid ? html`<p class="officer__afflabel">Current affiliation (optional)</p>${affiliationField(i)}` : ''}`;
 }
 
 /** The office <select> (curated list + "Other"), or the typeahead once "Other" was chosen. */

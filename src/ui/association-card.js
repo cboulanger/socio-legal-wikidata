@@ -39,13 +39,14 @@ export function renderAssociationCard(a, { editMode = false, lastEdit = null } =
         : ''}
       <p class="card__row">journal:
         ${a.journal
-          ? html`<a href="${safeHref(a.journal.url || '#')}" rel="noopener" target="_blank">${a.journal.label}</a>`
+          ? html`<button type="button" class="card__link" data-action="select-journal" data-qid="${a.journal.qid}">${a.journal.label}</button>`
           : '—'}</p>
       ${lastEdit ? renderLastEdit(a.qid, lastEdit, editMode) : ''}
       ${editMode
         ? html`<p class="card__actions">
             <button type="button" data-action="edit" data-qid="${a.qid}">Edit</button>
             <button type="button" data-action="leadership" data-qid="${a.qid}">Manage leadership</button>
+            <button type="button" data-action="link-journal" data-qid="${a.qid}">Link journal</button>
           </p>`
         : ''}
     </article>`;

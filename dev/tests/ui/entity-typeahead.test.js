@@ -78,6 +78,83 @@ test('an optional badge is shown next to each match', async () => {
   assert.match(el.innerHTML, /✓ in directory/);
 });
 
+test('an existing value is shown as "chosen"; "change" opens search without touching the draft', async () => {
+  const el = host();
+  let picked = null;
+  const ta = createTypeahead(el, {
+    label: 'Published by', chosenLabel: 'Published by', searchEntities: search,
+    existing: { qid: 'Q1', label: 'Some Society' }, onPick: (v) => { picked = v; },
+  });
+  assert.match(el.innerHTML, /Published by: <strong>Some Society<\/strong>/);
+  assert.doesNotMatch(el.innerHTML, /data-role="query"/); // no search box yet
+  el.querySelector('[data-role="change"]').click();
+  assert.match(el.innerHTML, /data-role="query"/);
+  assert.equal(picked, null); // nothing was picked, so nothing was committed
+});
+
+test('Escape while editing an existing value cancels back to the chosen display, without calling onPick/onClear', async () => {
+  const el = host();
+  let cleared = false;
+  const ta = createTypeahead(el, {
+    label: 'Published by', searchEntities: search, existing: { qid: 'Q1', label: 'Some Society' },
+    onPick: () => {}, onClear: () => { cleared = true; },
+  });
+  el.querySelector('[data-role="change"]').click();
+  await ta._typeForTest('asian');
+  el.querySelector('[data-role="query"]').dispatchEvent(new el.ownerDocument.defaultView.KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+  assert.match(el.innerHTML, /Published by: <strong>Some Society<\/strong>/);
+  assert.equal(cleared, false);
+});
+
+test('a "cancel" button does the same as Escape', async () => {
+  const el = host();
+  const ta = createTypeahead(el, { label: 'X', searchEntities: search, existing: { qid: 'Q1', label: 'Old' }, onPick: () => {} });
+  el.querySelector('[data-role="change"]').click();
+  el.querySelector('[data-role="cancel-edit"]').click();
+  assert.match(el.innerHTML, /Old/);
+  assert.doesNotMatch(el.innerHTML, /data-role="query"/);
+});
+
+test('"remove" asks for confirmation; declining keeps the value, confirming clears it', async () => {
+  const el = host();
+  el.ownerDocument.defaultView.confirm = () => false;
+  let cleared = false;
+  const ta = createTypeahead(el, { label: 'X', searchEntities: search, existing: { qid: 'Q1', label: 'Old' }, onPick: () => {}, onClear: () => { cleared = true; } });
+  el.querySelector('[data-role="remove"]').click();
+  assert.equal(cleared, false);
+  assert.match(el.innerHTML, /Old/);
+
+  el.ownerDocument.defaultView.confirm = () => true;
+  el.querySelector('[data-role="remove"]').click();
+  assert.equal(cleared, true);
+  assert.match(el.innerHTML, /data-role="query"/); // falls back to a plain, empty search box
+});
+
+test('without onClear, no "remove" button is offered', async () => {
+  const el = host();
+  const ta = createTypeahead(el, { label: 'X', searchEntities: search, existing: { qid: 'Q1', label: 'Old' }, onPick: () => {} });
+  assert.doesNotMatch(el.innerHTML, /data-role="remove"/);
+});
+
+test('picking a replacement while editing an existing value commits the new one', async () => {
+  const el = host();
+  let picked = null;
+  const ta = createTypeahead(el, { label: 'X', searchEntities: search, existing: { qid: 'Q1', label: 'Old' }, onPick: (v) => { picked = v; } });
+  el.querySelector('[data-role="change"]').click();
+  await ta._typeForTest('asian law');
+  el.querySelector('[data-pick="Q2"]').click();
+  assert.deepEqual(picked, { qid: 'Q2', label: 'Asian Law and Society Association', description: 'regional body' });
+  assert.match(el.innerHTML, /Asian Law and Society Association<\/strong>/);
+});
+
+test('Escape with no existing value and no fallback calls onCancelEditing, so the host can collapse its own alternate UI', async () => {
+  const el = host();
+  let cancelled = false;
+  const ta = createTypeahead(el, { label: 'X', searchEntities: search, onPick: () => {}, onCancelEditing: () => { cancelled = true; } });
+  el.querySelector('[data-role="query"]').dispatchEvent(new el.ownerDocument.defaultView.KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+  assert.equal(cancelled, true);
+});
+
 test('a person candidate with birth year, occupation and field of work shows a detail line; one with none of those shows no extra line', async () => {
   const el = host();
   const personSearch = async () => [

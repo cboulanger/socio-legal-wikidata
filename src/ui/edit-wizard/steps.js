@@ -7,6 +7,9 @@ export const STEP_ORDER = {
   'create-association': ['identify', 'place', 'details', 'review'],
   'manage-leadership': ['officers', 'review'],
   'update-field': ['details', 'review'],
+  'create-journal': ['identify', 'details', 'review'],
+  'update-journal': ['details', 'review'],
+  'manage-journal-editors': ['editors', 'review'],
 };
 
 /**
@@ -19,6 +22,11 @@ export function validateStep(step, d) {
   const e = [];
 
   if (step === 'identify') {
+    if (d.mode === 'create-journal') {
+      const j = d.journalEntity;
+      if (!j?.qid && !j?.identifyName && Object.keys(cleanTerms(j?.labels || {})).length === 0) e.push('choose or name the journal');
+      return e;
+    }
     if (!a.qid && !a.identifyName && Object.keys(cleanTerms(a.labels)).length === 0) e.push('choose or name the association');
   }
 
@@ -27,6 +35,9 @@ export function validateStep(step, d) {
   }
 
   if (step === 'details') {
+    if (d.mode === 'create-journal' || d.mode === 'update-journal') {
+      return validateDraftForChangeset(d);
+    }
     const changed = changedStatements(a);
     const statementChanged = !!(changed.website || changed.email || hasScopeChanges(a) || hasFormerNames(a) || hasAbbreviations(a) || !!changedParent(a) || !!changedOperatingArea(a));
     if (d.mode === 'create-association') {
@@ -45,13 +56,8 @@ export function validateStep(step, d) {
     e.push(...validateTerms(a), ...validateFormerNames(a));
   }
 
-  if (step === 'officers') {
+  if (step === 'officers' || step === 'editors') {
     return validateDraftForChangeset(d);
-  }
-
-  if (step === 'journal') {
-    if (d.journal && !d.journal.qid && !d.journal.label) e.push('name the journal or remove it');
-    if (d.journal && !d.journal.qid && !d.journal.referenceUrl) e.push('a reference URL for the new journal is required');
   }
 
   return e;

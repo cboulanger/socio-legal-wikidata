@@ -3,10 +3,12 @@ import { mount } from './render.js';
 import { filterAssociations } from './core/filter.js';
 import { emptyAssociation } from './core/model.js';
 import { cleanTerms } from './core/draft.js';
+import { publishedJournalsFrom, mergeJournals } from './core/journals.js';
 import { createCache, loadDirectory as loadDirectoryImpl } from './adapters/browser-cache.js';
-import { queryDirectory as queryDirectoryImpl } from './adapters/sparql-client.js';
+import { queryDirectory as queryDirectoryImpl, queryJournals as queryJournalsImpl } from './adapters/sparql-client.js';
 import { renderPanel } from './ui/directory-panel.js';
 import { renderAssociationCard } from './ui/association-card.js';
+import { renderJournalCard } from './ui/journal-card.js';
 import { createRevisionClient } from './adapters/wikidata-revisions.js';
 import { createMapView as createMapViewImpl, toMapPins } from './ui/map-view.js';
 import { renderEditChrome } from './ui/edit-panel.js';
@@ -25,6 +27,8 @@ import { mountLeadershipHistory, clearLeadershipHistoryCache } from './ui/compon
  *   buildEditRuntime?: () => Promise<{
  *     auth: {hasSession: () => boolean, connect: () => Promise<void>, disconnect: () => Promise<void>},
  *     getLeadershipHistory?: (qid: string) => Promise<any>,
+ *     getJournalDetails?: (qid: string) => Promise<any>,
+ *     getJournalEditorHistory?: (qid: string) => Promise<any>,
  *     openWizard: (host: HTMLElement, seed: any, hooks?: {onSaved?: Function}) => void,
  *   }>,
  * }} deps
@@ -46,16 +50,23 @@ export async function createApp(deps) {
   const store = createStore({
     mode,
     associations: [],
+    independentJournals: null, // raw Pool B query result, fetched once per session; null = not fetched yet
+    showJournals: false,
     filter: {},
     selection: null,
     stale: false,
     asOf: null,
   });
 
+  const currentJournals = () => mergeJournals(publishedJournalsFrom(store.getState().associations), store.getState().independentJournals || []);
+
   // Who last edited the selected item: the snapshot's value shows at once, a live lookup replaces it.
   const revisions = deps.revisionClient || (win.fetch ? createRevisionClient({ fetch: win.fetch.bind(win), config }) : null);
   const liveEdits = new Map();
   const requestedEdits = new Set();
+
+  // A journal's rich fields and editor history: fetched live, once per qid, when its card opens.
+  const journalDetailsCache = new Map(); // qid -> { details, editorHistory, error }
 
   const panelHost = doc.getElementById('panel-host');
   const detailHost = doc.getElementById('detail-host');
@@ -70,7 +81,7 @@ export async function createApp(deps) {
       const m = mapHost.getBoundingClientRect();
       return r.top > m.top ? { bottom: m.bottom - r.top } : { left: r.right };
     },
-    onSelect: (qid) => select(qid),
+    onSelect: (qid) => select('association', qid),
     onSelectCountry: (iso) => { win.location.hash = `#/country/${iso}`; },
   });
 
@@ -78,6 +89,8 @@ export async function createApp(deps) {
     const s = store.getState();
     mount(panelHost, renderPanel({
       associations: s.associations,
+      journals: currentJournals(),
+      showJournals: s.showJournals,
       filter: s.filter,
       selection: s.selection,
       centroids,
@@ -86,11 +99,47 @@ export async function createApp(deps) {
     }));
   }
 
-  // the selected association's card lives in a right-hand sidebar (the edit drawer covers it)
+  function loadJournalDetails(qid) {
+    journalDetailsCache.set(qid, { details: null, editorHistory: null, error: '' }); // dedup while in flight
+    Promise.all([
+      editRuntime.getJournalDetails(qid),
+      editRuntime.getJournalEditorHistory ? editRuntime.getJournalEditorHistory(qid) : Promise.resolve({ history: [] }),
+    ]).then(([details, editors]) => {
+      journalDetailsCache.set(qid, { details, editorHistory: editors.history, error: '' });
+      const sel = store.getState().selection;
+      if (sel?.kind === 'journal' && sel.qid === qid) renderDetailRegion();
+    }).catch((err) => {
+      journalDetailsCache.set(qid, { details: null, editorHistory: null, error: `Could not load journal details: ${err.message}` });
+      const sel = store.getState().selection;
+      if (sel?.kind === 'journal' && sel.qid === qid) renderDetailRegion();
+    });
+  }
+
+  // the selected item's card lives in a right-hand sidebar (the edit drawer covers it)
   function renderDetailRegion() {
     const s = store.getState();
-    const a = s.selection ? s.associations.find((x) => x.qid === s.selection) : null;
-    if (a) {
+    const sel = s.selection;
+    const showHost = (el) => { detailHost.hidden = false; doc.getElementById('app').classList.toggle('has-detail', true); el(); };
+    const hideHost = () => { detailHost.innerHTML = ''; detailHost.hidden = true; doc.getElementById('app').classList.toggle('has-detail', false); };
+
+    if (sel?.kind === 'journal') {
+      const j = currentJournals().find((x) => x.qid === sel.qid);
+      if (!j) return hideHost();
+      const cached = journalDetailsCache.get(j.qid);
+      return showHost(() => {
+        mount(detailHost, renderJournalCard(j, {
+          editMode: s.mode === 'edit',
+          details: cached?.details || null,
+          editorHistory: cached?.editorHistory || null,
+          loadError: cached?.error || '',
+        }));
+        if (s.mode === 'edit' && editRuntime?.getJournalDetails && !cached) loadJournalDetails(j.qid);
+      });
+    }
+
+    const a = sel?.kind === 'association' ? s.associations.find((x) => x.qid === sel.qid) : null;
+    if (!a) return hideHost();
+    showHost(() => {
       mount(detailHost, renderAssociationCard(a, { editMode: s.mode === 'edit', lastEdit: liveEdits.get(a.qid) || a.lastEdit || null }));
       if (s.mode === 'edit' && editRuntime?.getLeadershipHistory) {
         mountLeadershipHistory(detailHost, { qid: a.qid, getHistory: editRuntime.getLeadershipHistory });
@@ -100,13 +149,11 @@ export async function createApp(deps) {
         revisions.getLastEdit(a.qid).then((edit) => {
           if (!edit) return; // keep what the snapshot knew
           liveEdits.set(a.qid, edit);
-          if (store.getState().selection === a.qid) renderDetailRegion();
+          const cur = store.getState().selection;
+          if (cur?.kind === 'association' && cur.qid === a.qid) renderDetailRegion();
         });
       }
-    }
-    else detailHost.innerHTML = '';
-    detailHost.hidden = !a;
-    doc.getElementById('app').classList.toggle('has-detail', !!a);
+    });
   }
 
   function renderMapRegion() {
@@ -115,17 +162,27 @@ export async function createApp(deps) {
     mapView.render(toMapPins(visible, { centroids }));
   }
 
-  function select(qid) {
-    store.setState({ selection: qid });
+  function select(kind, qid) {
+    store.setState({ selection: { kind, qid } });
+    if (kind !== 'association') return;
     const a = store.getState().associations.find((x) => x.qid === qid);
     if (a && a.seatCoord) mapView.focus(a.seatCoord);
     else if (a && a.countryCode && centroids[a.countryCode]) mapView.focus(centroids[a.countryCode]);
   }
 
+  async function fetchIndependentJournals() {
+    try {
+      const rows = await queryJournalsImpl({ fetch: win.fetch.bind(win), endpoint: config.sparqlEndpoint, cfg: config });
+      store.setState({ independentJournals: rows });
+    } catch {
+      store.setState({ independentJournals: [] }); // best-effort: the "Journals" group stays limited to association-published ones
+    }
+  }
+
   // ---- events (delegated) ----
   panelHost.addEventListener('click', (e) => {
     const row = e.target.closest('button.row');
-    if (row) return select(row.dataset.qid);
+    if (row) return select(row.dataset.kind || 'association', row.dataset.qid);
     if (e.target.closest('[data-role="reload-data"]')) {
       // drop only the cached directory (not the login session or a wizard draft), then re-query Wikidata
       try { cache.remove('directory'); } catch { /* storage blocked */ }
@@ -145,11 +202,25 @@ export async function createApp(deps) {
       if (/^#\/country\//.test(win.location.hash)) win.location.hash = '';
     }
   });
+  panelHost.addEventListener('change', (e) => {
+    if (!e.target.matches('input[data-role="show-journals"]')) return;
+    const checked = e.target.checked;
+    store.setState({ showJournals: checked });
+    if (checked && store.getState().independentJournals == null) fetchIndependentJournals();
+  });
   detailHost.addEventListener('click', (e) => {
-    if (!e.target.closest('[data-role="close-card"]')) return;
-    store.setState({ selection: null });
-    // a selection can also come from #/assoc/Q…; clear it so a reload doesn't re-open the card
-    if (/^#\/assoc\//.test(win.location.hash)) win.location.hash = '';
+    if (e.target.closest('[data-role="close-card"]')) {
+      store.setState({ selection: null });
+      // a selection can also come from #/assoc/Q… or #/journal/Q…; clear it so a reload doesn't re-open the card
+      if (/^#\/(assoc|journal)\//.test(win.location.hash)) win.location.hash = '';
+      return;
+    }
+    const journalLink = e.target.closest('[data-action="select-journal"]');
+    if (journalLink) return select('journal', journalLink.dataset.qid);
+    const assocLink = e.target.closest('[data-action="select-association"]');
+    if (assocLink) return select('association', assocLink.dataset.qid);
+    const retry = e.target.closest('[data-role="retry-journal-load"]');
+    if (retry) { journalDetailsCache.delete(retry.dataset.qid); return renderDetailRegion(); }
   });
   panelHost.addEventListener('input', (e) => {
     if (e.target.matches('input[data-role="search"]')) {
@@ -162,8 +233,10 @@ export async function createApp(deps) {
     const hash = win.location.hash || '#/';
     const m = hash.match(/^#\/country\/([A-Za-z]{2})$/);
     if (m) return store.setState((s) => ({ filter: { ...s.filter, countryCode: m[1].toUpperCase() } }));
+    const j = hash.match(/^#\/journal\/(Q\d+)$/);
+    if (j) return store.setState({ selection: { kind: 'journal', qid: j[1] } });
     const a = hash.match(/^#\/assoc\/(Q\d+)$/);
-    if (a) return store.setState({ selection: a[1] });
+    if (a) return store.setState({ selection: { kind: 'association', qid: a[1] } });
   }
 
   store.subscribe(() => {
@@ -186,6 +259,7 @@ export async function createApp(deps) {
       onConnect: () => editRuntime.auth.connect(),
       onLeave: async () => { await editRuntime.auth.disconnect(); win.location.search = ''; },
       onAdd: () => editRuntime.openWizard(drawer, { mode: 'create-association' }, { onSaved: applySaved, isInDirectory }),
+      onAddJournal: () => editRuntime.openWizard(drawer, { mode: 'create-journal' }, { onSaved: applySaved }),
     });
 
     const isInDirectory = (qid) => store.getState().associations.some((x) => x.qid === qid);
@@ -199,6 +273,9 @@ export async function createApp(deps) {
     }
 
     function patchStore(result, draft) {
+      if (draft.mode === 'create-journal' || draft.mode === 'update-journal' || draft.mode === 'manage-journal-editors') {
+        return patchJournalStore(result, draft);
+      }
       const a = draft.association;
       if (a.qid) { revisions?.forget(a.qid); liveEdits.delete(a.qid); requestedEdits.delete(a.qid); } // the item just changed
       const labels = cleanTerms({ ...a.original.labels, ...a.labels });
@@ -212,7 +289,7 @@ export async function createApp(deps) {
             ...emptyAssociation(a.qid), label: pick(labels) || Object.values(labels)[0] || a.qid,
             description: pick(descriptions), website: a.website, email: a.email,
           }],
-          selection: a.qid,
+          selection: { kind: 'association', qid: a.qid },
         }));
       } else if (draft.mode === 'update-field') {
         store.setState((s) => ({
@@ -229,16 +306,49 @@ export async function createApp(deps) {
           description: pick(descriptions), website: a.website, email: a.email,
           countryLabel: a.countryLabel, seatQid: a.seatQid, seatLabel: a.seatLabel,
         };
-        store.setState((s) => ({ associations: [...s.associations, added], selection: created.qid }));
+        store.setState((s) => ({ associations: [...s.associations, added], selection: { kind: 'association', qid: created.qid } }));
       } else if (draft.mode === 'manage-leadership') {
         clearLeadershipHistoryCache(a.qid);
       }
+    }
+
+    function patchJournalStore(result, draft) {
+      const j = draft.journalEntity;
+      if (draft.mode === 'manage-journal-editors') {
+        journalDetailsCache.delete(j.qid);
+        return;
+      }
+      const labels = cleanTerms({ ...j.original.labels, ...j.labels });
+      const descriptions = cleanTerms({ ...j.original.descriptions, ...j.descriptions });
+      const pick = (m) => (config.labelLanguages || 'en').split(',').map((l) => l.trim()).map((l) => m[l]).find(Boolean) || '';
+      let qid = j.qid;
+      if (draft.mode === 'create-journal') {
+        const created = result.created?.find((c) => c.ref === 'journal');
+        if (!created) return;
+        qid = created.qid;
+      }
+      journalDetailsCache.delete(qid);
+      const row = {
+        qid, label: pick(labels) || Object.values(labels)[0] || qid, description: pick(descriptions),
+        publisherQid: j.publisherQid, publisherLabel: j.publisherLabel,
+        // left unset so mergeJournals falls back to the publisher's country, when there is one
+        countryCode: null, countryLabel: null,
+      };
+      store.setState((s) => {
+        const list = s.independentJournals || [];
+        const idx = list.findIndex((x) => x.qid === qid);
+        const next = idx === -1 ? [...list, row] : list.map((x, i) => (i === idx ? { ...x, ...row } : x));
+        return { independentJournals: next, selection: { kind: 'journal', qid } };
+      });
     }
     paintChrome();
 
     detailHost.addEventListener('click', (e) => {
       const editBtn = e.target.closest('[data-action="edit"]');
       const leadershipBtn = e.target.closest('[data-action="leadership"]');
+      const linkJournalBtn = e.target.closest('[data-action="link-journal"]');
+      const editJournalBtn = e.target.closest('[data-action="edit-journal"]');
+      const manageEditorsBtn = e.target.closest('[data-action="manage-editors"]');
       if (editBtn) {
         const a = store.getState().associations.find((x) => x.qid === editBtn.dataset.qid);
         if (!a) return;
@@ -247,6 +357,14 @@ export async function createApp(deps) {
         const a = store.getState().associations.find((x) => x.qid === leadershipBtn.dataset.qid);
         if (!a) return;
         editRuntime.openWizard(drawer, { mode: 'manage-leadership', association: { qid: a.qid, label: a.label } }, { onSaved: applySaved });
+      } else if (linkJournalBtn) {
+        const a = store.getState().associations.find((x) => x.qid === linkJournalBtn.dataset.qid);
+        if (!a) return;
+        editRuntime.openWizard(drawer, { mode: 'create-journal', journal: { publisherQid: a.qid, publisherLabel: a.label } }, { onSaved: applySaved });
+      } else if (editJournalBtn) {
+        editRuntime.openWizard(drawer, { mode: 'update-journal', journal: { qid: editJournalBtn.dataset.qid } }, { onSaved: applySaved });
+      } else if (manageEditorsBtn) {
+        editRuntime.openWizard(drawer, { mode: 'manage-journal-editors', journal: { qid: manageEditorsBtn.dataset.qid } }, { onSaved: applySaved });
       }
     });
   }
@@ -345,6 +463,8 @@ if (typeof window !== 'undefined' && window.document?.getElementById('app')) {
         auth: runtimeAuth,
         devWriteMocked,
         getLeadershipHistory: api.getLeadershipHistory,
+        getJournalDetails: api.getJournalDetails,
+        getJournalEditorHistory: api.getJournalEditorHistory,
         openWizard: (host, seed, hooks = {}) => createWizard(host, { window, config, ports: { search: api, write }, seed, onClose: () => { host.innerHTML = ''; }, ...hooks }),
       };
     },

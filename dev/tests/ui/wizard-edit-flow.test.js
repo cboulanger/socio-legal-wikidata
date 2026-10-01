@@ -436,3 +436,30 @@ test('typing in a former-name field keeps the input (focus, caret) and the hint 
   type(host.querySelector('input[name="label-pt"]'), 'Rede Antiga');            // changed back: no rename any more
   assert.equal(host.querySelector('[data-role="rename-hint"]'), null);
 });
+
+test('regression: "change" on the place step\'s country does not clear it until a replacement is actually picked; Escape restores it', async () => {
+  const { win, host, ports, type, click } = setup();
+  createWizard(host, { window: win, config: cfg, ports, seed: { mode: 'create-association' } });
+  await settle();
+  type(host.querySelector('[data-role="ta-identify"] input[data-role="query"]'), 'Rede');
+  await settle();
+  click('[data-role="none-of-these"]');
+  host.querySelector('[data-role="create-name"]').value = 'Rede';
+  click('[data-role="create-confirm"]');
+  click('[data-role="next"]');
+
+  type(host.querySelector('[data-role="ta-country"] input[data-role="query"]'), 'bra');
+  await settle();
+  click('[data-pick="Q155"]');
+  await settle();
+  assert.match(host.innerHTML, /Country: <strong>Brazil/);
+  assert.ok(!host.querySelector('[data-role="next"]').disabled);
+
+  host.querySelector('[data-role="ta-country"] [data-role="change"]').click();
+  assert.match(host.innerHTML, /data-role="query"/);
+  // leaving the search box empty and going "back" must not have lost the country
+  assert.ok(!host.querySelector('[data-role="next"]').disabled);
+  host.querySelector('[data-role="ta-country"] input[data-role="query"]')
+    .dispatchEvent(new win.KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+  assert.match(host.innerHTML, /Country: <strong>Brazil/);
+});

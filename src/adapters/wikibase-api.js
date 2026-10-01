@@ -1,4 +1,4 @@
-import { leadershipClaimsFromEntity } from '../core/draft.js';
+import { leadershipClaimsFromEntity, editorClaimsFromEntity, journalOriginalFromEntity } from '../core/draft.js';
 
 /**
  * @typedef {import('../core/changeset.js').ChangeSet} ChangeSet
@@ -41,7 +41,13 @@ export function createWikibaseApi({ fetch, config, getToken }) {
     return res.json();
   }
 
-  return {
+  // Several methods call sibling methods via `this` (e.g. getJournalDetails -> this.getEntity).
+  // That only works while the method is invoked as `api.method(...)`; callers elsewhere (e.g.
+  // app.js exposes `getJournalDetails: api.getJournalDetails` on a different object, then calls
+  // it as `editRuntime.getJournalDetails(qid)`) invoke it detached, rebinding `this` to whatever
+  // object the method now hangs off. Binding every method to `api` here up front makes `this`
+  // stable no matter how a caller later holds or re-attaches the reference.
+  const api = {
     async searchEntities(text, type = 'item') {
       const search = encodeURIComponent(text).replace(/%20/g, '+');
       const url = `${action}?action=wbsearchentities&format=json&origin=*&type=${type}&language=en&uselang=en&limit=10&search=${search}`;
@@ -170,6 +176,51 @@ export function createWikibaseApi({ fetch, config, getToken }) {
       return { history, current };
     },
 
+    /**
+     * Every P98 (editor) statement on `qid`, labelled and sorted newest-begin-first. No
+     * "current" computation (unlike getLeadershipHistory): a journal can have several
+     * concurrent editors in different roles, so there is no single "current" row.
+     * @param {string} qid
+     * @returns {Promise<{history: import('../core/draft.js').EditorHistoryRow[]}>}
+     */
+    async getJournalEditorHistory(qid) {
+      const entity = await this.getEntity(qid);
+      const claims = editorClaimsFromEntity(entity);
+      if (!claims.length) return { history: [] };
+      const ids = [...new Set(claims.flatMap((c) => [c.personQid, c.roleQid].filter(Boolean)))];
+      const j = await getJson(`${action}?action=wbgetentities&format=json&origin=*&props=labels&languages=en&ids=${ids.join('%7C')}`);
+      const labelOf = (id) => j.entities?.[id]?.labels?.en?.value || id;
+      const history = claims
+        .map((c) => ({
+          statementId: c.statementId, personQid: c.personQid, personLabel: labelOf(c.personQid),
+          roleQid: c.roleQid, roleLabel: c.roleQid ? labelOf(c.roleQid) : 'editor',
+          begin: c.begin, end: c.end,
+        }))
+        .sort((x, y) => (y.begin || '').localeCompare(x.begin || ''));
+      return { history };
+    },
+
+    /**
+     * A journal's rich fields (title, description, website, ISSN, founded/closed, OpenAlex
+     * id, publisher), as loaded from Wikidata. Serves two call sites: the `update-journal`
+     * wizard step and the read-only journal card.
+     * @param {string} qid
+     * @returns {Promise<null|{qid: string, labels: Object<string,string>, descriptions: Object<string,string>, website: string|null, websiteAsOf: string|null, issn: string|null, founded: string|null, closed: string|null, openAlexId: string|null, publisherQid: string|null, publisherLabel: string|null, classQids: string[], fieldQids: string[]}>}
+     */
+    async getJournalDetails(qid) {
+      const entity = await this.getEntity(qid);
+      if (!entity) return null;
+      const o = journalOriginalFromEntity(entity);
+      let publisherLabel = null;
+      if (o.publisherQid) {
+        try {
+          const labels = (await this.getEntity(o.publisherQid))?.labels || {};
+          publisherLabel = (labels.en || Object.values(labels)[0])?.value || o.publisherQid;
+        } catch { publisherLabel = o.publisherQid; }
+      }
+      return { qid, ...o, publisherLabel };
+    },
+
     async lookupByExternalId(property, value) {
       const q = `haswbstatement:${property}=${value}`;
       const url = `${action}?action=query&format=json&origin=*&list=search&srsearch=${encodeURIComponent(q)}&srlimit=10`;
@@ -261,4 +312,9 @@ export function createWikibaseApi({ fetch, config, getToken }) {
       return { via: 'direct', created, diffUrls };
     },
   };
+
+  for (const key of Object.keys(api)) {
+    if (typeof api[key] === 'function') api[key] = api[key].bind(api);
+  }
+  return api;
 }

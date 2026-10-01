@@ -41,3 +41,13 @@ test('getLeadershipHistory: labels are batched in one request, sorted newest-beg
   assert.deepEqual(result.history[1], { statementId: 'Q1$A', personQid: 'Q5', personLabel: 'Eva Kocher', officeQid: 'Q140686', officeLabel: 'Chairperson', begin: '1995-01-01', end: null });
   assert.deepEqual(result.current, result.history[0]); // the more recently begun of the two open rows
 });
+
+// Regression: app.js exposes this as a bare reference (`editRuntime.getLeadershipHistory =
+// api.getLeadershipHistory`) and ui/components/leadership-history.js calls it detached. It
+// must still work when `this` inside it would otherwise be rebound or undefined.
+test('getLeadershipHistory works when detached and called as a method on an unrelated object', async () => {
+  const fetch = async () => ok({ entities: { Q1: { claims: {} } } });
+  const api = createWikibaseApi({ fetch, config, getToken: async () => 'T' });
+  const editRuntime = { getLeadershipHistory: api.getLeadershipHistory };
+  assert.deepEqual(await editRuntime.getLeadershipHistory('Q1'), { history: [], current: null });
+});

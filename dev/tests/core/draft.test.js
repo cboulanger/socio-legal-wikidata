@@ -1,12 +1,12 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { emptyDraft, validateDraftForChangeset, changedTerms, changedStatements, originalFromEntity, cleanTerms, scopeStatements, hasScopeChanges, activeFormerNames, validateFormerNames, aliasesToSet, changedAbbreviations, emptyOfficerRow, leadershipClaimsFromEntity } from '../../../src/core/draft.js';
+import { emptyDraft, validateDraftForChangeset, changedTerms, changedStatements, originalFromEntity, cleanTerms, scopeStatements, hasScopeChanges, activeFormerNames, validateFormerNames, aliasesToSet, changedAbbreviations, emptyOfficerRow, leadershipClaimsFromEntity, emptyJournalEntity, emptyEditorRow, journalOriginalFromEntity, editorClaimsFromEntity, hasJournalTermChanges, hasJournalFieldChanges, hasJournalScopeChanges } from '../../../src/core/draft.js';
 
 test('emptyDraft has a mode and nested association/journal', () => {
   const d = emptyDraft('create-association');
   assert.equal(d.mode, 'create-association');
   assert.equal(d.association.qid, null);
-  assert.equal(d.journal, null);
+  assert.equal(d.journalEntity, null);
 });
 
 test('validateDraftForChangeset: create-association requires a name, class, field, reference', () => {
@@ -310,4 +310,100 @@ test('validateDraftForChangeset: manage-leadership requires a reference URL once
   row.begin = '2024-01-01';
   d.officers.push(row);
   assert.ok(validateDraftForChangeset(d).includes('association.referenceUrl is required'));
+});
+
+test('emptyJournalEntity / emptyEditorRow seed blank shapes', () => {
+  const j = emptyJournalEntity('Q100');
+  assert.equal(j.qid, 'Q100');
+  assert.deepEqual(j.labels, {});
+  assert.equal(j.addToDirectory, false);
+  const row = emptyEditorRow('Q589298', 'Editor-in-chief');
+  assert.equal(row.roleQid, 'Q589298');
+  assert.equal(row.begin, '');
+  assert.equal(row.end, null);
+});
+
+test('journalOriginalFromEntity reads title, website+P585, ISSN, founded/closed years, OpenAlex id and publisher', () => {
+  const entity = {
+    labels: { en: { language: 'en', value: 'Example Journal' } },
+    descriptions: { en: { language: 'en', value: 'a journal' } },
+    claims: {
+      P856: [{ rank: 'normal', mainsnak: { datavalue: { value: 'https://example.org' } }, qualifiers: { P585: [{ datavalue: { value: { time: '+2026-10-01T00:00:00Z' } } }] } }],
+      P236: [{ rank: 'normal', mainsnak: { datavalue: { value: '2666-1861' } } }],
+      P571: [{ rank: 'normal', mainsnak: { datavalue: { value: { time: '+2020-00-00T00:00:00Z', precision: 9 } } } }],
+      P576: [{ rank: 'normal', mainsnak: { datavalue: { value: { time: '+2023-00-00T00:00:00Z', precision: 9 } } } }],
+      P10283: [{ rank: 'normal', mainsnak: { datavalue: { value: 'S58239531' } } }],
+      P123: [{ rank: 'normal', mainsnak: { datavalue: { value: { id: 'Q2867822' } } } }],
+      P31: [{ rank: 'normal', mainsnak: { datavalue: { value: { id: 'Q737498' } } } }],
+      P921: [{ rank: 'normal', mainsnak: { datavalue: { value: { id: 'Q847034' } } } }],
+    },
+  };
+  assert.deepEqual(journalOriginalFromEntity(entity), {
+    labels: { en: 'Example Journal' }, descriptions: { en: 'a journal' },
+    website: 'https://example.org', websiteAsOf: '2026-10-01',
+    issn: '2666-1861', founded: '2020', closed: '2023', openAlexId: 'S58239531',
+    publisherQid: 'Q2867822', classQids: ['Q737498'], fieldQids: ['Q847034'],
+  });
+  assert.deepEqual(journalOriginalFromEntity({}), {
+    labels: {}, descriptions: {}, website: null, websiteAsOf: null, issn: null, founded: null, closed: null,
+    openAlexId: null, publisherQid: null, classQids: [], fieldQids: [],
+  });
+});
+
+test('editorClaimsFromEntity parses P98 claims with P580/P582/P3831 qualifiers', () => {
+  const entity = {
+    claims: {
+      P98: [
+        {
+          id: 'Q100$A', rank: 'normal',
+          mainsnak: { datavalue: { value: { id: 'Q5' } } },
+          qualifiers: {
+            P580: [{ datavalue: { value: { time: '+2020-01-01T00:00:00Z' } } }],
+            P3831: [{ datavalue: { value: { id: 'Q589298' } } }],
+          },
+        },
+        { id: 'Q100$B', rank: 'deprecated', mainsnak: { datavalue: { value: { id: 'Q999' } } } },
+      ],
+    },
+  };
+  const rows = editorClaimsFromEntity(entity);
+  assert.equal(rows.length, 1);
+  assert.deepEqual(rows[0], { statementId: 'Q100$A', personQid: 'Q5', roleQid: 'Q589298', begin: '2020-01-01', end: null });
+  assert.deepEqual(editorClaimsFromEntity({}), []);
+});
+
+test('hasJournalTermChanges / hasJournalFieldChanges / hasJournalScopeChanges', () => {
+  const j = emptyJournalEntity('Q100');
+  j.original = { labels: { en: 'Old' }, descriptions: {}, website: null, issn: null, founded: null, closed: null, openAlexId: null, publisherQid: null, needsClass: true, needsField: false };
+  assert.equal(hasJournalTermChanges(j), false);
+  assert.equal(hasJournalFieldChanges(j), false);
+  assert.equal(hasJournalScopeChanges(j), false); // not ticked yet
+  j.labels = { en: 'New' };
+  assert.equal(hasJournalTermChanges(j), true);
+  j.issn = '1234-5678';
+  assert.equal(hasJournalFieldChanges(j), true);
+  j.addToDirectory = true;
+  assert.equal(hasJournalScopeChanges(j), true);
+});
+
+test('validateDraftForChangeset: create-journal requires a title and reference URL', () => {
+  const d = emptyDraft('create-journal');
+  d.journalEntity = emptyJournalEntity();
+  const errs = validateDraftForChangeset(d);
+  assert.ok(errs.includes('journal.labels: at least one title is required'));
+  assert.ok(errs.includes('journal.referenceUrl is required'));
+  d.journalEntity.labels = { en: 'X' };
+  d.journalEntity.referenceUrl = 'https://x.example';
+  assert.deepEqual(validateDraftForChangeset(d), []);
+});
+
+test('validateDraftForChangeset: manage-journal-editors groups the "one open row" rule by role', () => {
+  const d = emptyDraft('manage-journal-editors');
+  d.journalEntity = emptyJournalEntity('Q100');
+  d.journalEntity.referenceUrl = 'https://x.example';
+  const row = (roleQid, qid) => ({ ...emptyEditorRow(roleQid, ''), person: { ...emptyEditorRow('Q1', '').person, qid }, begin: '2024-01-01' });
+  d.editors.push(row('Q589298', 'Q200'), row('Q75792065', 'Q300'));
+  assert.deepEqual(validateDraftForChangeset(d), []); // different roles, both open: fine
+  d.editors.push(row('Q589298', 'Q400'));
+  assert.ok(validateDraftForChangeset(d).includes('only one editor per role can be current — give the others an end date'));
 });

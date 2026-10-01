@@ -35,7 +35,44 @@ test('shows the stale banner when stale', () => {
 });
 
 test('does not render the card in the list panel (it lives in the right sidebar)', () => {
-  const out = renderPanel({ associations: list, filter: {}, selection: 'Q1', centroids, stale: false }).value;
+  const out = renderPanel({ associations: list, filter: {}, selection: { kind: 'association', qid: 'Q1' }, centroids, stale: false }).value;
   assert.doesNotMatch(out, /class="card"/);
   assert.match(out, /aria-current="true"/);
+});
+
+test('"Show journals" checkbox appears, unchecked by default, next to Reload data', () => {
+  const out = renderPanel({ associations: list, filter: {}, selection: null, centroids, stale: false }).value;
+  assert.match(out, /data-role="show-journals"/);
+  assert.doesNotMatch(out, /data-role="show-journals"[^>]*checked/);
+  assert.doesNotMatch(out, /Journals<\/h3>/);
+});
+
+const journals = [
+  { qid: 'Q9', label: 'ZfRS', description: '', publisherQid: 'Q1', publisherLabel: 'German Association', countryCode: 'DE', countryLabel: 'Germany' },
+  { qid: 'Q10', label: 'Journal of Law and Society', description: '', publisherQid: null, publisherLabel: null, countryCode: 'GB', countryLabel: 'United Kingdom' },
+];
+
+test('when "Show journals" is checked, a "Journals" group lists every journal row', () => {
+  const out = renderPanel({ associations: list, journals, showJournals: true, filter: {}, selection: null, centroids, stale: false }).value;
+  assert.match(out, /checked/);
+  assert.match(out, /Journals<\/h3>/);
+  assert.match(out, /data-kind="journal" data-qid="Q9"/);
+  assert.match(out, /data-kind="journal" data-qid="Q10"/);
+});
+
+test('the journals group is filtered by the same country filter as associations', () => {
+  const out = renderPanel({ associations: list, journals, showJournals: true, filter: { countryCode: 'DE' }, selection: null, centroids, stale: false }).value;
+  assert.match(out, /data-kind="journal" data-qid="Q9"/);
+  assert.doesNotMatch(out, /data-kind="journal" data-qid="Q10"/);
+});
+
+test('a selected journal row gets aria-current, an association row with the same qid does not', () => {
+  const out = renderPanel({
+    associations: list, journals: [{ qid: 'Q1', label: 'Same-qid journal', description: '', publisherQid: null, publisherLabel: null, countryCode: null, countryLabel: null }],
+    showJournals: true, filter: {}, selection: { kind: 'journal', qid: 'Q1' }, centroids, stale: false,
+  }).value;
+  const journalRow = out.match(/<button[^>]*data-kind="journal" data-qid="Q1"[^>]*>/)[0];
+  const assocRow = out.match(/<button[^>]*data-kind="association" data-qid="Q1"[^>]*>/)[0];
+  assert.match(journalRow, /aria-current="true"/);
+  assert.match(assocRow, /aria-current=""/);
 });

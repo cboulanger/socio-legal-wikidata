@@ -32,5 +32,11 @@
     { "qid": "Q6501749", "label": "Secretary-general" },
     { "qid": "Q388338", "label": "Treasurer" },
     { "qid": "Q1758037", "label": "Speaker" }
+  ],
+  "journalEditorRoles": [
+    { "qid": "Q589298", "label": "Editor-in-chief" },
+    { "qid": "Q1068933", "label": "Managing editor" },
+    { "qid": "Q75792065", "label": "Associate editor" },
+    { "qid": "Q62489725", "label": "Deputy editor" }
   ]
 }

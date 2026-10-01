@@ -51,12 +51,65 @@ const isValidIsoDate = (s) => ISO_DATE.test(s) && !Number.isNaN(Date.parse(s));
  * @property {string|null} inception     // 'YYYY'
  * @property {string|null} referenceUrl
  *
- * @typedef {Object} DraftJournal
- * @property {string|null} qid
- * @property {string} label
- * @property {string|null} url
+ * @typedef {Object} JournalOriginal   // values as loaded from Wikidata (empty when creating)
+ * @property {Object<string,string>} labels
+ * @property {Object<string,string>} descriptions
+ * @property {string|null} website
+ * @property {string|null} websiteAsOf
  * @property {string|null} issn
+ * @property {string|null} founded
+ * @property {string|null} closed
+ * @property {string|null} openAlexId
+ * @property {string|null} publisherQid
+ * @property {boolean} [needsClass]   // lacks P31=academic journal
+ * @property {boolean} [needsField]   // lacks P921=sociology of law
+ *
+ * @typedef {Object} DraftJournalEntity
+ * @property {string|null} qid
+ * @property {string} identifyName        // typed in the "identify" step (create)
+ * @property {Object<string,string>} labels
+ * @property {Object<string,string>} descriptions
+ * @property {JournalOriginal} original
+ * @property {string|null} website
+ * @property {string|null} issn
+ * @property {string|null} founded        // 'YYYY'
+ * @property {string|null} closed         // 'YYYY'
+ * @property {string|null} openAlexId
+ * @property {string|null} publisherQid
+ * @property {string|null} publisherLabel // display only
+ * @property {boolean} addToDirectory     // edit: also add missing P31/P921 to an existing item
  * @property {string|null} referenceUrl
+ *
+ * @typedef {Object} DraftEditorPerson   // identical shape to DraftOfficerPerson
+ * @property {string|null} qid
+ * @property {string|null} pickedLabel
+ * @property {string|null} pickedBirthYear
+ * @property {Object<string,string>} labels
+ * @property {string} description
+ * @property {string|null} birthDate
+ * @property {string|null} affiliationQid
+ * @property {string|null} affiliationLabel
+ * @property {string|null} orcid
+ * @property {string|null} homepage
+ *
+ * @typedef {Object} DraftEditorRow      // identical shape to DraftOfficerRow
+ * @property {DraftEditorPerson} person
+ * @property {string} roleQid            // P3831 value; defaults to config.journalEditorRoles[0].qid
+ * @property {string} roleLabel
+ * @property {string} begin
+ * @property {string|null} end
+ *
+ * @typedef {Object} EditorHistoryRow    // an existing P98 statement, read from Wikidata
+ * @property {string} statementId
+ * @property {string} personQid
+ * @property {string} personLabel
+ * @property {string|null} roleQid
+ * @property {string} roleLabel          // "editor" fallback if no P3831 qualifier
+ * @property {string|null} begin
+ * @property {string|null} end
+ *
+ * @typedef {Object} EditorHistoryOriginal
+ * @property {EditorHistoryRow[]} history   // every P98 statement, sorted begin desc
  *
  * @typedef {Object} DraftOfficerPerson
  * @property {string|null} qid                  // an existing person, or null to create one
@@ -91,11 +144,13 @@ const isValidIsoDate = (s) => ISO_DATE.test(s) && !Number.isNaN(Date.parse(s));
  * @property {LeadershipHistoryRow|null} current   // the one row (if any) with no end date
  *
  * @typedef {Object} DirectoryDraft
- * @property {'create-association'|'manage-leadership'|'update-field'} mode
+ * @property {'create-association'|'manage-leadership'|'update-field'|'create-journal'|'update-journal'|'manage-journal-editors'} mode
  * @property {DraftAssociation} association
- * @property {DraftJournal|null} journal
  * @property {DraftOfficerRow[]} officers            // manage-leadership only: rows being added
  * @property {LeadershipOriginal|null} leadershipOriginal  // manage-leadership only: loaded from Wikidata
+ * @property {DraftJournalEntity|null} journalEntity // create-journal/update-journal/manage-journal-editors only
+ * @property {DraftEditorRow[]} editors              // manage-journal-editors only: rows being added
+ * @property {EditorHistoryOriginal|null} editorsOriginal  // manage-journal-editors only: loaded from Wikidata
  */
 
 /** @param {DirectoryDraft['mode']} mode @returns {DirectoryDraft} */
@@ -112,9 +167,11 @@ export function emptyDraft(mode) {
       countryQid: null, countryLabel: null, operatingAreaQid: null, seatQid: null, seatLabel: null, parentQid: null, parentLabel: null,
       website: null, email: null, emailConfirmedShared: false, inception: null, referenceUrl: null,
     },
-    journal: null,
     officers: [],
     leadershipOriginal: null,
+    journalEntity: null,
+    editors: [],
+    editorsOriginal: null,
   };
 }
 
@@ -127,6 +184,33 @@ export function emptyOfficerRow(officeQid, officeLabel) {
   return {
     person: { qid: null, pickedLabel: null, pickedBirthYear: null, labels: {}, description: '', birthDate: null, affiliationQid: null, affiliationLabel: null, orcid: null, homepage: null },
     officeQid, officeLabel, begin: '', end: null,
+  };
+}
+
+/**
+ * A blank journal entity, ready for the UI to fill in (create) or load into (edit).
+ * @param {string|null} [qid]
+ * @returns {DraftJournalEntity}
+ */
+export function emptyJournalEntity(qid = null) {
+  return {
+    qid, identifyName: '', labels: {}, descriptions: {},
+    original: { labels: {}, descriptions: {}, website: null, websiteAsOf: null, issn: null, founded: null, closed: null, openAlexId: null, publisherQid: null, needsClass: false, needsField: false },
+    website: null, issn: null, founded: null, closed: null, openAlexId: null,
+    publisherQid: null, publisherLabel: null,
+    addToDirectory: false, referenceUrl: null,
+  };
+}
+
+/**
+ * A blank editor row, ready for the UI to fill in.
+ * @param {string} roleQid @param {string} roleLabel
+ * @returns {DraftEditorRow}
+ */
+export function emptyEditorRow(roleQid, roleLabel) {
+  return {
+    person: { qid: null, pickedLabel: null, pickedBirthYear: null, labels: {}, description: '', birthDate: null, affiliationQid: null, affiliationLabel: null, orcid: null, homepage: null },
+    roleQid, roleLabel, begin: '', end: null,
   };
 }
 
@@ -312,6 +396,110 @@ export function validateTerms(a) {
   return e;
 }
 
+const trimmedOrNull = (v) => (v || '').trim() || null;
+
+/**
+ * The journal title/description entries that will be written (parallel to `changedTerms`).
+ * @param {DraftJournalEntity} j
+ * @returns {{labels: Object<string,string>, descriptions: Object<string,string>}}
+ */
+export function journalChangedTerms(j) {
+  return {
+    labels: changedEntries(j.labels, j.original?.labels),
+    descriptions: changedEntries(j.descriptions, j.original?.descriptions),
+  };
+}
+
+/**
+ * Journal field values (website, ISSN, founded, closed, OpenAlex id, publisher) that differ
+ * from what is on Wikidata. Blank/unset means "no change".
+ * @param {DraftJournalEntity} j
+ * @returns {{website?: string, issn?: string, founded?: string, closed?: string, openAlexId?: string, publisherQid?: string}}
+ */
+export function journalChangedFields(j) {
+  const o = j.original || {};
+  const out = {};
+  const website = trimmedOrNull(j.website);
+  if (website && website !== trimmedOrNull(o.website)) out.website = website;
+  const issn = trimmedOrNull(j.issn);
+  if (issn && issn !== trimmedOrNull(o.issn)) out.issn = issn;
+  const founded = trimmedOrNull(j.founded);
+  if (founded && founded !== trimmedOrNull(o.founded)) out.founded = founded;
+  const closed = trimmedOrNull(j.closed);
+  if (closed && closed !== trimmedOrNull(o.closed)) out.closed = closed;
+  const openAlexId = trimmedOrNull(j.openAlexId);
+  if (openAlexId && openAlexId !== trimmedOrNull(o.openAlexId)) out.openAlexId = openAlexId;
+  if (j.publisherQid && j.publisherQid !== (o.publisherQid || null)) out.publisherQid = j.publisherQid;
+  return out;
+}
+
+/** Whether a journal draft would write any name/description change. */
+export function hasJournalTermChanges(j) {
+  const t = journalChangedTerms(j);
+  return Object.keys(t.labels).length + Object.keys(t.descriptions).length > 0;
+}
+
+/** Whether a journal draft would write any field change (website/ISSN/founded/closed/OpenAlex/publisher). */
+export function hasJournalFieldChanges(j) {
+  return Object.keys(journalChangedFields(j)).length > 0;
+}
+
+/** Whether ticking "add to directory" on a journal would actually write something. */
+export function hasJournalScopeChanges(j) {
+  return !!(j.addToDirectory && (j.original?.needsClass || j.original?.needsField));
+}
+
+/**
+ * Read what the editor needs from a journal entity (parallel to `originalFromEntity`).
+ * @param {any} entity
+ * @returns {{labels: Object<string,string>, descriptions: Object<string,string>, website: string|null, websiteAsOf: string|null, issn: string|null, founded: string|null, closed: string|null, openAlexId: string|null, publisherQid: string|null, classQids: string[], fieldQids: string[]}}
+ */
+export function journalOriginalFromEntity(entity) {
+  const terms = (obj) => Object.fromEntries(Object.entries(obj || {}).map(([lang, v]) => [lang, v.value]));
+  const mainClaim = (prop) => (entity?.claims?.[prop] || []).find((c) => c.rank !== 'deprecated' && c.mainsnak?.datavalue);
+  const first = (prop) => mainClaim(prop)?.mainsnak.datavalue.value ?? null;
+  const ids = (prop) => (entity?.claims?.[prop] || [])
+    .filter((c) => c.rank !== 'deprecated')
+    .map((c) => c.mainsnak?.datavalue?.value?.id)
+    .filter(Boolean);
+  const yearOf = (value) => {
+    const m = /^[+-]?0*(\d+)-/.exec(value?.time || '');
+    return m ? m[1] : null;
+  };
+  const publisher = first('P123');
+  return {
+    labels: terms(entity?.labels),
+    descriptions: terms(entity?.descriptions),
+    website: first('P856'),
+    websiteAsOf: dateOf(mainClaim('P856')?.qualifiers?.P585),
+    issn: first('P236'),
+    founded: yearOf(first('P571')),
+    closed: yearOf(first('P576')),
+    openAlexId: first('P10283'),
+    publisherQid: publisher && typeof publisher === 'object' ? publisher.id : null,
+    classQids: ids('P31'),
+    fieldQids: ids('P921'),
+  };
+}
+
+/**
+ * Parse an entity's P98 (editor) claims into editor rows. No label resolution here (QIDs
+ * only) — that is the adapter's job (see `adapters/wikibase-api.js`'s `getJournalEditorHistory`).
+ * @param {any} entity
+ * @returns {{statementId: string, personQid: string, roleQid: string|null, begin: string|null, end: string|null}[]}
+ */
+export function editorClaimsFromEntity(entity) {
+  return (entity?.claims?.P98 || [])
+    .filter((c) => c.rank !== 'deprecated' && c.mainsnak?.datavalue?.value?.id)
+    .map((c) => ({
+      statementId: c.id,
+      personQid: c.mainsnak.datavalue.value.id,
+      roleQid: c.qualifiers?.P3831?.[0]?.datavalue?.value?.id || null,
+      begin: dateOf(c.qualifiers?.P580),
+      end: dateOf(c.qualifiers?.P582),
+    }));
+}
+
 /**
  * Read what the editor needs from a `wbgetentities` entity.
  * @param {any} entity
@@ -444,6 +632,50 @@ export function validateDraftForChangeset(d) {
     e.push(...validateTerms(a), ...validateFormerNames(a));
   }
 
-  if (d.journal && !d.journal.qid && !d.journal.label) e.push('journal.label is required to create a journal');
+  if (d.mode === 'create-journal') {
+    const j = d.journalEntity;
+    if (!j || Object.keys(cleanTerms(j.labels)).length === 0) e.push('journal.labels: at least one title is required');
+    if (!j?.referenceUrl) e.push('journal.referenceUrl is required');
+    if (j) e.push(...validateTerms({ labels: j.labels, descriptions: j.descriptions, abbreviations: {} }));
+  }
+
+  if (d.mode === 'update-journal') {
+    const j = d.journalEntity;
+    if (!j?.qid) e.push('journal.qid is required');
+    const termChange = j ? hasJournalTermChanges(j) : false;
+    const fieldChange = j ? hasJournalFieldChanges(j) : false;
+    const scopeChange = j ? hasJournalScopeChanges(j) : false;
+    if (!termChange && !fieldChange && !scopeChange) e.push('nothing to update');
+    if ((termChange || fieldChange || scopeChange) && !j?.referenceUrl) e.push('journal.referenceUrl is required');
+    if (j) e.push(...validateTerms({ labels: j.labels, descriptions: j.descriptions, abbreviations: {} }));
+  }
+
+  if (d.mode === 'manage-journal-editors') {
+    const j = d.journalEntity;
+    if (!j?.qid) e.push('journal.qid is required');
+    const rows = d.editors || [];
+    if (rows.length === 0) e.push('add at least one editor');
+    const openCountByRole = new Map();
+    for (const row of rows) {
+      const rp = row.person;
+      const hasName = Object.keys(cleanTerms(rp.labels)).length > 0;
+      if (!rp.qid && !hasName) e.push('name the editor or pick an existing person');
+      if (!rp.qid) {
+        if (!rp.affiliationQid && !rp.orcid) e.push('a new editor needs an affiliation or an ORCID iD');
+        e.push(...validateTerms({ labels: rp.labels, descriptions: {}, abbreviations: {} }));
+      }
+      if (!row.roleQid) e.push('pick the editor role');
+      if (!row.begin || !isValidIsoDate(row.begin)) e.push('the term needs a valid begin date');
+      if (row.end) {
+        if (!isValidIsoDate(row.end)) e.push('the end date is not valid');
+        else if (row.begin && isValidIsoDate(row.begin) && row.end < row.begin) e.push('the end date is before the begin date');
+      } else {
+        openCountByRole.set(row.roleQid, (openCountByRole.get(row.roleQid) || 0) + 1);
+      }
+    }
+    if ([...openCountByRole.values()].some((n) => n > 1)) e.push('only one editor per role can be current — give the others an end date');
+    if (rows.length > 0 && !j?.referenceUrl) e.push('journal.referenceUrl is required');
+  }
+
   return e;
 }

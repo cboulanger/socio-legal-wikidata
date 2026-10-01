@@ -158,6 +158,62 @@ export function mapBindings(sparqlJson) {
   return [...byQid.values()].sort((x, y) => x.label.localeCompare(y.label));
 }
 
+// Independent socio-legal journals ("Pool B" of the hybrid journals feature): any academic
+// journal (by subclass, since journals are catalogued under many sibling classes on
+// Wikidata) tagged with the in-scope field of work, regardless of publisher. Kept lean
+// (list-row fields only) — the rich fields (founded, ISSN, website, ...) are fetched live
+// per journal when its card opens, not here (see adapters/wikibase-api.js's getJournalDetails).
+const JOURNAL_QUERY_TEMPLATE = `SELECT ?journal ?journalLabel ?journalDescription
+       ?publisher ?publisherLabel ?country ?countryLabel ?countryCode
+WHERE {
+  ?journal wdt:P31/wdt:P279* wd:%ACADEMIC_JOURNAL% .
+  ?journal wdt:P921 wd:%FIELD% .
+  OPTIONAL { ?journal wdt:P123 ?publisher. }
+  OPTIONAL { ?journal (wdt:P17|wdt:P495) ?country. OPTIONAL { ?country wdt:P297 ?countryCode. } }
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "%LANGS%". }
+}`;
+
+/** @param {{academicJournalQid: string, inScopeFieldQid: string, labelLanguages: string}} cfg */
+export function buildJournalQuery(cfg) {
+  return JOURNAL_QUERY_TEMPLATE
+    .replace('%ACADEMIC_JOURNAL%', cfg.academicJournalQid)
+    .replace('%FIELD%', cfg.inScopeFieldQid)
+    .replace('%LANGS%', cfg.labelLanguages);
+}
+
+/** @param {any} sparqlJson @returns {import('../core/model.js').Journal[]} */
+export function mapJournalBindings(sparqlJson) {
+  /** @type {Map<string, import('../core/model.js').Journal>} */
+  const byQid = new Map();
+  for (const row of sparqlJson?.results?.bindings || []) {
+    const id = qid(row.journal);
+    if (!id) continue;
+    let j = byQid.get(id);
+    if (!j) {
+      j = { qid: id, label: '', description: '', publisherQid: null, publisherLabel: null, countryCode: null, countryLabel: null };
+      byQid.set(id, j);
+    }
+    j.label ||= val(row.journalLabel) || id;
+    j.description ||= val(row.journalDescription) || '';
+    j.publisherQid ??= qid(row.publisher);
+    j.publisherLabel ??= val(row.publisherLabel) ?? null;
+    j.countryCode ??= (val(row.countryCode) || '').toUpperCase() || null;
+    j.countryLabel ??= val(row.countryLabel) ?? null;
+  }
+  return [...byQid.values()].sort((x, y) => x.label.localeCompare(y.label));
+}
+
+/**
+ * @param {{fetch: typeof fetch, endpoint: string, cfg: any}} deps
+ * @returns {Promise<import('../core/model.js').Journal[]>}
+ */
+export async function queryJournals({ fetch, endpoint, cfg }) {
+  const url = `${endpoint}?query=${encodeURIComponent(buildJournalQuery(cfg))}`;
+  const res = await fetch(url, { headers: { Accept: 'application/sparql-results+json' } });
+  if (!res.ok) throw new Error(`SPARQL query failed: ${res.status}`);
+  return mapJournalBindings(await res.json());
+}
+
 /**
  * @param {{fetch: typeof fetch, endpoint: string, cfg: any}} deps
  * @returns {Promise<Association[]>}

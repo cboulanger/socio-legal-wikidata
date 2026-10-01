@@ -92,23 +92,17 @@ function formerSection(draft) {
     </fieldset>`;
 }
 
-/** "Part of": the host organization, picked by typing (the picker is mounted by the wizard). */
-function parentSection(a) {
+/** "Part of": the host organization, picked by typing (the picker, including its chosen/change/remove state, is mounted by the wizard). */
+function parentSection() {
   return html`<div class="details__parent" data-role="parent-field">
-      ${a.parentQid
-        ? html`<p class="wizard__chosen">Part of (organization): <strong>${a.parentLabel || a.parentQid}</strong>
-            <button type="button" data-role="clear-parent">change</button></p>`
-        : html`<div data-role="ta-parent"></div>`}
+      <div data-role="ta-parent"></div>
     </div>`;
 }
 
 /** "Operating area" (P2541): the region an international / regional body works in, picked by typing. */
-function operatingAreaSection(a) {
+function operatingAreaSection() {
   return html`<div class="details__area" data-role="area-field">
-      ${a.operatingAreaQid
-        ? html`<p class="wizard__chosen">Operating area (region or countries it covers): <strong>${a.operatingAreaLabel || a.operatingAreaQid}</strong>
-            <button type="button" data-role="clear-area">change</button></p>`
-        : html`<div data-role="ta-area"></div>`}
+      <div data-role="ta-area"></div>
     </div>`;
 }
 

@@ -36,6 +36,15 @@
  * @property {LonLat|null} leadCoord
  * @property {JournalRef|null} journal
  *
+ * @typedef {Object} Journal        // a "Journals" list row — a summary, not the full record
+ * @property {string} qid
+ * @property {string} label
+ * @property {string} description
+ * @property {string|null} publisherQid  // P123, null if independent
+ * @property {string|null} publisherLabel
+ * @property {string|null} countryCode   // display- and filter-only; see core/journals.js for the derivation rule
+ * @property {string|null} countryLabel
+ *
  * @typedef {Object} Directory
  * @property {Association[]} associations
  * @property {boolean} stale

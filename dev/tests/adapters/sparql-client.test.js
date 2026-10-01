@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { buildDirectoryQuery, mapBindings, queryDirectory } from '../../../src/adapters/sparql-client.js';
+import { buildDirectoryQuery, mapBindings, queryDirectory, buildJournalQuery, mapJournalBindings, queryJournals } from '../../../src/adapters/sparql-client.js';
 
 const cfg = { inScopeClassQid: 'Q955824', inScopeFieldQid: 'Q847034', labelLanguages: 'en,de' };
 
@@ -85,4 +85,54 @@ test('mapBindings and the query carry the P1813 abbreviation', () => {
     abbreviation: { value: 'ALSA' },
   }] } });
   assert.equal(a.abbreviation, 'ALSA');
+});
+
+const journalCfg = { academicJournalQid: 'Q737498', inScopeFieldQid: 'Q847034', labelLanguages: 'en,de' };
+
+test('buildJournalQuery injects config and keeps the key triples', () => {
+  const q = buildJournalQuery(journalCfg);
+  assert.match(q, /wdt:P31\/wdt:P279\* wd:Q737498/);
+  assert.match(q, /wdt:P921 wd:Q847034/);
+  assert.match(q, /\(wdt:P17\|wdt:P495\) \?country/);
+  assert.match(q, /bd:serviceParam wikibase:language "en,de"/);
+});
+
+test('mapJournalBindings maps one row per journal, with COALESCE-style country fallback', () => {
+  const list = mapJournalBindings({ results: { bindings: [
+    {
+      journal: { value: 'http://www.wikidata.org/entity/Q2' }, journalLabel: { value: 'Independent Journal' },
+      country: { value: 'http://www.wikidata.org/entity/Q30' }, countryLabel: { value: 'United States' }, countryCode: { value: 'us' },
+    },
+    {
+      journal: { value: 'http://www.wikidata.org/entity/Q3' }, journalLabel: { value: 'Published Journal' },
+      publisher: { value: 'http://www.wikidata.org/entity/Q1' }, publisherLabel: { value: 'Some Society' },
+    },
+  ] } });
+  assert.equal(list.length, 2);
+  const independent = list.find((j) => j.qid === 'Q2');
+  assert.equal(independent.countryCode, 'US');
+  assert.equal(independent.publisherQid, null);
+  const published = list.find((j) => j.qid === 'Q3');
+  assert.equal(published.publisherQid, 'Q1');
+  assert.equal(published.countryCode, null);
+});
+
+test('queryJournals posts urlencoded query and returns mapped list', async () => {
+  let seen = {};
+  const fakeFetch = async (url, init) => {
+    seen = { url, init };
+    return { ok: true, status: 200, json: async () => ({ results: { bindings: [] } }) };
+  };
+  const list = await queryJournals({ fetch: fakeFetch, endpoint: 'https://wdqs.example/sparql', cfg: journalCfg });
+  assert.deepEqual(list, []);
+  assert.match(seen.url, /^https:\/\/wdqs\.example\/sparql\?query=/);
+  assert.equal(seen.init.headers.Accept, 'application/sparql-results+json');
+});
+
+test('queryJournals throws on non-ok response', async () => {
+  const fakeFetch = async () => ({ ok: false, status: 503 });
+  await assert.rejects(
+    () => queryJournals({ fetch: fakeFetch, endpoint: 'https://x/sparql', cfg: journalCfg }),
+    /SPARQL query failed: 503/,
+  );
 });

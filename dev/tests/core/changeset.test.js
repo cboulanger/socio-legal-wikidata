@@ -1,32 +1,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { emptyDraft } from '../../../src/core/draft.js';
+import { emptyDraft, emptyJournalEntity, emptyEditorRow } from '../../../src/core/draft.js';
 import { buildChangeSet, describeChanges } from '../../../src/core/changeset.js';
 
-const cfg = { humanQid: 'Q5', researcherQid: 'Q1650915', academicJournalQid: 'Q737498' };
-
-test('create-association with a new journal links journal P123 to the association ref', () => {
-  const d = emptyDraft('create-association');
-  Object.assign(d.association, {
-    labels: { en: 'European Society for Empirical Legal Studies', de: 'Europäische Gesellschaft für empirische Rechtsforschung' },
-    descriptions: { en: 'European society for empirical legal studies' },
-    classQid: 'Q955824', fieldQid: 'Q847034', countryQid: 'Q55',
-    website: 'https://esels.eu', email: 'contact@esels.eu',
-    inception: '2021', referenceUrl: 'https://esels.eu/about',
-  });
-  d.journal = { qid: null, label: 'European Journal of Empirical Legal Studies', url: 'https://esels.eu/ejels/', issn: null, referenceUrl: 'https://esels.eu/ejels/' };
-
-  const cs = buildChangeSet(d, cfg);
-  const assoc = cs.ops.find((o) => o.type === 'create-item' && o.ref === 'assoc');
-  assert.deepEqual(assoc.labels, { en: 'European Society for Empirical Legal Studies', de: 'Europäische Gesellschaft für empirische Rechtsforschung' });
-  assert.deepEqual(assoc.descriptions, { en: 'European society for empirical legal studies' });
-  assert.ok(assoc.claims.some((c) => c.property === 'P31' && c.value.qid === 'Q955824'));
-  assert.ok(assoc.claims.some((c) => c.property === 'P101' && c.value.qid === 'Q847034'));
-  assert.ok(assoc.claims.some((c) => c.property === 'P17' && c.value.qid === 'Q55'));
-  assert.ok(assoc.claims.some((c) => c.property === 'P571' && c.value.precision === 9));
-  const journal = cs.ops.find((o) => o.type === 'create-item' && o.ref === 'journal');
-  assert.ok(journal.claims.some((c) => c.property === 'P123' && c.value.ref === 'assoc'));
-});
+const cfg = { humanQid: 'Q5', researcherQid: 'Q1650915', academicJournalQid: 'Q737498', inScopeFieldQid: 'Q847034' };
 
 test('update-field emits one referenced add-statement per provided field', () => {
   const d = emptyDraft('update-field');
@@ -68,27 +45,6 @@ test('P968 (email) is always stored as a mailto: URI, in both create and update-
 
 test('buildChangeSet throws on an invalid draft', () => {
   assert.throws(() => buildChangeSet(emptyDraft('create-association'), cfg), /at least one name is required/);
-});
-
-test('linking an EXISTING journal emits add-statements, not a create-item', () => {
-  const d = emptyDraft('create-association');
-  Object.assign(d.association, {
-    labels: { en: 'Law and Society Association' },
-    classQid: 'Q955824', fieldQid: 'Q847034', referenceUrl: 'https://example.org/about',
-  });
-  d.journal = { qid: 'Q6502970', label: 'Law & Society Review', url: 'https://example.org/lsr', issn: '0023-9216', referenceUrl: 'https://example.org/lsr' };
-
-  const cs = buildChangeSet(d, cfg);
-  assert.equal(cs.ops.some((o) => o.type === 'create-item' && o.ref === 'journal'), false);
-  const p123 = cs.ops.find((o) => o.type === 'add-statement' && o.property === 'P123' && o.target.qid === 'Q6502970');
-  assert.ok(p123, 'expected a P123 add-statement targeting the existing journal qid');
-  assert.deepEqual(p123.reference, { P854: 'https://example.org/lsr' });
-  const p856 = cs.ops.find((o) => o.type === 'add-statement' && o.property === 'P856' && o.target.qid === 'Q6502970');
-  assert.ok(p856);
-  assert.equal(p856.value.value, 'https://example.org/lsr');
-  const p236 = cs.ops.find((o) => o.type === 'add-statement' && o.property === 'P236' && o.target.qid === 'Q6502970');
-  assert.ok(p236);
-  assert.equal(p236.value.value, '0023-9216');
 });
 
 test('create-association creates only the association item (no person, no P488)', () => {
@@ -439,4 +395,129 @@ test('describeChanges: an existing person picked from the typeahead is shown by 
   });
   const lines = describeChanges(d);
   assert.ok(lines.includes('President: Jane Doe (b. 1975) (existing person), 2024-01-01 – present'));
+});
+
+test('create-journal writes P31/P921 plus every optional field, all referenced', () => {
+  const d = emptyDraft('create-journal');
+  d.journalEntity = emptyJournalEntity();
+  Object.assign(d.journalEntity, {
+    labels: { en: 'European Journal of Empirical Legal Studies' },
+    founded: '2020', issn: '2666-1861', website: 'https://ejels.example', openAlexId: 'S58239531',
+    publisherQid: 'Q2867822', referenceUrl: 'https://ejels.example/about',
+  });
+  const cs = buildChangeSet(d, { ...cfg, today: '2026-10-01' });
+  assert.equal(cs.ops.length, 1);
+  const create = cs.ops[0];
+  assert.equal(create.type, 'create-item');
+  assert.deepEqual(create.labels, { en: 'European Journal of Empirical Legal Studies' });
+  assert.ok(create.claims.some((c) => c.property === 'P31' && c.value.qid === 'Q737498'));
+  assert.ok(create.claims.some((c) => c.property === 'P921' && c.value.qid === 'Q847034'));
+  assert.ok(create.claims.some((c) => c.property === 'P123' && c.value.qid === 'Q2867822'));
+  assert.ok(create.claims.some((c) => c.property === 'P236' && c.value.value === '2666-1861'));
+  assert.ok(create.claims.some((c) => c.property === 'P571' && c.value.value === '2020-01-01'));
+  assert.ok(create.claims.some((c) => c.property === 'P10283' && c.value.value === 'S58239531'));
+  const website = create.claims.find((c) => c.property === 'P856');
+  assert.equal(website.value.value, 'https://ejels.example');
+  assert.deepEqual(website.qualifiers, [{ property: 'P585', value: { kind: 'time', value: '2026-10-01', precision: 11 } }]);
+  assert.ok(create.claims.every((c) => c.reference.P854 === 'https://ejels.example/about'));
+});
+
+test('buildChangeSet throws on an invalid create-journal draft (no title)', () => {
+  const d = emptyDraft('create-journal');
+  d.journalEntity = emptyJournalEntity();
+  assert.throws(() => buildChangeSet(d, cfg), /at least one title is required/);
+});
+
+test('update-journal replaces only the changed fields and refreshes the website P585 qualifier', () => {
+  const d = emptyDraft('update-journal');
+  d.journalEntity = emptyJournalEntity('Q100');
+  d.journalEntity.original = { labels: { en: 'Old Title' }, descriptions: {}, website: 'https://old.example', websiteAsOf: '2020-01-01', issn: null, founded: null, closed: null, openAlexId: null, publisherQid: null };
+  d.journalEntity.labels = { en: 'Old Title' };
+  d.journalEntity.website = 'https://new.example';
+  d.journalEntity.closed = '2023';
+  d.journalEntity.referenceUrl = 'https://new.example/notice';
+  const cs = buildChangeSet(d, { ...cfg, today: '2026-10-01' });
+  assert.equal(cs.ops.some((o) => o.type === 'set-terms'), false); // title unchanged
+  const website = cs.ops.find((o) => o.property === 'P856');
+  assert.equal(website.replace, true);
+  assert.deepEqual(website.qualifiers, [{ property: 'P585', value: { kind: 'time', value: '2026-10-01', precision: 11 } }]);
+  const closed = cs.ops.find((o) => o.property === 'P576');
+  assert.equal(closed.value.value, '2023-01-01');
+  assert.equal(closed.replace, true);
+  assert.match(cs.summary, /closed/);
+});
+
+test('update-journal with nothing changed reports nothing to update', () => {
+  const d = emptyDraft('update-journal');
+  d.journalEntity = emptyJournalEntity('Q100');
+  assert.throws(() => buildChangeSet(d, cfg), /nothing to update/);
+});
+
+test('update-journal: "add to directory" adds only the missing P31/P921, referenced', () => {
+  const d = emptyDraft('update-journal');
+  d.journalEntity = emptyJournalEntity('Q100');
+  d.journalEntity.original.needsClass = true;
+  d.journalEntity.original.needsField = true;
+  d.journalEntity.addToDirectory = true;
+  d.journalEntity.referenceUrl = 'https://x.example/about';
+  const cs = buildChangeSet(d, cfg);
+  assert.deepEqual(cs.ops.map((o) => [o.type, o.property, o.value.qid]), [
+    ['add-statement', 'P31', 'Q737498'], ['add-statement', 'P921', 'Q847034'],
+  ]);
+  assert.ok(cs.ops.every((o) => o.reference.P854 === 'https://x.example/about'));
+});
+
+test('manage-journal-editors: an existing person gets a referenced P98 with begin/role qualifiers', () => {
+  const d = emptyDraft('manage-journal-editors');
+  d.journalEntity = emptyJournalEntity('Q100');
+  d.journalEntity.referenceUrl = 'https://x.example/masthead';
+  d.editors.push({
+    person: { qid: 'Q200', labels: {}, description: '', birthDate: null, affiliationQid: null, affiliationLabel: null, orcid: null, homepage: null },
+    roleQid: 'Q589298', roleLabel: 'Editor-in-chief', begin: '2024-01-01', end: null,
+  });
+  const cs = buildChangeSet(d, cfg);
+  assert.equal(cs.ops.length, 1);
+  const op = cs.ops[0];
+  assert.deepEqual(op.target, { qid: 'Q100' });
+  assert.equal(op.property, 'P98');
+  assert.deepEqual(op.value, { kind: 'item', qid: 'Q200' });
+  assert.deepEqual(op.qualifiers, [
+    { property: 'P580', value: { kind: 'time', value: '2024-01-01', precision: 11 } },
+    { property: 'P3831', value: { kind: 'item', qid: 'Q589298' } },
+  ]);
+  assert.deepEqual(op.reference, { P854: 'https://x.example/masthead' });
+});
+
+test('manage-journal-editors: no auto-end of a previous holder (concurrent roles are normal)', () => {
+  const d = emptyDraft('manage-journal-editors');
+  d.journalEntity = emptyJournalEntity('Q100');
+  d.journalEntity.referenceUrl = 'https://x.example/masthead';
+  d.editors.push(
+    { ...emptyEditorRow('Q589298', 'Editor-in-chief'), person: { ...emptyEditorRow('Q1', '').person, qid: 'Q200' }, begin: '2024-01-01' },
+    { ...emptyEditorRow('Q75792065', 'Associate editor'), person: { ...emptyEditorRow('Q1', '').person, qid: 'Q300' }, begin: '2024-01-01' },
+  );
+  const cs = buildChangeSet(d, cfg);
+  assert.equal(cs.ops.some((o) => o.type === 'end-statement'), false);
+  assert.equal(cs.ops.filter((o) => o.property === 'P98').length, 2);
+});
+
+test('describeChanges: create-journal lists the title and fields', () => {
+  const d = emptyDraft('create-journal');
+  d.journalEntity = emptyJournalEntity();
+  Object.assign(d.journalEntity, { labels: { en: 'Example Journal' }, founded: '2020', referenceUrl: 'https://x.example' });
+  const lines = describeChanges(d);
+  assert.ok(lines.includes('title (en): “Example Journal” (new)'));
+  assert.ok(lines.includes('founded: 2020'));
+  assert.ok(lines.includes('reference: https://x.example'));
+});
+
+test('describeChanges: manage-journal-editors lists each row by role', () => {
+  const d = emptyDraft('manage-journal-editors');
+  d.journalEntity = emptyJournalEntity('Q100');
+  d.editors.push({
+    person: { qid: 'Q200', pickedLabel: 'Jane Doe', pickedBirthYear: null, labels: {}, description: '', birthDate: null, affiliationQid: null, affiliationLabel: null, orcid: null, homepage: null },
+    roleQid: 'Q589298', roleLabel: 'Editor-in-chief', begin: '2020-01-01', end: null,
+  });
+  const lines = describeChanges(d);
+  assert.ok(lines.includes('Editor-in-chief: Jane Doe (existing person), 2020-01-01 – present'));
 });

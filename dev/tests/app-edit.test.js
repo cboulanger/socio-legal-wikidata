@@ -106,7 +106,7 @@ test('Edit opens "Edit details" (update-field) for the selected association', as
   w.document.querySelector('button.row[data-qid="Q1"]').click();
   w.document.querySelector('[data-action="edit"]').click();
   assert.deepEqual(opened[0].seed, { mode: 'update-field', association: { qid: 'Q1', label: 'Body' } });
-  assert.equal(store.getState().selection, 'Q1');
+  assert.deepEqual(store.getState().selection, { kind: 'association', qid: 'Q1' });
 });
 
 test('after Edit details is saved the card shows the new name at once (in a directory language)', async () => {
@@ -137,7 +137,7 @@ test('after Add association is saved the new association is listed and selected'
     },
   });
   const s = store.getState();
-  assert.equal(s.selection, 'Q999');
+  assert.deepEqual(s.selection, { kind: 'association', qid: 'Q999' });
   const added = s.associations.find((x) => x.qid === 'Q999');
   assert.equal(added.label, 'Network');
   assert.equal(added.countryLabel, 'Brazil');
@@ -164,7 +164,7 @@ test('an existing Wikidata item that was just added to the directory shows up in
     },
   });
   const s = store.getState();
-  assert.equal(s.selection, 'Q4242');
+  assert.deepEqual(s.selection, { kind: 'association', qid: 'Q4242' });
   assert.equal(s.associations.filter((x) => x.qid === 'Q4242').length, 1);
   assert.equal(s.associations.find((x) => x.qid === 'Q4242').label, 'Some Society');
   // saving again does not duplicate it

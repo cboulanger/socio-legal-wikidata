@@ -1,4 +1,4 @@
-import { validateDraftForChangeset, changedTerms, changedStatements, scopeStatements, changedParent, changedOperatingArea, activeFormerNames, aliasesToSet, changedAbbreviations, cleanTerms } from './draft.js';
+import { validateDraftForChangeset, changedTerms, changedStatements, scopeStatements, changedParent, changedOperatingArea, activeFormerNames, aliasesToSet, changedAbbreviations, cleanTerms, journalChangedTerms, journalChangedFields, hasJournalScopeChanges } from './draft.js';
 
 /**
  * @typedef {{kind:'item', qid:string}|{kind:'item', ref:string}
@@ -49,7 +49,7 @@ function abbreviationClaims(a, reference) {
 
 /**
  * @param {import('./draft.js').DirectoryDraft} draft
- * @param {{humanQid:string, researcherQid:string, academicJournalQid:string, today?:string}} cfg
+ * @param {{humanQid:string, researcherQid:string, academicJournalQid:string, inScopeFieldQid?:string, today?:string}} cfg
  * @returns {ChangeSet}
  */
 export function buildChangeSet(draft, cfg) {
@@ -59,26 +59,6 @@ export function buildChangeSet(draft, cfg) {
   /** @type {Op[]} */
   const ops = [];
   const a = draft.association;
-  const j = draft.journal;
-
-  // --- journal (create if new) ---
-  if (j) {
-    if (!j.qid) {
-      /** @type {Claim[]} */
-      const claims = [
-        { property: 'P31', value: item(cfg.academicJournalQid) },
-        { property: 'P123', value: a.qid ? item(a.qid) : ref('assoc') },
-      ];
-      if (j.url) claims.push({ property: 'P856', value: url(j.url) });
-      if (j.issn) claims.push({ property: 'P236', value: extId(j.issn) });
-      for (const c of claims) if (j.referenceUrl) c.reference = { P854: j.referenceUrl };
-      ops.push({ type: 'create-item', ref: 'journal', labels: { en: j.label }, descriptions: {}, claims });
-    } else {
-      ops.push({ type: 'add-statement', target: { qid: j.qid }, property: 'P123', value: a.qid ? item(a.qid) : ref('assoc'), reference: j.referenceUrl ? { P854: j.referenceUrl } : undefined });
-      if (j.url) ops.push({ type: 'add-statement', target: { qid: j.qid }, property: 'P856', value: url(j.url) });
-      if (j.issn) ops.push({ type: 'add-statement', target: { qid: j.qid }, property: 'P236', value: extId(j.issn) });
-    }
-  }
 
   const assocRefUrl = a.referenceUrl ? { P854: a.referenceUrl } : undefined;
 
@@ -104,7 +84,7 @@ export function buildChangeSet(draft, cfg) {
       type: 'create-item', ref: 'assoc', labels: terms.labels, descriptions: terms.descriptions,
       ...(Object.keys(createAliases).length ? { aliases: createAliases } : {}), claims,
     });
-    return { summary: `socio-legal directory: create association${j ? ' with journal' : ''}`, ops };
+    return { summary: 'socio-legal directory: create association', ops };
   }
 
   if (draft.mode === 'manage-leadership') {
@@ -146,6 +126,96 @@ export function buildChangeSet(draft, cfg) {
       ops.push({ type: 'end-statement', statementId: draft.leadershipOriginal.current.statementId, endDate: openRow.begin });
     }
     return { summary: `socio-legal directory: update leadership (${rows.length} ${rows.length === 1 ? 'entry' : 'entries'})`, ops };
+  }
+
+  if (draft.mode === 'create-journal') {
+    const j = draft.journalEntity;
+    const journalRefUrl = j.referenceUrl ? { P854: j.referenceUrl } : undefined;
+    /** @type {Claim[]} */
+    const claims = [
+      { property: 'P31', value: item(cfg.academicJournalQid) },
+      { property: 'P921', value: item(cfg.inScopeFieldQid) },
+    ];
+    if (j.publisherQid) claims.push({ property: 'P123', value: item(j.publisherQid) });
+    if (j.website) claims.push({ property: 'P856', value: url(j.website), qualifiers: [{ property: 'P585', value: day(cfg.today || new Date().toISOString().slice(0, 10)) }] });
+    if (j.issn) claims.push({ property: 'P236', value: extId(j.issn) });
+    if (j.founded) claims.push({ property: 'P571', value: year(j.founded) });
+    if (j.closed) claims.push({ property: 'P576', value: year(j.closed) });
+    if (j.openAlexId) claims.push({ property: 'P10283', value: extId(j.openAlexId) });
+    for (const c of claims) if (journalRefUrl) c.reference = journalRefUrl;
+    const terms = journalChangedTerms(j);
+    ops.push({ type: 'create-item', ref: 'journal', labels: terms.labels, descriptions: terms.descriptions, claims });
+    return { summary: 'socio-legal directory: create journal', ops };
+  }
+
+  if (draft.mode === 'update-journal') {
+    const j = draft.journalEntity;
+    const journalRefUrl = j.referenceUrl ? { P854: j.referenceUrl } : undefined;
+    const terms = journalChangedTerms(j);
+    const changed = [];
+    const langs = (m) => Object.keys(m).sort().join(', ');
+    if (Object.keys(terms.labels).length || Object.keys(terms.descriptions).length) {
+      ops.push({ type: 'set-terms', target: { qid: j.qid }, labels: terms.labels, descriptions: terms.descriptions });
+      if (Object.keys(terms.labels).length) changed.push(`titles (${langs(terms.labels)})`);
+      if (Object.keys(terms.descriptions).length) changed.push(`descriptions (${langs(terms.descriptions)})`);
+    }
+    const fields = journalChangedFields(j);
+    if (fields.website) {
+      ops.push({
+        type: 'add-statement', target: { qid: j.qid }, property: 'P856', value: url(fields.website),
+        qualifiers: [{ property: 'P585', value: day(cfg.today || new Date().toISOString().slice(0, 10)) }],
+        reference: journalRefUrl, replace: true,
+      });
+      changed.push('website');
+    }
+    if (fields.issn) { ops.push({ type: 'add-statement', target: { qid: j.qid }, property: 'P236', value: extId(fields.issn), reference: journalRefUrl, replace: true }); changed.push('ISSN'); }
+    if (fields.founded) { ops.push({ type: 'add-statement', target: { qid: j.qid }, property: 'P571', value: year(fields.founded), reference: journalRefUrl, replace: true }); changed.push('founded'); }
+    if (fields.closed) { ops.push({ type: 'add-statement', target: { qid: j.qid }, property: 'P576', value: year(fields.closed), reference: journalRefUrl, replace: true }); changed.push('closed'); }
+    if (fields.openAlexId) { ops.push({ type: 'add-statement', target: { qid: j.qid }, property: 'P10283', value: extId(fields.openAlexId), reference: journalRefUrl, replace: true }); changed.push('OpenAlex id'); }
+    if (fields.publisherQid) { ops.push({ type: 'add-statement', target: { qid: j.qid }, property: 'P123', value: item(fields.publisherQid), reference: journalRefUrl, replace: true }); changed.push('publisher'); }
+    if (hasJournalScopeChanges(j)) {
+      if (j.original?.needsClass) { ops.push({ type: 'add-statement', target: { qid: j.qid }, property: 'P31', value: item(cfg.academicJournalQid), reference: journalRefUrl }); }
+      if (j.original?.needsField) { ops.push({ type: 'add-statement', target: { qid: j.qid }, property: 'P921', value: item(cfg.inScopeFieldQid), reference: journalRefUrl }); }
+      changed.push('directory membership');
+    }
+    return { summary: `socio-legal directory: update journal ${changed.join(', ')}`, ops };
+  }
+
+  if (draft.mode === 'manage-journal-editors') {
+    const j = draft.journalEntity;
+    const journalRefUrl = j.referenceUrl ? { P854: j.referenceUrl } : undefined;
+    const rows = draft.editors || [];
+    rows.forEach((row, i) => {
+      const rp = row.person;
+      let value;
+      if (rp.qid) {
+        value = item(rp.qid);
+        if (rp.affiliationQid) {
+          ops.push({
+            type: 'add-statement', target: { qid: rp.qid }, property: 'P108', value: item(rp.affiliationQid),
+            qualifiers: [{ property: 'P585', value: day(cfg.today || new Date().toISOString().slice(0, 10)) }], reference: journalRefUrl,
+          });
+        }
+      } else {
+        const personRef = `person-${i}`;
+        /** @type {Claim[]} */
+        const claims = [
+          { property: 'P31', value: item(cfg.humanQid) },
+          { property: 'P106', value: item(cfg.researcherQid) },
+        ];
+        if (rp.birthDate) claims.push({ property: 'P569', value: day(rp.birthDate) });
+        if (rp.affiliationQid) claims.push({ property: 'P108', value: item(rp.affiliationQid), qualifiers: [{ property: 'P585', value: day(cfg.today || new Date().toISOString().slice(0, 10)) }] });
+        if (rp.homepage) claims.push({ property: 'P856', value: url(rp.homepage) });
+        if (rp.orcid) claims.push({ property: 'P496', value: extId(rp.orcid) });
+        for (const c of claims) if (journalRefUrl) c.reference = journalRefUrl;
+        ops.push({ type: 'create-item', ref: personRef, labels: cleanTerms(rp.labels), descriptions: rp.description ? { en: rp.description } : {}, claims });
+        value = ref(personRef);
+      }
+      const qualifiers = [{ property: 'P580', value: day(row.begin) }, { property: 'P3831', value: item(row.roleQid) }];
+      if (row.end) qualifiers.push({ property: 'P582', value: day(row.end) });
+      ops.push({ type: 'add-statement', target: { qid: j.qid }, property: 'P98', value, qualifiers, reference: journalRefUrl });
+    });
+    return { summary: `socio-legal directory: update journal editors (${rows.length} ${rows.length === 1 ? 'entry' : 'entries'})`, ops };
   }
 
   // update-field
@@ -233,6 +303,38 @@ export function describeChanges(draft) {
     const openRow = (draft.officers || []).find((r) => !r.end);
     if (openRow && draft.leadershipOriginal?.current) {
       lines.push(`ends the previous officeholder's term at ${openRow.begin}`);
+    }
+  }
+  if (draft.mode === 'create-journal' || draft.mode === 'update-journal') {
+    const j = draft.journalEntity;
+    const jTerms = journalChangedTerms(j);
+    for (const [lang, text] of Object.entries(jTerms.labels)) {
+      const old = j.original?.labels?.[lang];
+      lines.push(old ? `title (${lang}): “${old}” → “${text}”` : `title (${lang}): “${text}” (new)`);
+    }
+    for (const [lang, text] of Object.entries(jTerms.descriptions)) {
+      const old = j.original?.descriptions?.[lang];
+      lines.push(old ? `description (${lang}): “${old}” → “${text}”` : `description (${lang}): “${text}” (new)`);
+    }
+    const jFields = journalChangedFields(j);
+    if (jFields.founded) lines.push(`founded: ${jFields.founded}`);
+    if (jFields.closed) lines.push(`closed: ${jFields.closed}`);
+    if (jFields.issn) lines.push(`ISSN: ${jFields.issn}`);
+    if (jFields.website) lines.push(`website: ${jFields.website}`);
+    if (jFields.openAlexId) lines.push(`OpenAlex id: ${jFields.openAlexId}`);
+    if (jFields.publisherQid) lines.push(`published by: ${j.publisherLabel || j.publisherQid}${draft.mode === 'update-journal' ? ' (existing association)' : ''}`);
+    if (hasJournalScopeChanges(j)) {
+      if (j.original?.needsClass) lines.push('add to directory: instance of academic journal');
+      if (j.original?.needsField) lines.push('add to directory: field of work sociology of law');
+    }
+    if (j.referenceUrl) lines.push(`reference: ${j.referenceUrl}`);
+  }
+  if (draft.mode === 'manage-journal-editors') {
+    for (const row of draft.editors || []) {
+      const who = row.person.qid
+        ? `${row.person.pickedLabel || row.person.qid}${row.person.pickedBirthYear ? ` (b. ${row.person.pickedBirthYear})` : ''} (existing person)`
+        : `${Object.values(row.person.labels || {})[0] || '(unnamed)'} (new person)`;
+      lines.push(`${row.roleLabel || row.roleQid}: ${who}, ${row.begin || '?'} – ${row.end || 'present'}`);
     }
   }
   return lines;

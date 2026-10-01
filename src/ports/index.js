@@ -28,6 +28,10 @@
  * @property {(property: string, value: string) => Promise<EntityCandidate[]>} lookupByExternalId
  * @property {(qid: string) => Promise<{history: import('../core/draft.js').LeadershipHistoryRow[], current: import('../core/draft.js').LeadershipHistoryRow|null}>} [getLeadershipHistory]
  * @property {(text: string) => Promise<(EntityCandidate & {birthYear: string|null, occupationLabels: string[], fieldLabels: string[]})[]>} [searchPersons]
+ * @property {(text: string) => Promise<EntityCandidate[]>} [searchCountries]
+ * @property {(countryQid: string) => Promise<string[]>} [getOfficialLanguageCodes]
+ * @property {(qid: string) => Promise<{history: import('../core/draft.js').EditorHistoryRow[]}>} [getJournalEditorHistory]
+ * @property {(qid: string) => Promise<null|{qid: string, labels: Object<string,string>, descriptions: Object<string,string>, website: string|null, websiteAsOf: string|null, issn: string|null, founded: string|null, closed: string|null, openAlexId: string|null, publisherQid: string|null, publisherLabel: string|null, classQids: string[], fieldQids: string[]}>} [getJournalDetails]
  *
  * @typedef {Object} WriteResult
  * @property {'direct'|'quickstatements'} via

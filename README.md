@@ -122,6 +122,14 @@ Step-by-step registration is in
   (president, chairperson, ...), with begin/end dates, and back-fill past
   officeholders for historical background. Shown on the card as a
   "Leadership history" disclosure.
+- **Journals**: a "Show journals" checkbox in the panel adds a "Journals"
+  group covering both association-published journals and independent
+  socio-legal journals (any academic journal tagged "sociology of law" on
+  Wikidata). **Add journal** / **Link journal** create or connect a journal
+  (title, founding/closing year, ISSN, website, OpenAlex id, optional
+  publisher); **Manage editors** records editors-in-chief and other editorial
+  roles with their terms, shown on the journal's own card.
 
 Design: [`docs/spec/2026-09-29-multilingual-edit-and-add-association-design.md`](docs/spec/2026-09-29-multilingual-edit-and-add-association-design.md),
-[`docs/spec/2026-09-30-association-leadership-design.md`](docs/spec/2026-09-30-association-leadership-design.md).
+[`docs/spec/2026-09-30-association-leadership-design.md`](docs/spec/2026-09-30-association-leadership-design.md),
+[`docs/spec/2026-10-01-journals-design.md`](docs/spec/2026-10-01-journals-design.md).

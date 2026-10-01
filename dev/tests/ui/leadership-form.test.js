@@ -17,27 +17,16 @@ test('renders one fieldset per officer row, an "already on Wikidata" list, and t
   assert.match(out, /Other — search Wikidata/);
 });
 
-test('an existing person (qid set) shows the chosen state and an affiliation picker placeholder, not the new-person fields', () => {
+test('an existing person (qid set) shows the person and affiliation picker placeholders (the wizard mounts their "chosen" state), not the new-person fields', () => {
   const draft = emptyDraft('manage-leadership');
   const row = emptyOfficerRow('Q1255921', 'President');
   row.person.qid = 'Q200';
   draft.officers.push(row);
   const out = renderLeadershipForm({ draft, config }).value;
-  assert.match(out, /Q200/);
+  assert.match(out, /data-role="ta-officer-0"/);
+  assert.match(out, /Current affiliation \(optional\)/);
   assert.match(out, /data-role="ta-officer-affiliation-0"/);
   assert.doesNotMatch(out, /New person/);
-});
-
-test('an existing person picked from the typeahead shows their name and birth year, not the bare qid', () => {
-  const draft = emptyDraft('manage-leadership');
-  const row = emptyOfficerRow('Q1255921', 'President');
-  row.person.qid = 'Q200';
-  row.person.pickedLabel = 'Jane Doe';
-  row.person.pickedBirthYear = '1975';
-  draft.officers.push(row);
-  const out = renderLeadershipForm({ draft, config }).value;
-  assert.match(out, /Person: <strong>Jane Doe \(b\. 1975\)<\/strong>/);
-  assert.doesNotMatch(out, />Q200</);
 });
 
 test('a new person (labels set, no qid) shows the create-person fields including birth date and ORCID', () => {

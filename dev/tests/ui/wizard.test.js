@@ -42,6 +42,39 @@ test('a manage-leadership flow produces the expected ChangeSet and calls the wri
   assert.match(host.innerHTML, /Success/);
 });
 
+test('manage-leadership: an existing officeholder is shown as "chosen" with their birth year, and "change" does not lose them until a replacement is picked', async () => {
+  const win = env();
+  const host = win.document.getElementById('w');
+  const ports = {
+    search: {
+      searchEntities: async () => [{ qid: 'Q300', label: 'Someone Else', description: 'scholar' }],
+      getEntity: async () => ({ claims: {} }),
+      getLeadershipHistory: async () => ({ history: [], current: null }),
+    },
+    write: { applyChangeSet: async () => ({}) },
+  };
+  const wizard = createWizard(host, {
+    window: win, config: cfg, ports,
+    seed: { mode: 'manage-leadership', association: { qid: 'Q100', label: 'Body' } },
+  });
+  await new Promise((r) => setTimeout(r, 0));
+  wizard._setDraft((d) => {
+    d.officers[0].person.qid = 'Q200';
+    d.officers[0].person.pickedLabel = 'Jane Doe';
+    d.officers[0].person.pickedBirthYear = '1975';
+  });
+  assert.match(host.innerHTML, /Person: <strong>Jane Doe \(b\. 1975\)<\/strong>/);
+
+  host.querySelector('[data-role="ta-officer-0"] [data-role="change"]').click();
+  assert.match(host.innerHTML, /data-role="query"/);
+  assert.equal(wizard.getDraft().officers[0].person.qid, 'Q200'); // not cleared just by opening the search box
+
+  host.querySelector('[data-role="ta-officer-0"] input[data-role="query"]')
+    .dispatchEvent(new win.KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+  assert.match(host.innerHTML, /Person: <strong>Jane Doe \(b\. 1975\)<\/strong>/);
+  assert.equal(wizard.getDraft().officers[0].person.qid, 'Q200');
+});
+
 test('draft is persisted to localStorage and restored', () => {
   const win = env();
   const host = win.document.getElementById('w');
