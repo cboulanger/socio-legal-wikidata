@@ -112,10 +112,19 @@ separate item, so it is not listed separately.
  * @property {string} description
  * @property {string|null} publisherQid  // P123, null if independent
  * @property {string|null} publisherLabel
- * @property {string|null} countryCode   // P17|P495, independent journals, display only
+ * @property {string|null} countryCode   // display- and filter-only; see derivation rule below
  * @property {string|null} countryLabel
  */
 ```
+
+**`countryCode`/`countryLabel` derivation**: an independent journal uses its own
+`P17`/`P495`. An association-published journal has **no** country of its own on most
+items (nobody has been entering `P17`/`P495` on journal items, only on the
+association), so it **inherits its publishing association's `countryCode`/
+`countryLabel`** instead (§5) — the same field the existing country filter
+(`#/country/XX`) already keys off for the association itself. This is what makes
+"Show journals" + an active country filter show every journal "in" that country,
+independent or association-published.
 
 `Association.journal` (the existing `JournalRef` embedded field) is unchanged — it
 remains the cheap, already-fetched "does this association have a journal" fact the card
@@ -220,9 +229,14 @@ Label resolution happens in the adapter (§8), same layering rule as before.
 Two pools of journals, merged for display, never for the map:
 
 - **Pool A — association-published.** Already fetched today, for free, inside the main
-  per-association SPARQL query (`?journal wdt:P123 ?assoc`, unchanged). This is why an
-  association's own journal already shows on its card with zero extra cost, checkbox or
-  not.
+  per-association SPARQL query (`?journal wdt:P123 ?assoc`, unchanged) — `a.journal` on
+  every association. This is why an association's own journal already shows on its card
+  with zero extra cost, checkbox or not. A new pure function in `core/journals.js`,
+  `publishedJournalsFrom(associations)`, maps every association with a `.journal` into a
+  full `Journal` row: `{ qid: a.journal.qid, label: a.journal.label, publisherQid: a.qid,
+  publisherLabel: a.label, countryCode: a.countryCode, countryLabel: a.countryLabel }` —
+  **the country is inherited from the publishing association**, per §4.1's derivation
+  rule, since the journal item itself essentially never carries `P17`/`P495`.
 - **Pool B — independent socio-legal journals.** A **new, separate** SPARQL query in
   `adapters/sparql-client.js` (`buildJournalQuery`/`mapJournalBindings`/`queryJournals`,
   alongside the existing `buildDirectoryQuery` family). It fetches only what a list row
@@ -240,30 +254,44 @@ WHERE {
 }
 ```
 
-Fetched **only when the checkbox is first ticked** (lazy), kept in an in-memory
-`store.journals` for the session (not `localStorage`, no snapshot fallback — same
-"fetch once, live-only" precedent as leadership history and "last edited by").
+Fetched **only when the checkbox is first ticked** (lazy), the raw result kept as
+`store.independentJournals` for the session (not `localStorage`, no snapshot fallback —
+same "fetch once, live-only" precedent as leadership history and "last edited by").
 Unchecking and rechecking does not refetch.
 
 A small pure merge helper, `core/journals.js`:
 
 ```js
-/** Union of the journals already known from associations (pool A, built from their
- *  .journal JournalRef) and the independently queried pool (pool B), deduped by qid.
- *  Pool B wins on overlap: it carries a resolved countryLabel/publisherLabel pool A's
- *  bare JournalRef does not. */
+/** Union of pool A (built fresh from the current associations list via
+ *  publishedJournalsFrom, so it always reflects the latest country/publisher) and pool
+ *  B (the independently queried P921 pool, fetched once per session), deduped by qid.
+ *  On overlap, pool B's own fields win, EXCEPT: if pool B's row has no countryCode of
+ *  its own, pool A's (the publisher-inherited one) is kept — a journal's publisher's
+ *  country is at least as good a "where is this journal" signal as a possibly-absent
+ *  P17/P495 on the journal item itself. */
 export function mergeJournals(poolA, poolB) { /* ... */ }
 ```
+
+The **merged list is computed at render time**, not stored — `renderPanelRegion` calls
+`mergeJournals(publishedJournalsFrom(s.associations), s.independentJournals || [])`
+each time it runs, the same way it already calls `filterAssociations(s.associations,
+s.filter)` fresh on every render. This means an association's country or a newly-linked
+journal (via a live edit) is reflected in the "Journals" list immediately, with no
+separate cache to invalidate — only the independent-journal *query result itself* is
+cached (in `store.independentJournals`), not the merged view.
 
 **Panel integration**: a new `<label><input type="checkbox" data-role="show-journals"> Show journals</label>`
 in `directory-panel.js`'s existing `.panel__toolbar` row, next to "Reload data" — same
 small, muted, low-emphasis styling (that row already styles both as secondary
 controls). When checked and loaded, a new **"Journals"** group appears in the panel
-list (same pattern as the existing "No fixed location" group), filtered by the same
-free-text search logic the association list already uses (`filterAssociations` only
-ever touches `.label`/`.names`/`.countryCode`, so it applies to the leaner `Journal`
-shape unchanged — journals simply have no `.names`, so they filter by label only).
-Each row is selectable. **No map pins** — `map-view.js` and `toMapPins` are untouched.
+list (same pattern as the existing "No fixed location" group), filtered by the
+**same `filterAssociations(list, s.filter)` call already used for associations** — it
+only ever touches `.label`/`.names`/`.countryCode`, so it applies to `Journal` rows
+unchanged (journals have no `.names`, so text search matches on label only; the
+existing exact-match `countryCode` check now works for journals too, per §4.1's
+inheritance rule, so an active `#/country/XX` filter correctly includes every journal
+"in" that country, independent or association-published). Each row is selectable.
+**No map pins** — `map-view.js` and `toMapPins` are untouched.
 
 ## 6. User flow
 
@@ -448,7 +476,7 @@ idempotent either).
 | Unit | Responsibility | Depends on |
 | --- | --- | --- |
 | `core/model.js` | `Journal` type | — |
-| `core/journals.js` (new) | `mergeJournals` (pure) | — |
+| `core/journals.js` (new) | `publishedJournalsFrom`, `mergeJournals` (pure) | `core/model.js` |
 | `core/draft.js` | `DraftJournalEntity`/`DraftEditorRow`/`EditorHistoryOriginal` types, `journalOriginalFromEntity`, `editorClaimsFromEntity`, validation | `languages.js` |
 | `core/changeset.js` | `create-journal`/`update-journal`/`manage-journal-editors` ops | `draft.js` |
 | `adapters/sparql-client.js` | `buildJournalQuery`/`mapJournalBindings`/`queryJournals` | — |
@@ -472,7 +500,9 @@ idempotent either).
   `update-journal` changing one field at a time (`replace:true` website refreshes
   `P585`); `manage-journal-editors` with a mixed batch (two different roles, both
   open-ended, no error) and (two rows, same role, both open-ended, error).
-- **Unit (`core/journals.js`):** `mergeJournals` dedup, pool-B-wins-on-overlap.
+- **Unit (`core/journals.js`):** `publishedJournalsFrom` inherits the publishing
+  association's country; `mergeJournals` dedup, pool-B-wins-on-overlap **except** it
+  keeps pool A's country when pool B's row has none.
 - **Unit (`core/quickstatements.js`):** the interleaved create/link ordering for
   `manage-journal-editors`, same regression shape as the existing leadership-ordering
   test.
