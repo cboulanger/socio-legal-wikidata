@@ -3,12 +3,13 @@ import { html, mount } from '../render.js';
 /**
  * Renders the edit-mode chrome into a dedicated overlay element.
  * @param {HTMLElement} el
- * @param {{ connected: boolean, onConnect: () => void, onLeave: () => void, onAdd: () => void }} opts
+ * @param {{ connected: boolean, devWriteMocked?: boolean, onConnect: () => void, onLeave: () => void, onAdd: () => void }} opts
  */
 export function renderEditChrome(el, opts) {
   mount(el, html`
     <div class="editbar">
       <span class="editbar__badge">Edit mode</span>
+      ${opts.devWriteMocked ? html`<span class="editbar__dev">local dev — writes simulated, nothing is sent to Wikidata</span>` : ''}
       ${opts.connected
         ? html`<button type="button" data-role="add">Add association</button>
                <button type="button" data-role="leave">Leave edit mode</button>`

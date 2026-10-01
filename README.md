@@ -93,6 +93,19 @@ OAuth 2.0 consumer (an "OAuth app") that acts as the backend:
   mismatched `oauth.clientId` / `redirectUri`), edit mode cannot connect and
   the site stays effectively read-only.
 
+### Testing edit mode on localhost
+
+There is no approved OAuth consumer for `localhost`, so `Connect a Wikimedia
+account` cannot work there. When `src/app.js` detects it is running on
+`localhost`/`127.0.0.1` it automatically swaps in `src/adapters/dev-auth-mock.js`
+and `src/adapters/dev-write-mock.js`: the UI behaves as if an account were
+already connected, and the final save logs the changeset to the console and
+returns a fake success instead of calling the real Wikidata API. Everything
+else — search, the wizard, validation, the post-save UI update — runs exactly
+as it would in production. The edit bar shows "local dev — writes simulated"
+as a reminder. This only triggers on those two hostnames, so the deployed
+site is unaffected.
+
 Step-by-step registration is in
 [`docs/plans/2026-09-02-operations-and-data-runbook.md`](docs/plans/2026-09-02-operations-and-data-runbook.md)
 (Task A3).

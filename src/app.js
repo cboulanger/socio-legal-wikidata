@@ -182,6 +182,7 @@ export async function createApp(deps) {
 
     const paintChrome = () => renderEditChrome(bar, {
       connected: editRuntime.auth.hasSession(),
+      devWriteMocked: !!editRuntime.devWriteMocked,
       onConnect: () => editRuntime.auth.connect(),
       onLeave: async () => { await editRuntime.auth.disconnect(); win.location.search = ''; },
       onAdd: () => editRuntime.openWizard(drawer, { mode: 'create-association' }, { onSaved: applySaved, isInDirectory }),
@@ -318,11 +319,31 @@ if (typeof window !== 'undefined' && window.document?.getElementById('app')) {
         import('./ui/edit-wizard/wizard.js'),
       ]);
       const api = createWikibaseApi({ fetch: window.fetch.bind(window), config, getToken: () => auth.getToken() });
-      const write = config.writeMode === 'quickstatements'
+      let write = config.writeMode === 'quickstatements'
         ? createQuickStatementsWriter({ window, config })
         : api;
+      let runtimeAuth = auth;
+      let devWriteMocked = false;
+
+      // No Wikidata OAuth consumer can work on localhost — Wikimedia must approve a
+      // new consumer before anyone but its owner can authorize it (see README.md
+      // "Edit mode"), and only the production consumer is registered. So on localhost
+      // the edit UI is shown as already "connected" and saves are simulated locally,
+      // letting every read, search and UI flow be tested without ever touching
+      // real Wikidata or requiring a Wikimedia sign-in.
+      if (['localhost', '127.0.0.1'].includes(window.location.hostname)) {
+        const [{ createDevAuth }, { createDevWriteMock }] = await Promise.all([
+          import('./adapters/dev-auth-mock.js'),
+          import('./adapters/dev-write-mock.js'),
+        ]);
+        runtimeAuth = createDevAuth();
+        write = createDevWriteMock();
+        devWriteMocked = true;
+      }
+
       return {
-        auth,
+        auth: runtimeAuth,
+        devWriteMocked,
         getLeadershipHistory: api.getLeadershipHistory,
         openWizard: (host, seed, hooks = {}) => createWizard(host, { window, config, ports: { search: api, write }, seed, onClose: () => { host.innerHTML = ''; }, ...hooks }),
       };

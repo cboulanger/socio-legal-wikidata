@@ -125,6 +125,7 @@ body { font-family: var(--font); color: var(--text); background: var(--bg); }
   border: 1px solid var(--border); border-radius: var(--radius); padding: var(--space-2); }
 .editbar__badge { background: var(--banner-bg); color: var(--banner-text);
   padding: 2px var(--space-2); border-radius: 999px; font-size: 0.8rem; }
+.editbar__dev { color: #b45309; font-size: 0.75rem; font-weight: 600; }
 #wizard-host:empty { display: none; }
 #wizard-host { position: absolute; z-index: 3; top: 0; right: 0; bottom: 0; width: min(420px, 96vw);
   background: var(--bg); border-left: 1px solid var(--border); overflow-y: auto; padding: var(--space-3); }
