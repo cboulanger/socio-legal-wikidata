@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-30",
+  "generatedAt": "2026-10-02",
   "associations": [
     {
       "qid": "Q141260161",
@@ -440,7 +440,7 @@
       ],
       "countryCode": "DE",
       "countryLabel": "Germany",
-      "operatingAreaQid": null,
+      "operatingAreaQid": "Q183",
       "seatQid": null,
       "seatLabel": null,
       "seatCoord": null,
@@ -449,20 +449,27 @@
       "parentUrl": null,
       "website": "https://rechtssoziologie.info",
       "email": null,
-      "inception": null,
+      "inception": "1976",
       "abbreviation": null,
-      "president": null,
-      "leadUniQid": null,
-      "leadUniLabel": null,
-      "leadCoord": null,
+      "president": {
+        "qid": "Q106589594",
+        "label": "Eva Kocher",
+        "url": null
+      },
+      "leadUniQid": "Q149481",
+      "leadUniLabel": "European University Viadrina",
+      "leadCoord": [
+        14.553888888,
+        52.342222222
+      ],
       "journal": null,
       "lastEdit": {
-        "revid": 2550924015,
+        "revid": 2552105716,
         "user": "Panyasan",
         "anon": false,
         "userHidden": false,
-        "timestamp": "2026-09-29T16:32:38Z",
-        "comment": "/* wbremoveclaims-remove:1| */ [[Property:P101]]: [[Q2734663]], #quickstatements; #temporary_batch_1790699525268"
+        "timestamp": "2026-10-02T09:46:07Z",
+        "comment": "/* wbsetclaim-update:2||1|2 */ [[Property:P488]]: [[Q106589594]]"
       }
     },
     {
