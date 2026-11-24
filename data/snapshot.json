@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-22",
+  "generatedAt": "2026-11-24",
   "associations": [
     {
       "qid": "Q141260161",
@@ -361,7 +361,7 @@
       "names": [
         "Dutch-Flemish Law and Society Association"
       ],
-      "countryCode": "NL",
+      "countryCode": null,
       "countryLabel": "Netherlands",
       "operatingAreaQid": null,
       "seatQid": null,
@@ -395,7 +395,7 @@
       "names": [
         "European Society for Empirical Legal Studies"
       ],
-      "countryCode": "NL",
+      "countryCode": null,
       "countryLabel": "Netherlands",
       "operatingAreaQid": null,
       "seatQid": null,
@@ -799,7 +799,7 @@
       "names": [
         "Netherlands Academy for Empirical Legal Studies"
       ],
-      "countryCode": "NL",
+      "countryCode": null,
       "countryLabel": "Netherlands",
       "operatingAreaQid": null,
       "seatQid": null,
